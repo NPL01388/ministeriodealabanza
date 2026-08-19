@@ -1,0 +1,2757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#172554">
+
+<title>Asistencia | Ministerio de Alabanza</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+:root{
+    --primary:#1d4ed8;
+    --primary-dark:#172554;
+    --success:#16a34a;
+    --warning:#d97706;
+    --danger:#dc2626;
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --text:#172033;
+    --muted:#64748b;
+    --border:#e2e8f0;
+}
+
+body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+}
+
+/* HEADER */
+
+header{
+    background:linear-gradient(135deg,#172554,#1d4ed8);
+    color:white;
+    padding:18px;
+    position:sticky;
+    top:0;
+    z-index:100;
+    box-shadow:0 3px 15px rgba(0,0,0,.15);
+}
+
+.header-content{
+    max-width:1200px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+}
+
+.header-title small{
+    font-size:11px;
+    opacity:.8;
+    letter-spacing:1px;
+}
+
+.header-title h1{
+    margin:5px 0 0;
+    font-size:22px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    padding:20px 15px 60px;
+}
+
+/* BOTONES */
+
+button{
+    border:0;
+    cursor:pointer;
+    font-family:inherit;
+}
+
+.btn{
+    padding:11px 15px;
+    border-radius:10px;
+    font-weight:bold;
+    font-size:14px;
+}
+
+.btn-primary{
+    background:var(--primary);
+    color:white;
+}
+
+.btn-success{
+    background:var(--success);
+    color:white;
+}
+
+.btn-warning{
+    background:var(--warning);
+    color:white;
+}
+
+.btn-danger{
+    background:var(--danger);
+    color:white;
+}
+
+.btn-secondary{
+    background:#e2e8f0;
+    color:#334155;
+}
+
+.btn:hover{
+    opacity:.9;
+}
+
+/* ESTADISTICAS */
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:15px;
+    padding:18px;
+    box-shadow:0 3px 12px rgba(0,0,0,.05);
+}
+
+.stat-card span{
+    color:var(--muted);
+    font-size:13px;
+}
+
+.stat-card strong{
+    display:block;
+    font-size:30px;
+    margin-top:5px;
+}
+
+/* TABS */
+
+.tabs{
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    margin-bottom:20px;
+}
+
+.tab{
+    background:#e2e8f0;
+    color:#475569;
+    padding:11px 15px;
+    border-radius:10px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.tab.active{
+    background:var(--primary-dark);
+    color:white;
+}
+
+.tab-panel{
+    display:none;
+}
+
+.tab-panel.active{
+    display:block;
+}
+
+/* SECCIONES */
+
+.section-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:15px;
+}
+
+.section-header h2{
+    margin:0;
+}
+
+.section-header p{
+    color:var(--muted);
+    font-size:14px;
+}
+
+/* CARDS DE MUSICOS */
+
+.musician-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
+
+.musician-card{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:17px;
+    box-shadow:0 3px 12px rgba(0,0,0,.05);
+}
+
+.person{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.avatar{
+    width:48px;
+    height:48px;
+    background:#dbeafe;
+    color:#1d4ed8;
+    border-radius:13px;
+    display:grid;
+    place-items:center;
+    font-weight:bold;
+    font-size:18px;
+}
+
+.person h3{
+    margin:0;
+}
+
+.role{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:4px;
+}
+
+.badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:15px 0;
+}
+
+.badge{
+    background:#eff6ff;
+    color:#1d4ed8;
+    padding:5px 8px;
+    border-radius:20px;
+    font-size:12px;
+}
+
+.badge.warning{
+    background:#fff7ed;
+    color:#c2410c;
+}
+
+.actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+
+.small-btn{
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+/* FORMULARIOS */
+
+.form-card{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:15px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:13px;
+}
+
+label{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-weight:bold;
+    font-size:13px;
+    color:#475569;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    padding:11px;
+    font-size:14px;
+    background:white;
+    color:#172033;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+
+.full{
+    width:100%;
+    margin-top:15px;
+}
+
+.span-2{
+    grid-column:span 2;
+}
+
+/* ASISTENCIA */
+
+.attendance-list{
+    display:grid;
+    gap:10px;
+}
+
+.attendance-row{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:13px;
+    display:grid;
+    grid-template-columns:1.5fr 1fr 1fr;
+    gap:10px;
+    align-items:center;
+}
+
+.att-name{
+    font-weight:bold;
+}
+
+.att-role{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:3px;
+}
+
+.reason{
+    display:none;
+}
+
+.attendance-row.absent .reason{
+    display:block;
+}
+
+/* HISTORIAL */
+
+.filters{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.table-container{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:15px;
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:850px;
+}
+
+th,
+td{
+    padding:11px;
+    text-align:left;
+    border-bottom:1px solid #edf2f7;
+    font-size:13px;
+}
+
+th{
+    background:#f8fafc;
+    color:#64748b;
+}
+
+/* REGLAS */
+
+.rule-card{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px;
+}
+
+.rule{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    padding:13px 0;
+    border-bottom:1px solid #edf2f7;
+}
+
+.rule:last-child{
+    border-bottom:0;
+}
+
+.rule small{
+    display:block;
+    color:var(--muted);
+    margin-top:4px;
+}
+
+/* MODAL */
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.7);
+    display:grid;
+    place-items:center;
+    padding:15px;
+    z-index:500;
+}
+
+.modal.hidden{
+    display:none;
+}
+
+.modal-content{
+    background:white;
+    width:min(580px,100%);
+    max-height:90vh;
+    overflow:auto;
+    border-radius:20px;
+    padding:22px;
+    position:relative;
+}
+
+.close{
+    position:absolute;
+    right:15px;
+    top:10px;
+    border:0;
+    background:none;
+    font-size:28px;
+    color:#64748b;
+}
+
+.modal-content h2{
+    margin-top:0;
+}
+
+/* ESTADISTICAS INDIVIDUALES */
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+
+.summary{
+    background:#f8fafc;
+    border-radius:12px;
+    padding:14px;
+}
+
+.summary strong{
+    display:block;
+    font-size:24px;
+}
+
+.summary span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.progress{
+    height:10px;
+    background:#e2e8f0;
+    border-radius:50px;
+    overflow:hidden;
+    margin:15px 0;
+}
+
+.progress-bar{
+    height:100%;
+    background:var(--primary);
+}
+
+/* VACIO */
+
+.empty{
+    background:white;
+    border:1px dashed #cbd5e1;
+    border-radius:15px;
+    padding:30px;
+    text-align:center;
+    color:var(--muted);
+}
+
+/* CHECKBOX */
+
+.checkbox{
+    flex-direction:row;
+    align-items:center;
+    gap:8px;
+}
+
+.checkbox input{
+    width:18px;
+    height:18px;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:850px){
+
+    .dashboard{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .musician-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .attendance-row{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:600px){
+
+    header{
+        position:static;
+    }
+
+    .header-content{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .header-content .btn{
+        width:100%;
+    }
+
+    .header-title h1{
+        font-size:19px;
+    }
+
+    .container{
+        padding:15px 10px 50px;
+    }
+
+    .musician-grid{
+        grid-template-columns:1fr;
+    }
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .span-2{
+        grid-column:auto;
+    }
+
+    .section-header{
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .section-header .btn{
+        width:100%;
+    }
+
+    .filters{
+        flex-direction:column;
+    }
+
+    .summary-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="header-content">
+
+<div class="header-title">
+
+<small>IGLEICO · HECHOS DEL ESPÍRITU SANTO</small>
+
+<h1>🎵 Asistencia — Ministerio de Alabanza</h1>
+
+</div>
+
+<button class="btn btn-success" onclick="exportarExcel()">
+⬇ Descargar Excel
+</button>
+
+</div>
+
+</header>
+
+
+<div class="container">
+
+
+<!-- DASHBOARD -->
+
+<section class="dashboard">
+
+<div class="stat-card">
+<span>Músicos</span>
+<strong id="totalMusicos">0</strong>
+</div>
+
+<div class="stat-card">
+<span>Asistencias</span>
+<strong id="totalAsistencias">0</strong>
+</div>
+
+<div class="stat-card">
+<span>Tardanzas</span>
+<strong id="totalTardanzas">0</strong>
+</div>
+
+<div class="stat-card">
+<span>Inasistencias</span>
+<strong id="totalInasistencias">0</strong>
+</div>
+
+</section>
+
+
+<!-- MENU -->
+
+<nav class="tabs">
+
+<button class="tab active" onclick="mostrarTab('musicos',this)">
+👥 Músicos
+</button>
+
+<button class="tab" onclick="mostrarTab('registrar',this)">
+✅ Registrar asistencia
+</button>
+
+<button class="tab" onclick="mostrarTab('historial',this)">
+📋 Historial
+</button>
+
+<button class="tab" onclick="mostrarTab('reglas',this)">
+⚙️ Reglas
+</button>
+
+</nav>
+
+
+<!-- ========================= -->
+<!-- MUSICOS -->
+<!-- ========================= -->
+
+<section id="musicos" class="tab-panel active">
+
+<div class="section-header">
+
+<div>
+<h2>👥 Músicos</h2>
+<p>Administra los integrantes del Ministerio de Alabanza.</p>
+</div>
+
+<button class="btn btn-primary" onclick="abrirMusico()">
+＋ Nuevo músico
+</button>
+
+</div>
+
+<div id="listaMusicos" class="musician-grid"></div>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- REGISTRAR -->
+<!-- ========================= -->
+
+<section id="registrar" class="tab-panel">
+
+<div class="section-header">
+
+<div>
+<h2>✅ Registrar asistencia</h2>
+<p>Registra la asistencia de todos los músicos.</p>
+</div>
+
+</div>
+
+
+<div class="form-card">
+
+<div class="form-grid">
+
+<label>
+Fecha
+<input type="date" id="fechaAsistencia">
+</label>
+
+
+<label>
+Actividad
+<select id="tipoActividad">
+
+<option value="Domingo">
+Domingo — Servicio
+</option>
+
+<option value="Jueves">
+Jueves — Servicio
+</option>
+
+<option value="Miércoles">
+Miércoles — Ensayo
+</option>
+
+<option value="Ayuno">
+Ayuno — Domingo 8:00 AM
+</option>
+
+<option value="Otro">
+Otro
+</option>
+
+</select>
+</label>
+
+
+<label>
+Hora de llegada
+<input type="time" id="horaLlegada">
+</label>
+
+</div>
+
+</div>
+
+
+<div id="listaAsistencia" class="attendance-list"></div>
+
+
+<button class="btn btn-primary full" onclick="guardarAsistencia()">
+💾 Guardar asistencia
+</button>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- HISTORIAL -->
+<!-- ========================= -->
+
+<section id="historial" class="tab-panel">
+
+<div class="section-header">
+
+<div>
+<h2>📋 Historial de asistencia</h2>
+<p>Consulta todos los registros.</p>
+</div>
+
+</div>
+
+
+<div class="filters">
+
+<input
+type="search"
+id="buscarHistorial"
+placeholder="🔎 Buscar músico..."
+oninput="renderHistorial()"
+>
+
+
+<select id="filtroActividad" onchange="renderHistorial()">
+
+<option value="">
+Todas las actividades
+</option>
+
+<option value="Domingo">
+Domingo
+</option>
+
+<option value="Jueves">
+Jueves
+</option>
+
+<option value="Miércoles">
+Miércoles
+</option>
+
+<option value="Ayuno">
+Ayuno
+</option>
+
+<option value="Otro">
+Otro
+</option>
+
+</select>
+
+</div>
+
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Fecha</th>
+<th>Músico</th>
+<th>Función</th>
+<th>Actividad</th>
+<th>Estado</th>
+<th>Hora</th>
+<th>Motivo</th>
+<th>Acción</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tablaHistorial"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+
+<!-- ========================= -->
+<!-- REGLAS -->
+<!-- ========================= -->
+
+<section id="reglas" class="tab-panel">
+
+<div class="section-header">
+
+<div>
+
+<h2>⚙️ Reglas de llegada</h2>
+
+<p>
+Configura las horas límite generales del ministerio.
+</p>
+
+</div>
+
+</div>
+
+
+<div class="rule-card">
+
+
+<div class="rule">
+
+<div>
+
+<strong>Domingo — Servicio</strong>
+
+<small>
+Hora máxima para llegar sin tardanza
+</small>
+
+</div>
+
+<input
+type="time"
+id="reglaDomingo"
+value="09:35"
+>
+
+</div>
+
+
+<div class="rule">
+
+<div>
+
+<strong>Jueves — Servicio</strong>
+
+<small>
+Hora máxima general
+</small>
+
+</div>
+
+<input
+type="time"
+id="reglaJueves"
+value="18:35"
+>
+
+</div>
+
+
+<div class="rule">
+
+<div>
+
+<strong>Miércoles — Ensayo</strong>
+
+<small>
+Llegada a las 6:30 PM
+</small>
+
+</div>
+
+<input
+type="time"
+id="reglaMiercoles"
+value="18:30"
+>
+
+</div>
+
+
+<div class="rule">
+
+<div>
+
+<strong>Ayuno — Domingo</strong>
+
+<small>
+Hora de llegada
+</small>
+
+</div>
+
+<input
+type="time"
+id="reglaAyuno"
+value="08:00"
+>
+
+</div>
+
+
+<button
+class="btn btn-primary full"
+onclick="guardarReglas()"
+>
+💾 Guardar reglas
+</button>
+
+</div>
+
+
+<div class="rule-card" style="margin-top:15px;border-color:#fecaca">
+
+<h3>⚠️ Mantenimiento</h3>
+
+<p style="color:#64748b">
+Esta opción elimina todos los músicos y registros guardados.
+</p>
+
+<button
+class="btn btn-danger"
+onclick="borrarTodo()"
+>
+🗑 Borrar todos los datos
+</button>
+
+</div>
+
+</section>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- MODAL MUSICO -->
+<!-- ========================= -->
+
+<div id="modalMusico" class="modal hidden">
+
+<div class="modal-content">
+
+<button class="close" onclick="cerrarMusico()">
+×
+</button>
+
+<h2 id="tituloModal">
+Nuevo músico
+</h2>
+
+
+<form onsubmit="guardarMusico(event)">
+
+<input type="hidden" id="musicoId">
+
+
+<div class="form-grid">
+
+
+<label>
+
+Nombre
+
+<input
+type="text"
+id="nombre"
+required
+maxlength="60"
+>
+
+</label>
+
+
+<label>
+
+Apellido
+
+<input
+type="text"
+id="apellido"
+required
+maxlength="60"
+>
+
+</label>
+
+
+<label class="span-2">
+
+Función / Instrumento
+
+<select id="funcion">
+
+<option>Baterista</option>
+
+<option>Bajista</option>
+
+<option>Pianista</option>
+
+<option>Guitarrista</option>
+
+<option>Corista</option>
+
+<option>Director de alabanza</option>
+
+<option>Sonidista</option>
+
+<option>Otro</option>
+
+</select>
+
+</label>
+
+
+<label class="checkbox span-2">
+
+<input
+type="checkbox"
+id="horarioEspecial"
+onchange="mostrarHorarioEspecial()"
+>
+
+Tiene horario especial por trabajo
+
+</label>
+
+
+<label
+id="campoHorarioEspecial"
+class="span-2"
+style="display:none"
+>
+
+Hora límite especial para jueves
+
+<input
+type="time"
+id="horaEspecial"
+>
+
+</label>
+
+
+<label class="span-2">
+
+Observaciones
+
+<textarea
+id="observaciones"
+rows="3"
+placeholder="Información adicional del músico..."
+></textarea>
+
+</label>
+
+
+</div>
+
+
+<button
+class="btn btn-primary full"
+type="submit"
+>
+💾 Guardar músico
+</button>
+
+</form>
+
+</div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- MODAL ESTADISTICA -->
+<!-- ========================= -->
+
+<div id="modalEstadistica" class="modal hidden">
+
+<div class="modal-content">
+
+<button class="close" onclick="cerrarEstadistica()">
+×
+</button>
+
+<h2 id="tituloEstadistica">
+Estadística
+</h2>
+
+<div id="contenidoEstadistica"></div>
+
+</div>
+
+</div>
+
+
+<!-- LIBRERIA EXCEL -->
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+
+<script>
+
+/* =====================================================
+   BASE DE DATOS LOCAL
+===================================================== */
+
+const STORAGE_KEY = "IGLEICO_ASISTENCIA_ALABANZA";
+
+const datosIniciales = {
+
+musicos:[],
+
+registros:[],
+
+reglas:{
+
+Domingo:"09:35",
+
+Jueves:"18:35",
+
+"Miércoles":"18:30",
+
+Ayuno:"08:00"
+
+}
+
+};
+
+
+let datos = cargarDatos();
+
+let editandoId = null;
+
+
+/* =====================================================
+   UTILIDADES
+===================================================== */
+
+function idUnico(){
+
+return Date.now().toString(36)+"-"+Math.random().toString(36).substring(2);
+
+}
+
+
+function cargarDatos(){
+
+try{
+
+const guardado =
+localStorage.getItem(STORAGE_KEY);
+
+if(!guardado){
+
+return JSON.parse(
+JSON.stringify(datosIniciales)
+);
+
+}
+
+return {
+
+...datosIniciales,
+
+...JSON.parse(guardado)
+
+};
+
+}catch(error){
+
+return JSON.parse(
+JSON.stringify(datosIniciales)
+);
+
+}
+
+}
+
+
+function guardarDatos(){
+
+localStorage.setItem(
+STORAGE_KEY,
+JSON.stringify(datos)
+);
+
+actualizarTodo();
+
+}
+
+
+function escapar(texto){
+
+return String(texto || "")
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+function nombreCompleto(musico){
+
+return `${musico.nombre} ${musico.apellido}`;
+
+}
+
+
+function iniciales(musico){
+
+return (
+(musico.nombre.charAt(0) || "") +
+(musico.apellido.charAt(0) || "")
+).toUpperCase();
+
+}
+
+
+/* =====================================================
+   TABS
+===================================================== */
+
+function mostrarTab(id,boton){
+
+document.querySelectorAll(".tab-panel")
+.forEach(panel=>{
+panel.classList.remove("active");
+});
+
+document.querySelectorAll(".tab")
+.forEach(tab=>{
+tab.classList.remove("active");
+});
+
+document.getElementById(id)
+.classList.add("active");
+
+boton.classList.add("active");
+
+if(id==="historial"){
+
+renderHistorial();
+
+}
+
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+function actualizarDashboard(){
+
+document.getElementById("totalMusicos")
+.textContent=datos.musicos.length;
+
+
+document.getElementById("totalAsistencias")
+.textContent=
+datos.registros.filter(
+r=>r.estado==="asistio" ||
+r.estado==="tarde"
+).length;
+
+
+document.getElementById("totalTardanzas")
+.textContent=
+datos.registros.filter(
+r=>r.estado==="tarde"
+).length;
+
+
+document.getElementById("totalInasistencias")
+.textContent=
+datos.registros.filter(
+r=>r.estado==="inasistencia"
+).length;
+
+}
+
+
+/* =====================================================
+   MUSICOS
+===================================================== */
+
+function renderMusicos(){
+
+const contenedor =
+document.getElementById("listaMusicos");
+
+
+if(datos.musicos.length===0){
+
+contenedor.innerHTML=`
+
+<div class="empty">
+
+<h3>No hay músicos registrados</h3>
+
+<p>
+Pulsa “Nuevo músico” para comenzar.
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+contenedor.innerHTML =
+datos.musicos.map(musico=>{
+
+const registros =
+datos.registros.filter(
+r=>r.musicoId===musico.id
+);
+
+
+const asistencias =
+registros.filter(
+r=>r.estado==="asistio" ||
+r.estado==="tarde"
+).length;
+
+
+const tardanzas =
+registros.filter(
+r=>r.estado==="tarde"
+).length;
+
+
+const faltas =
+registros.filter(
+r=>r.estado==="inasistencia"
+).length;
+
+
+return `
+
+<div class="musician-card">
+
+<div class="person">
+
+<div class="avatar">
+
+${escapar(iniciales(musico))}
+
+</div>
+
+
+<div>
+
+<h3>
+${escapar(nombreCompleto(musico))}
+</h3>
+
+<div class="role">
+${escapar(musico.funcion)}
+</div>
+
+</div>
+
+</div>
+
+
+<div class="badges">
+
+<span class="badge">
+Asistió: ${asistencias}
+</span>
+
+<span class="badge">
+Tarde: ${tardanzas}
+</span>
+
+<span class="badge">
+Faltó: ${faltas}
+</span>
+
+${musico.horarioEspecial
+?
+`<span class="badge warning">
+Jueves hasta ${escapar(musico.horaEspecial)}
+</span>`
+:""}
+
+</div>
+
+
+<div class="actions">
+
+<button
+class="small-btn btn-primary"
+onclick="verEstadistica('${musico.id}')"
+>
+📊 Estadística
+</button>
+
+
+<button
+class="small-btn btn-secondary"
+onclick="editarMusico('${musico.id}')"
+>
+✏️ Editar
+</button>
+
+
+<button
+class="small-btn btn-danger"
+onclick="eliminarMusico('${musico.id}')"
+>
+🗑️ Eliminar
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+
+/* =====================================================
+   MODAL MUSICO
+===================================================== */
+
+function abrirMusico(){
+
+editandoId=null;
+
+document.getElementById("tituloModal")
+.textContent="Nuevo músico";
+
+document.getElementById("musicoId").value="";
+
+document.getElementById("nombre").value="";
+
+document.getElementById("apellido").value="";
+
+document.getElementById("funcion").value="Baterista";
+
+document.getElementById("horarioEspecial").checked=false;
+
+document.getElementById("horaEspecial").value="";
+
+document.getElementById("observaciones").value="";
+
+document.getElementById("campoHorarioEspecial")
+.style.display="none";
+
+document.getElementById("modalMusico")
+.classList.remove("hidden");
+
+}
+
+
+function cerrarMusico(){
+
+document.getElementById("modalMusico")
+.classList.add("hidden");
+
+}
+
+
+function mostrarHorarioEspecial(){
+
+const activo =
+document.getElementById("horarioEspecial")
+.checked;
+
+
+document.getElementById("campoHorarioEspecial")
+.style.display=
+activo ? "flex" : "none";
+
+}
+
+
+function editarMusico(id){
+
+const musico =
+datos.musicos.find(m=>m.id===id);
+
+
+if(!musico)return;
+
+
+editandoId=id;
+
+
+document.getElementById("tituloModal")
+.textContent="Editar músico";
+
+
+document.getElementById("nombre").value=
+musico.nombre;
+
+
+document.getElementById("apellido").value=
+musico.apellido;
+
+
+document.getElementById("funcion").value=
+musico.funcion;
+
+
+document.getElementById("horarioEspecial").checked=
+!!musico.horarioEspecial;
+
+
+document.getElementById("horaEspecial").value=
+musico.horaEspecial || "";
+
+
+document.getElementById("observaciones").value=
+musico.observaciones || "";
+
+
+mostrarHorarioEspecial();
+
+
+document.getElementById("modalMusico")
+.classList.remove("hidden");
+
+}
+
+
+function guardarMusico(event){
+
+event.preventDefault();
+
+
+const nuevoMusico={
+
+nombre:
+document.getElementById("nombre")
+.value.trim(),
+
+apellido:
+document.getElementById("apellido")
+.value.trim(),
+
+funcion:
+document.getElementById("funcion")
+.value,
+
+horarioEspecial:
+document.getElementById("horarioEspecial")
+.checked,
+
+horaEspecial:
+document.getElementById("horaEspecial")
+.value,
+
+observaciones:
+document.getElementById("observaciones")
+.value.trim()
+
+};
+
+
+if(editandoId){
+
+const indice =
+datos.musicos.findIndex(
+m=>m.id===editandoId
+);
+
+datos.musicos[indice]={
+...datos.musicos[indice],
+...nuevoMusico
+};
+
+}else{
+
+datos.musicos.push({
+
+id:idUnico(),
+
+...nuevoMusico
+
+});
+
+}
+
+
+guardarDatos();
+
+cerrarMusico();
+
+}
+
+
+/* =====================================================
+   ELIMINAR MUSICO
+===================================================== */
+
+function eliminarMusico(id){
+
+const musico =
+datos.musicos.find(m=>m.id===id);
+
+
+if(!musico)return;
+
+
+const confirmar =
+confirm(
+`¿Deseas eliminar a ${nombreCompleto(musico)}?\n\nTambién se eliminarán todos sus registros de asistencia.`
+);
+
+
+if(!confirmar)return;
+
+
+datos.musicos =
+datos.musicos.filter(
+m=>m.id!==id
+);
+
+
+datos.registros =
+datos.registros.filter(
+r=>r.musicoId!==id
+);
+
+
+guardarDatos();
+
+}
+
+
+/* =====================================================
+   LISTA DE ASISTENCIA
+===================================================== */
+
+function renderListaAsistencia(){
+
+const contenedor =
+document.getElementById("listaAsistencia");
+
+
+if(datos.musicos.length===0){
+
+contenedor.innerHTML=`
+
+<div class="empty">
+
+<h3>No hay músicos registrados</h3>
+
+<p>
+Primero debes crear los músicos.
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+contenedor.innerHTML =
+datos.musicos.map(musico=>`
+
+<div
+class="attendance-row"
+data-id="${musico.id}"
+>
+
+<div>
+
+<div class="att-name">
+
+${escapar(nombreCompleto(musico))}
+
+</div>
+
+<div class="att-role">
+
+${escapar(musico.funcion)}
+
+${musico.horarioEspecial
+?
+` · Jueves especial: ${escapar(musico.horaEspecial)}`
+:""}
+
+</div>
+
+</div>
+
+
+<select
+class="estado-select"
+onchange="cambiarEstadoAsistencia(this)"
+>
+
+<option value="asistio">
+✅ Asistió
+</option>
+
+<option value="inasistencia">
+❌ No asistió
+</option>
+
+</select>
+
+
+<input
+class="reason"
+type="text"
+placeholder="Motivo de inasistencia"
+/>
+
+</div>
+
+`).join("");
+
+}
+
+
+function cambiarEstadoAsistencia(select){
+
+const fila =
+select.closest(".attendance-row");
+
+
+if(select.value==="inasistencia"){
+
+fila.classList.add("absent");
+
+}else{
+
+fila.classList.remove("absent");
+
+}
+
+}
+
+
+/* =====================================================
+   CALCULAR HORA LIMITE
+===================================================== */
+
+function obtenerHoraLimite(tipo,musico){
+
+if(
+tipo==="Jueves" &&
+musico.horarioEspecial &&
+musico.horaEspecial
+){
+
+return musico.horaEspecial;
+
+}
+
+
+return datos.reglas[tipo] || null;
+
+}
+
+
+/* =====================================================
+   GUARDAR ASISTENCIA
+===================================================== */
+
+function guardarAsistencia(){
+
+if(datos.musicos.length===0){
+
+alert("Primero debes registrar los músicos.");
+
+return;
+
+}
+
+
+const fecha =
+document.getElementById("fechaAsistencia")
+.value;
+
+
+const tipo =
+document.getElementById("tipoActividad")
+.value;
+
+
+const hora =
+document.getElementById("horaLlegada")
+.value;
+
+
+if(!fecha){
+
+alert("Selecciona una fecha.");
+
+return;
+
+}
+
+
+const filas =
+document.querySelectorAll(".attendance-row");
+
+
+filas.forEach(fila=>{
+
+const musico =
+datos.musicos.find(
+m=>m.id===fila.dataset.id
+);
+
+
+const estadoSeleccionado =
+fila.querySelector(".estado-select")
+.value;
+
+
+const motivo =
+fila.querySelector(".reason")
+.value.trim();
+
+
+let estado=estadoSeleccionado;
+
+
+if(
+estadoSeleccionado==="asistio" &&
+hora
+){
+
+const limite =
+obtenerHoraLimite(
+tipo,
+musico
+);
+
+
+if(
+limite &&
+hora > limite
+){
+
+estado="tarde";
+
+}
+
+}
+
+
+datos.registros.push({
+
+id:idUnico(),
+
+musicoId:musico.id,
+
+fecha:fecha,
+
+actividad:tipo,
+
+hora:
+estado==="inasistencia"
+?
+""
+:
+hora,
+
+horaLimite:
+obtenerHoraLimite(
+tipo,
+musico
+),
+
+estado:estado,
+
+motivo:
+estado==="inasistencia"
+?
+(motivo || "Sin especificar")
+:
+""
+
+});
+
+});
+
+
+guardarDatos();
+
+
+alert(
+"✅ La asistencia fue registrada correctamente."
+);
+
+
+mostrarTabPorId("historial");
+
+}
+
+
+/* =====================================================
+   HISTORIAL
+===================================================== */
+
+function renderHistorial(){
+
+const tbody =
+document.getElementById("tablaHistorial");
+
+
+const busqueda =
+document.getElementById("buscarHistorial")
+.value
+.toLowerCase();
+
+
+const filtro =
+document.getElementById("filtroActividad")
+.value;
+
+
+let registros =
+datos.registros.filter(registro=>{
+
+const musico =
+datos.musicos.find(
+m=>m.id===registro.musicoId
+);
+
+
+if(!musico)return false;
+
+
+const nombre =
+nombreCompleto(musico)
+.toLowerCase();
+
+
+return (
+nombre.includes(busqueda) &&
+(!filtro ||
+registro.actividad===filtro)
+);
+
+});
+
+
+registros.sort(
+(a,b)=>
+(b.fecha+b.hora)
+.localeCompare(
+a.fecha+a.hora
+)
+);
+
+
+if(registros.length===0){
+
+tbody.innerHTML=`
+
+<tr>
+
+<td colspan="8">
+
+No hay registros.
+
+</td>
+
+</tr>
+
+`;
+
+return;
+
+}
+
+
+tbody.innerHTML =
+registros.map(registro=>{
+
+const musico =
+datos.musicos.find(
+m=>m.id===registro.musicoId
+);
+
+
+let estado="";
+
+if(registro.estado==="asistio"){
+
+estado="✅ Asistió";
+
+}
+
+if(registro.estado==="tarde"){
+
+estado="🟠 Llegó tarde";
+
+}
+
+if(registro.estado==="inasistencia"){
+
+estado="❌ No asistió";
+
+}
+
+
+return `
+
+<tr>
+
+<td>
+${escapar(registro.fecha)}
+</td>
+
+<td>
+${escapar(nombreCompleto(musico))}
+</td>
+
+<td>
+${escapar(musico.funcion)}
+</td>
+
+<td>
+${escapar(registro.actividad)}
+</td>
+
+<td>
+${estado}
+</td>
+
+<td>
+${escapar(registro.hora || "—")}
+</td>
+
+<td>
+${escapar(registro.motivo || "—")}
+</td>
+
+<td>
+
+<button
+class="small-btn btn-danger"
+onclick="eliminarRegistro('${registro.id}')"
+>
+🗑
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+}).join("");
+
+}
+
+
+/* =====================================================
+   ELIMINAR REGISTRO
+===================================================== */
+
+function eliminarRegistro(id){
+
+if(
+!confirm(
+"¿Deseas eliminar este registro de asistencia?"
+)
+){
+
+return;
+
+}
+
+
+datos.registros =
+datos.registros.filter(
+r=>r.id!==id
+);
+
+
+guardarDatos();
+
+}
+
+
+/* =====================================================
+   ESTADISTICA INDIVIDUAL
+===================================================== */
+
+function verEstadistica(id){
+
+const musico =
+datos.musicos.find(
+m=>m.id===id
+);
+
+
+if(!musico)return;
+
+
+const registros =
+datos.registros.filter(
+r=>r.musicoId===id
+);
+
+
+const total=registros.length;
+
+
+const asistencias =
+registros.filter(
+r=>r.estado==="asistio"
+).length;
+
+
+const tardanzas =
+registros.filter(
+r=>r.estado==="tarde"
+).length;
+
+
+const inasistencias =
+registros.filter(
+r=>r.estado==="inasistencia"
+).length;
+
+
+const porcentaje =
+total
+?
+Math.round(
+((asistencias+tardanzas)/total)*100
+)
+:
+0;
+
+
+const motivos={};
+
+
+registros
+.filter(r=>r.estado==="inasistencia")
+.forEach(r=>{
+
+const motivo =
+r.motivo || "Sin especificar";
+
+motivos[motivo] =
+(motivos[motivo] || 0)+1;
+
+});
+
+
+let listaMotivos="Ninguno";
+
+
+if(Object.keys(motivos).length){
+
+listaMotivos =
+Object.entries(motivos)
+.map(
+([motivo,cantidad])=>
+`${escapar(motivo)} (${cantidad})`
+)
+.join(", ");
+
+}
+
+
+document.getElementById("tituloEstadistica")
+.textContent=
+`📊 ${nombreCompleto(musico)}`;
+
+
+document.getElementById("contenidoEstadistica")
+.innerHTML=`
+
+<div class="summary-grid">
+
+<div class="summary">
+
+<strong>
+${total}
+</strong>
+
+<span>
+Registros
+</span>
+
+</div>
+
+
+<div class="summary">
+
+<strong>
+${asistencias}
+</strong>
+
+<span>
+Asistencias
+</span>
+
+</div>
+
+
+<div class="summary">
+
+<strong>
+${tardanzas}
+</strong>
+
+<span>
+Tardanzas
+</span>
+
+</div>
+
+
+<div class="summary">
+
+<strong>
+${inasistencias}
+</strong>
+
+<span>
+Inasistencias
+</span>
+
+</div>
+
+
+<div class="summary">
+
+<strong>
+${porcentaje}%
+</strong>
+
+<span>
+Asistencia
+</span>
+
+</div>
+
+
+<div class="summary">
+
+<strong>
+${musico.horarioEspecial ? "Sí":"No"}
+</strong>
+
+<span>
+Horario especial
+</span>
+
+</div>
+
+</div>
+
+
+<div class="progress">
+
+<div
+class="progress-bar"
+style="width:${porcentaje}%"
+></div>
+
+</div>
+
+
+<p>
+
+<strong>
+Motivos de inasistencia:
+</strong>
+
+${listaMotivos}
+
+</p>
+
+
+${musico.observaciones
+?
+`<p>
+<strong>Observaciones:</strong>
+${escapar(musico.observaciones)}
+</p>`
+:""}
+
+`;
+
+
+document.getElementById("modalEstadistica")
+.classList.remove("hidden");
+
+}
+
+
+function cerrarEstadistica(){
+
+document.getElementById("modalEstadistica")
+.classList.add("hidden");
+
+}
+
+
+/* =====================================================
+   REGLAS
+===================================================== */
+
+function cargarReglas(){
+
+document.getElementById("reglaDomingo")
+.value=datos.reglas.Domingo;
+
+
+document.getElementById("reglaJueves")
+.value=datos.reglas.Jueves;
+
+
+document.getElementById("reglaMiercoles")
+.value=
+datos.reglas["Miércoles"];
+
+
+document.getElementById("reglaAyuno")
+.value=datos.reglas.Ayuno;
+
+}
+
+
+function guardarReglas(){
+
+datos.reglas.Domingo=
+document.getElementById("reglaDomingo")
+.value;
+
+
+datos.reglas.Jueves=
+document.getElementById("reglaJueves")
+.value;
+
+
+datos.reglas["Miércoles"]=
+document.getElementById("reglaMiercoles")
+.value;
+
+
+datos.reglas.Ayuno=
+document.getElementById("reglaAyuno")
+.value;
+
+
+guardarDatos();
+
+
+alert("✅ Reglas guardadas correctamente.");
+
+}
+
+
+/* =====================================================
+   EXPORTAR EXCEL
+===================================================== */
+
+function exportarExcel(){
+
+if(typeof XLSX==="undefined"){
+
+alert(
+"No se pudo cargar la función de Excel. Necesitas conexión a Internet."
+);
+
+return;
+
+}
+
+
+/* HOJA DE ASISTENCIAS */
+
+const asistencias =
+datos.registros.map(registro=>{
+
+const musico =
+datos.musicos.find(
+m=>m.id===registro.musicoId
+) || {};
+
+
+let estado="";
+
+if(registro.estado==="asistio")
+estado="Asistió";
+
+if(registro.estado==="tarde")
+estado="Llegó tarde";
+
+if(registro.estado==="inasistencia")
+estado="No asistió";
+
+
+return {
+
+"Fecha":
+registro.fecha,
+
+"Nombre":
+musico.nombre || "",
+
+"Apellido":
+musico.apellido || "",
+
+"Función":
+musico.funcion || "",
+
+"Actividad":
+registro.actividad,
+
+"Estado":
+estado,
+
+"Hora llegada":
+registro.hora || "",
+
+"Hora límite":
+registro.horaLimite || "",
+
+"Motivo inasistencia":
+registro.motivo || "",
+
+"Horario especial":
+musico.horarioEspecial
+?
+"Sí"
+:
+"No",
+
+"Hora especial":
+musico.horaEspecial || "",
+
+"Observaciones":
+musico.observaciones || ""
+
+};
+
+});
+
+
+/* HOJA MUSICOS */
+
+const musicos =
+datos.musicos.map(musico=>({
+
+"Nombre":
+musico.nombre,
+
+"Apellido":
+musico.apellido,
+
+"Función":
+musico.funcion,
+
+"Horario especial":
+musico.horarioEspecial
+?
+"Sí"
+:
+"No",
+
+"Hora especial":
+musico.horaEspecial || "",
+
+"Observaciones":
+musico.observaciones || ""
+
+}));
+
+
+/* HOJA REGLAS */
+
+const reglas=[{
+
+"Domingo":
+datos.reglas.Domingo,
+
+"Jueves":
+datos.reglas.Jueves,
+
+"Miércoles":
+datos.reglas["Miércoles"],
+
+"Ayuno":
+datos.reglas.Ayuno
+
+}];
+
+
+const libro =
+XLSX.utils.book_new();
+
+
+const hojaAsistencias =
+XLSX.utils.json_to_sheet(
+asistencias.length
+?
+asistencias
+:
+[{}]
+);
+
+
+const hojaMusicos =
+XLSX.utils.json_to_sheet(
+musicos.length
+?
+musicos
+:
+[{}]
+);
+
+
+const hojaReglas =
+XLSX.utils.json_to_sheet(
+reglas
+);
+
+
+XLSX.utils.book_append_sheet(
+libro,
+hojaAsistencias,
+"Asistencias"
+);
+
+
+XLSX.utils.book_append_sheet(
+libro,
+hojaMusicos,
+"Músicos"
+);
+
+
+XLSX.utils.book_append_sheet(
+libro,
+hojaReglas,
+"Reglas"
+);
+
+
+const fecha =
+new Date()
+.toISOString()
+.substring(0,10);
+
+
+XLSX.writeFile(
+libro,
+`Asistencia_Ministerio_Alabanza_${fecha}.xlsx`
+);
+
+}
+
+
+/* =====================================================
+   BORRAR TODO
+===================================================== */
+
+function borrarTodo(){
+
+const confirmar =
+confirm(
+"⚠️ ATENCIÓN\n\nEsto eliminará TODOS los músicos y TODAS las asistencias.\n\n¿Deseas continuar?"
+);
+
+
+if(!confirmar)return;
+
+
+localStorage.removeItem(STORAGE_KEY);
+
+
+datos =
+JSON.parse(
+JSON.stringify(datosIniciales)
+);
+
+
+actualizarTodo();
+
+
+alert("Todos los datos fueron eliminados.");
+
+}
+
+
+/* =====================================================
+   ACTUALIZAR TODO
+===================================================== */
+
+function actualizarTodo(){
+
+actualizarDashboard();
+
+renderMusicos();
+
+renderListaAsistencia();
+
+renderHistorial();
+
+cargarReglas();
+
+}
+
+
+/* =====================================================
+   MOSTRAR TAB POR ID
+===================================================== */
+
+function mostrarTabPorId(id){
+
+document.querySelectorAll(".tab-panel")
+.forEach(panel=>{
+panel.classList.remove("active");
+});
+
+
+document.querySelectorAll(".tab")
+.forEach(tab=>{
+tab.classList.remove("active");
+});
+
+
+document.getElementById(id)
+.classList.add("active");
+
+
+const botones =
+document.querySelectorAll(".tab");
+
+
+if(id==="musicos")
+botones[0].classList.add("active");
+
+if(id==="registrar")
+botones[1].classList.add("active");
+
+if(id==="historial")
+botones[2].classList.add("active");
+
+if(id==="reglas")
+botones[3].classList.add("active");
+
+}
+
+
+/* =====================================================
+   FECHA Y HORA INICIAL
+===================================================== */
+
+const ahora=new Date();
+
+document.getElementById("fechaAsistencia")
+.value=
+ahora.toISOString()
+.substring(0,10);
+
+
+document.getElementById("horaLlegada")
+.value=
+ahora.toTimeString()
+.substring(0,5);
+
+
+/* =====================================================
+   INICIAR APLICACION
+===================================================== */
+
+actualizarTodo();
+
+</script>
+
+</body>
+</html>
