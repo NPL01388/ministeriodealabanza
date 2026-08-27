@@ -223,6 +223,14 @@ img,svg,video,canvas{max-width:100%;height:auto}
  .chart-fullscreen-wrap.chart-fs .chart-zoom-area{min-width:650px}
 }
 </style>
+
+<style id="arrival-ranking-legend-style">
+.ranking-arrival-legend{
+  margin:8px 0;padding:9px 12px;border-radius:10px;
+  background:#f8fafc;border:1px solid #dbe3ec;color:#475569;
+  font-size:12px;line-height:1.45
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -900,5 +908,40 @@ if(window.lucide)lucide.createIcons();
  window.installChartZoom=installZoom;
 })();
 </script>
+
+<script id="arrival-score-decimal">
+/* Puntaje de llegada:
+   - 60 min antes = +5.00
+   - hora exacta = 0.00
+   - 60 min tarde = -5.00
+   - entre esos extremos, proporcional por minuto, con decimales.
+*/
+function arrivalTimeScore(arrival, scheduled){
+  if(!arrival || !scheduled) return 0;
+  const a = normalizeTime(arrival), s = normalizeTime(scheduled);
+  if(!a || !s) return 0;
+  const diff = minutesDiff(a, s);
+  if(diff === null || !Number.isFinite(diff)) return 0;
+  // minutesDiff: positivo cuando arrival es posterior a scheduled.
+  const score = -(diff * 5 / 60);
+  return Math.max(-5, Math.min(5, score));
+}
+function formatArrivalScore(n){
+  return (Math.round(n*100)/100).toFixed(2);
+}
+</script>
+
+
+<script id="ranking-arrival-decimal-integration">
+function calculateArrivalPointsForMusician(musicianId, records){
+  let total=0;
+  (records||[]).filter(r=>r.musicianId===musicianId && r.arrival).forEach(r=>{
+    const deadline = r.deadline || getDeadline(r.musicianId, r.activityId);
+    total += arrivalTimeScore(r.arrival, deadline);
+  });
+  return Math.round(total*100)/100;
+}
+</script>
+
 </body>
 </html>
