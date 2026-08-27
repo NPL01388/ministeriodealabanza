@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Igleico Hechos del Espíritu Santo — Ministerio Alabanza Ruah</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--text:#172033;--muted:#6b7280;--primary:#285bb5;--primary2:#3d73c7;--line:#e5e7eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--shadow:0 10px 30px #1b173008}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.app{min-height:100vh}.top{background:linear-gradient(135deg,#133478,#285bb5);color:#fff;padding:20px clamp(16px,4vw,42px);display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}.brand h1{font-size:clamp(20px,3vw,30px);margin:0}.brand p{margin:5px 0 0;opacity:.85}.clock{text-align:right;font-weight:700}.clock small{display:block;font-weight:500;opacity:.8}.layout{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 100px)}.side{background:#fff;border-right:1px solid var(--line);padding:18px;position:sticky;top:0;height:calc(100vh - 100px)}.nav{display:grid;gap:8px}.nav button{padding:12px 14px;border-radius:12px;background:transparent;text-align:left;color:var(--text)}.nav button.active,.nav button:hover{background:#e8f1ff;color:var(--primary);font-weight:700}.content{padding:24px;max-width:1500px;width:100%;margin:auto}.page{display:none}.page.active{display:block}.pagehead{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.pagehead h2{margin:0}.btn{padding:10px 14px;border-radius:10px;background:#eee;color:var(--text);font-weight:700}.btn.primary{background:var(--primary);color:#fff}.btn.ok{background:#e9f8ee;color:#08752b}.btn.danger{background:#feecec;color:#a31616}.btn.warn{background:#fff3df;color:#9a5a00}.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}.stat{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:16px;padding:18px;cursor:pointer}.stat .num{font-size:30px;font-weight:800;margin-top:8px}.stat small{color:var(--muted)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}.card h3{margin-top:0}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar>*{min-height:40px}.field{display:grid;gap:6px;margin-bottom:12px}.field label{font-weight:700;font-size:13px}.field input,.field select,.field textarea{width:100%;padding:10px 11px;border:1px solid #d6d9e1;border-radius:10px;background:#fff}.field textarea{min-height:85px;resize:vertical}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.full{grid-column:1/-1}.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:720px}.table th,.table td{padding:11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}.table th{font-size:12px;text-transform:uppercase;color:var(--muted)}.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#285bb5,#5b8ed1);color:#fff;font-weight:800;flex:0 0 42px;overflow:hidden}.avatar img,.bigavatar img{width:100%;height:100%;object-fit:cover}.person{display:flex;gap:10px;align-items:center}.badge{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.present{background:#e8f8ee;color:#0a7b30}.late{background:#fff2dd;color:#9a5a00}.absent{background:#fee9e9;color:#ae1818}.neutral{background:#edf0f5;color:#596273}.modal{position:fixed;inset:0;background:#0d102050;display:none;align-items:center;justify-content:center;padding:15px;z-index:20}.modal.open{display:flex}.modalbox{background:#fff;width:min(900px,100%);max-height:92vh;overflow:auto;border-radius:18px;padding:22px;box-shadow:0 30px 80px #0003}.modalhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.close{background:#f0f1f4;width:38px;height:38px;border-radius:50%;font-size:20px}.profile{display:grid;grid-template-columns:170px 1fr;gap:22px}.bigavatar{width:150px;height:150px;border-radius:28px;background:linear-gradient(135deg,#285bb5,#5b8ed1);display:grid;place-items:center;color:#fff;font-size:55px;font-weight:900;overflow:hidden}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini{background:#f7f8fb;border-radius:12px;padding:12px}.mini b{display:block;font-size:22px}.timeline{display:grid;gap:9px}.timeline .item{border-left:4px solid var(--primary);background:#fafaff;padding:10px 12px;border-radius:0 10px 10px 0}.empty{padding:28px;text-align:center;color:var(--muted)}.checkrow{display:flex;align-items:center;gap:8px;padding:8px 0}.checkrow input{width:18px;height:18px}.schedule{display:grid;grid-template-columns:1fr 1fr;gap:10px}.schedulebox{border:1px solid var(--line);border-radius:12px;padding:12px}.dangertext{color:var(--bad)}.scorelegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}.scoreitem{background:#f8f9fc;border:1px solid var(--line);border-radius:9px;padding:8px}.scoreitem b{display:block;margin-bottom:3px;font-size:12px}.scoreitem small{color:var(--muted);line-height:1.3;font-size:11px}.positive{color:var(--ok);font-weight:800}.negative{color:var(--bad);font-weight:800}.zero{color:var(--muted);font-weight:800}@media(max-width:900px){.scorelegend{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.scorelegend{grid-template-columns:1fr}}@media(max-width:1050px){.cards{grid-template-columns:repeat(3,1fr)}.layout{grid-template-columns:1fr}.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}.nav{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.content{padding:14px}.cards{grid-template-columns:repeat(2,1fr)}.grid2,.formgrid,.profile{grid-template-columns:1fr}.profile{justify-items:center}.kpis{grid-template-columns:repeat(2,1fr)}.nav{grid-template-columns:repeat(2,1fr)}.clock{text-align:left}.schedule{grid-template-columns:1fr}}@media(max-width:430px){.cards{grid-template-columns:1fr 1fr}.stat{padding:12px}.stat .num{font-size:25px}}
+.profile-chart{margin:10px 0 18px;border:1px solid var(--line);border-radius:14px;background:#fbfcff;padding:8px;overflow:hidden}.profile-chart svg{display:block;width:100%;height:auto}.chart-help{color:var(--muted);font-size:13px;margin-top:-8px;line-height:1.5}.chart-label{font-size:13px;fill:#172033}.chart-muted{font-size:11px;fill:#6b7280}@media(max-width:700px){.profile-chart{padding:4px}.chart-help{font-size:12px}}
+
+/* ===== RESPONSIVE 100% AUTOMATICO ===== */
+html{width:100%;max-width:100%;overflow-x:hidden;scroll-behavior:smooth}
+body{width:100%;max-width:100%;min-width:0;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%;height:auto}
+.top>*{min-width:0}.brand{min-width:0;flex:1 1 280px}.brand h1,.brand p{overflow-wrap:anywhere}.clock{flex:0 1 auto}
+.layout{width:100%;min-width:0}.side,.content{min-width:0}.content{overflow-x:hidden}
+.page,.card,.grid2,.formgrid,.profile,.cards{min-width:0;max-width:100%}
+.pagehead>div{min-width:0;max-width:100%}
+.pagehead h2{overflow-wrap:anywhere}
+.toolbar{width:100%;min-width:0}.toolbar>*{min-width:0;max-width:100%}.toolbar input,.toolbar select{flex:1 1 180px}
+.btn{min-height:40px;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.field input,.field select,.field textarea{min-width:0;max-width:100%}
+.tablewrap{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+.table{min-width:680px}.modal{width:100%;max-width:100%;padding:clamp(8px,2vw,15px)}
+.modalbox{width:min(900px,100%);max-width:100%;max-height:94vh;padding:clamp(14px,3vw,22px);overflow:auto}
+.profile{align-items:start}.bigavatar{max-width:150px;width:min(150px,100%)}
+.schedulebox{min-width:0}.scorelegend{width:100%;min-width:0}.scoreitem{min-width:0;overflow-wrap:anywhere}
+.profile-chart{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden}.profile-chart svg{min-width:0}
+
+@media (max-width:1050px){
+  .layout{display:block}
+  .side{position:static;width:100%;height:auto;padding:12px}
+  .nav{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px}
+  .nav button{min-height:42px;padding:10px 11px}
+  .content{padding:clamp(14px,3vw,24px)}
+  .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+
+@media (max-width:760px){
+  .top{padding:16px;gap:10px}
+  .brand{flex-basis:100%}
+  .clock{width:100%;text-align:left}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .grid2,.formgrid{grid-template-columns:1fr}
+  .full{grid-column:auto}
+  .profile{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .profile>div:last-child{width:100%;text-align:left}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .schedule{grid-template-columns:1fr}
+  .pagehead{align-items:stretch}
+  .pagehead .btn{width:100%}
+  .toolbar{gap:8px}
+  .toolbar>*{flex:1 1 100%;width:100%}
+  .scorelegend{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media (max-width:480px){
+  .top{padding:13px}
+  .brand h1{font-size:21px}
+  .brand p{font-size:13px}
+  .content{padding:10px}
+  .side{padding:8px}
+  .nav{grid-template-columns:1fr 1fr}
+  .nav button{font-size:13px;padding:9px 8px;min-height:44px}
+  .cards{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:11px;border-radius:12px}
+  .stat .num{font-size:23px}
+  .card{padding:13px;border-radius:13px}
+  .btn{width:100%;padding:10px 11px}
+  .toolbar .btn{width:100%}
+  .kpis{grid-template-columns:1fr 1fr;gap:7px}
+  .mini{padding:9px}
+  .mini b{font-size:19px}
+  .scorelegend{grid-template-columns:1fr 1fr;gap:5px}
+  .scoreitem{padding:6px;font-size:11px}
+  .scoreitem b{font-size:11px}
+  .scoreitem small{font-size:10px}
+  .modal{padding:6px}
+  .modalbox{padding:12px;border-radius:14px;max-height:96vh}
+  .modalhead h2{font-size:19px}
+  .close{width:34px;height:34px;flex:0 0 34px}
+}
+
+@media (max-width:340px){
+  .nav{grid-template-columns:1fr}
+  .cards{grid-template-columns:1fr}
+  .kpis{grid-template-columns:1fr}
+  .scorelegend{grid-template-columns:1fr}
+  .content{padding:8px}
+}
+
+</style>
+<style>
+.topactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topactions .btn{background:#ffffff22;color:#fff;border:1px solid #ffffff44}.topactions .power{background:#fff;color:#542fb4}.authbox{width:min(440px,100%)}.authbox .brandmark{text-align:center;font-size:42px;margin:8px}.authbox p{color:var(--muted)}.authbox .btn{width:100%;margin-top:6px}.mobilehint{display:none}.spinner{width:42px;height:42px;margin:20px auto;border:5px solid #dbe5ff;border-top-color:#133478;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.welcome{text-align:center;padding:18px 4px}.welcome h2{margin-bottom:6px}
+@media(max-width:700px){.top{padding:15px 14px;align-items:flex-start}.brand{width:100%}.brand h1{font-size:21px}.clock{width:100%;text-align:left;font-size:14px}.topactions{width:100%;display:grid;grid-template-columns:1fr 1fr}.topactions .btn{padding:11px 8px}.side{padding:10px}.nav{gap:6px}.nav button{min-height:48px;padding:10px;font-size:14px}.content{padding:12px}.pagehead{align-items:stretch}.pagehead .btn{width:100%}.toolbar{display:grid;grid-template-columns:1fr}.toolbar input,.toolbar select,.toolbar .btn{width:100%;min-width:0!important}.card{padding:14px;border-radius:13px}.modal{padding:8px}.modalbox{padding:16px;border-radius:15px;max-height:96vh}.table{min-width:620px}.table th,.table td{padding:9px;font-size:13px}.table td .btn{margin:2px 0}.bigavatar{width:120px;height:120px}.mobilehint{display:block;color:var(--muted);font-size:12px;margin:0 0 7px}.authbox{padding:20px}.authbox .field input{font-size:16px}.cards{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}.kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:390px){.cards{grid-template-columns:1fr}.stat:last-child{grid-column:auto}.nav{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}}
+</style>
+<script src="https://unpkg.com/lucide@latest"></script><style>.icon{width:1.05em;height:1.05em;stroke-width:2;vertical-align:-.18em;display:inline-block}.nav-link .icon,.btn .icon,.brandmark .icon{transition:transform .35s ease}.nav-link:hover .icon,.btn:hover .icon{transform:translateY(-2px) rotate(-4deg)}.nav-link.active .icon{animation:iconPulse 1.8s ease-in-out infinite}@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}.status-dot{display:inline-block;width:.65em;height:.65em;border-radius:50%;margin-right:.3em;vertical-align:middle}.status-dot.present{background:#22c55e}.status-dot.late{background:#f59e0b}.status-dot.absent{background:#ef4444}@media(max-width:600px){.icon{width:1em;height:1em}}</style></head>
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand"><h1>Igleico Hechos del Espíritu Santo</h1><p>Asistencia · Ministerio Alabanza Ruah</p></div>
+  <div class="topactions" id="leaderActions" hidden><button class="btn" onclick="openLeaderProfile()">Mi perfil</button><button class="btn" onclick="closeSession()">Cerrar sesión</button><button class="btn power" onclick="lockApp()">⏻ Salir</button></div>
+  <div class="clock" id="clock">--<small>--</small></div>
+</header>
+<div class="layout">
+<aside class="side">
+  <div class="nav">
+    <button class="active" data-page="dashboard"><i data-lucide="chart-column" class="icon"></i> Panel</button>
+    <button data-page="musicos"><i data-lucide="music-2" class="icon"></i> Músicos</button>
+    <button data-page="asistencia">✅ Asistencia</button>
+    <button data-page="actividades"><i data-lucide="calendar-days" class="icon"></i> Actividades</button>
+    <button data-page="responsabilidades"><i data-lucide="clipboard-list" class="icon"></i> Responsabilidades</button>
+    <button data-page="calificacion"><i data-lucide="trophy" class="icon"></i> Calificación</button>
+    <button data-page="cumpleanos"><i data-lucide="cake" class="icon"></i> Cumpleaños</button>
+    <button data-page="exportar"><i data-lucide="download" class="icon"></i> Excel / Respaldo</button>
+  </div>
+</aside>
+<main class="content">
+<section id="dashboard" class="page active">
+  <div class="pagehead"><div><h2>Panel general</h2><span id="dashDate"></span></div><button class="btn primary" onclick="openMusicianModal()">+ Crear músico</button></div>
+  <div class="cards">
+    <div class="stat" onclick="showFiltered('all')"><small><i data-lucide="music-2" class="icon"></i> Músicos</small><div class="num" id="sMusicos">0</div></div>
+    <div class="stat" onclick="showFiltered('present')"><small><span class="status-dot present"></span> Asistencias</small><div class="num" id="sPresent">0</div></div>
+    <div class="stat" onclick="showFiltered('late')"><small><span class="status-dot late"></span> Tardanzas</small><div class="num" id="sLate">0</div></div>
+    <div class="stat" onclick="showFiltered('absent')"><small><span class="status-dot absent"></span> Inasistencias</small><div class="num" id="sAbsent">0</div></div>
+    <div class="stat" onclick="showPage('cumpleanos')"><small><i data-lucide="cake" class="icon"></i> Próximos cumpleaños</small><div class="num" id="sBirth">0</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h3>Resumen por músico</h3><div id="dashMusicians"></div></div>
+    <div class="card"><h3>Próximos eventos y cumpleaños</h3><div id="dashEvents"></div></div>
+  </div>
+</section>
+
+<section id="musicos" class="page">
+  <div class="pagehead"><h2>Músicos</h2><button class="btn primary" onclick="openMusicianModal()">+ Crear músico</button></div>
+  <div class="toolbar"><input id="musicSearch" placeholder="Buscar por nombre, apellido o instrumento..." oninput="renderMusicians()" style="padding:10px;border:1px solid #d6d9e1;border-radius:10px;min-width:260px"></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Músico</th><th>Rol</th><th>Nacimiento / Edad</th><th>Horario especial</th><th>Estadística</th><th>Acciones</th></tr></thead><tbody id="musicianTable"></tbody></table></div>
+</section>
+
+<section id="asistencia" class="page">
+  <div class="pagehead"><h2>Control de asistencia</h2><button class="btn primary" onclick="openAttendanceModal()">+ Registrar</button></div>
+  <div class="toolbar">
+    <input type="date" id="histDate" onchange="renderAttendance()">
+    <select id="histActivity" onchange="renderAttendance()"><option value="">Todas las actividades</option></select>
+    <select id="histStatus" onchange="renderAttendance()"><option value="">Todos los estados</option><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select>
+    <input id="histSearch" placeholder="Buscar músico..." oninput="renderAttendance()" style="padding:10px;border:1px solid #d6d9e1;border-radius:10px">
+  </div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Fecha</th><th>Actividad</th><th>Músico</th><th>Hora llegada</th><th>Estado</th><th>Justificación</th><th></th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
+</section>
+
+<section id="actividades" class="page">
+  <div class="pagehead"><h2>Actividades y horarios</h2><button class="btn primary" onclick="openActivityModal()">+ Crear actividad</button></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Actividad</th><th>Día</th><th>Hora límite</th><th>Tipo</th><th>Acciones</th></tr></thead><tbody id="activityTable"></tbody></table></div>
+</section>
+
+<section id="responsabilidades" class="page">
+  <div class="pagehead"><h2>Responsabilidades</h2><button class="btn primary" onclick="openResponsibilityModal()">+ Asignar</button></div>
+  <div class="toolbar"><select id="respMusician" onchange="renderResponsibilities()"><option value="">Todos los músicos</option></select><select id="respStatus" onchange="renderResponsibilities()"><option value="">Todas</option><option value="done">Cumplidas</option><option value="pending">No cumplidas</option></select></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Fecha</th><th>Responsabilidad</th><th>Músico</th><th>Actividad</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="respTable"></tbody></table></div>
+</section>
+
+<section id="cumpleanos" class="page">
+  <div class="pagehead"><h2><i data-lucide="cake" class="icon"></i> Cumpleaños</h2></div>
+  <div class="card"><div id="birthdayList"></div></div>
+</section>
+
+<section id="calificacion" class="page">
+  <div class="pagehead"><div><h2><i data-lucide="trophy" class="icon"></i> Ranking de calificación</h2><span>El ranking se actualiza automáticamente. Puedes ordenarlo por puntos o por porcentaje.</span></div></div>
+  <div class="card">
+    <h3><i data-lucide="book-open" class="icon"></i> Leyenda de puntuación</h3>
+    <div class="scorelegend">
+      <div class="scoreitem"><b><i data-lucide="music-2" class="icon"></i> Asistencia</b><small><span class="positive">+10 pts</span> por asistencia. Una <b>inasistencia justificada</b> cuenta como asistencia para el porcentaje, pero recibe <span class="negative">-1 punto</span>: queda en <span class="positive">+9 pts</span>.</small></div>
+      <div class="scoreitem"><b>⏱️ Hora de llegada</b><small><span class="positive">+3</span> si llega 3 o más minutos temprano · <span class="positive">+2</span> por 2 min temprano · <span class="positive">+1</span> por 1 min temprano · <span class="zero">0</span> exactamente puntual · <span class="negative">-1/-2/-3/-4</span> por 1/2/3/4+ min tarde.</small></div>
+      <div class="scoreitem"><b><span class="status-dot late"></span> Tardanza</b><small>Tardanza sin justificar: <span class="negative">-4 pts</span> de base, más el puntaje negativo de llegada. Tardanza justificada: <span class="positive">+7 pts</span> de base, más el ajuste de llegada.</small></div>
+      <div class="scoreitem"><b>❌ Inasistencia</b><small>Sin justificar: <span class="negative">-10 pts</span>. Justificada: cuenta como asistencia en el porcentaje y queda en <span class="positive">+9 pts</span>.</small></div>
+      <div class="scoreitem"><b><i data-lucide="clipboard-list" class="icon"></i> Responsabilidad</b><small>Cumplida: <span class="positive">+12 pts</span> · No cumplida: <span class="negative">-8 pts</span>.</small></div>
+      <div class="scoreitem"><b><i data-lucide="trophy" class="icon"></i> Total del músico</b><small>La columna <b>Puntos</b> suma asistencia + llegada + tardanzas/inasistencias + responsabilidades. El <b>porcentaje</b> mide cumplimiento.</small></div>
+    </div>
+  </div>
+  <div class="toolbar"><select id="rankingOrder" onchange="renderRanking()"><option value="points">Ordenar por puntos</option><option value="grade">Ordenar por porcentaje</option><option value="none">Sin orden seleccionado</option></select></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Puesto</th><th>Músico</th><th>Asistencia</th><th>Llegadas</th><th>Responsabilidades</th><th>Puntos</th><th>Calificación</th></tr></thead><tbody id="rankingTable"></tbody></table></div>
+</section>
+
+<section id="exportar" class="page">
+  <div class="pagehead"><h2>Excel y respaldo</h2></div>
+  <div class="grid2">
+    <div class="card"><h3>Exportar información</h3><p>Descarga un archivo Excel con músicos, asistencias, actividades, responsabilidades y horarios especiales.</p><button class="btn primary" onclick="exportExcel()"><i data-lucide="download" class="icon"></i> Descargar Excel</button></div>
+    <div class="card"><h3>Transferir datos entre dispositivos</h3><p>Descarga el Excel y luego cárgalo en otro celular o computador para recuperar todos los datos automáticamente.</p><button class="btn primary" onclick="exportExcel()"><i data-lucide="download" class="icon"></i> Descargar Excel con datos</button> <button class="btn" onclick="document.getElementById('importExcelFile').click()"><i data-lucide="upload" class="icon"></i> Cargar Excel</button><input id="importExcelFile" type="file" accept=".xlsx,.xls" hidden onchange="importExcel(event)"><small style="display:block;margin-top:8px;color:var(--muted)">El Excel de transferencia incluye músicos, asistencias, justificaciones, responsabilidades, actividades, horarios especiales y todos los datos necesarios para restaurar el sistema.</small></div>
+  </div>
+</section>
+</main></div></div>
+
+<div class="modal" id="modal"><div class="modalbox" id="modalBox"></div></div>
+
+<script>
+const KEY='ruah_assistance_v1';
+const days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const defaultActivities=[
+ {id:'a1',name:'Ayuno',day:0,time:'08:00',type:'Ayuno',custom:false},
+ {id:'a2',name:'Servicio Domingo',day:0,time:'09:35',type:'Servicio',custom:false},
+ {id:'a3',name:'Ensayo',day:3,time:'18:30',type:'Ensayo',custom:false},
+ {id:'a4',name:'Servicio Jueves',day:4,time:'18:35',type:'Servicio',custom:false}
+];
+let db=JSON.parse(localStorage.getItem(KEY)||'null')||{musicians:[],activities:defaultActivities,attendance:[],responsibilities:[],archivedActivities:[]};
+db.archivedActivities=db.archivedActivities||[];
+function getActivity(id){return db.activities.find(a=>a.id===id)||db.archivedActivities.find(a=>a.id===id)||null}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function uid(p='id'){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function today(){return new Date().toISOString().slice(0,10)}
+function ageExact(birth){
+ if(!birth)return '';
+ const b=new Date(birth+'T00:00:00'),n=new Date();
+ let y=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth(),d=n.getDate()-b.getDate();
+ if(d<0){m--;d+=new Date(n.getFullYear(),n.getMonth(),0).getDate()}
+ if(m<0){y--;m+=12} return `${y} años, ${m} meses y ${d} días`;
+}
+function ageYears(birth){if(!birth)return 0;const b=new Date(birth+'T00:00:00'),n=new Date();let y=n.getFullYear()-b.getFullYear();if(new Date(n.getFullYear(),b.getMonth(),b.getDate())>n)y--;return y}
+function initials(m){return ((m.first||'')[0]+(m.last||'')[0]).toUpperCase()}
+function avatar(m,big=false){return m.photo?`<img src="${esc(m.photo)}" alt="Foto de ${esc(m.first)} ${esc(m.last)}">`:initials(m)}
+function fmtDate(d){if(!d)return '';return new Date(d+'T00:00:00').toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function showPage(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));renderAll()}
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+function tick(){const n=new Date();document.getElementById('clock').innerHTML=n.toLocaleTimeString('es-CO')+`<small>${n.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</small>`;document.getElementById('dashDate').textContent=n.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});renderBirthdays()} setInterval(tick,1000);tick();
+
+function isJustified(x){return !!((x.reason||'').trim()||(x.notes||'').trim())}
+function isJustifiedLate(x){return x.status==='late'&&isJustified(x)}
+function isJustifiedAbsent(x){return x.status==='absent'&&isJustified(x)}
+function statusBadge(x){const s=typeof x==='string'?x:x.status,justified=typeof x==='object'&&isJustified(x);return `<span class="badge ${justified?'present':s}">${s==='present'?'Asistencia':s==='late'?(justified?'Tardanza justificada':'Tardanza'):(justified?'Inasistencia justificada':'Inasistencia')}</span>`}
+function justificationText(x){
+ const custom=(x.notes||'').trim();
+ if(x.reason==='Otro')return custom||'Otro';
+ return [x.reason,custom].filter(Boolean).join(': ')||'—';
+}
+function counts(mId){const a=db.attendance.filter(x=>x.musicianId===mId);const justifiedLate=a.filter(isJustifiedLate).length,justifiedAbsent=a.filter(isJustifiedAbsent).length,late=a.filter(x=>x.status==='late'&&!isJustifiedLate(x)).length,absent=a.filter(x=>x.status==='absent'&&!isJustifiedAbsent(x)).length;return {present:a.filter(x=>x.status==='present').length,late,justifiedLate,absent,justifiedAbsent}}
+function minutesDiff(arrival,deadline){if(!arrival||!deadline)return null;const [ah,am]=arrival.split(':').map(Number),[dh,dm]=deadline.split(':').map(Number);return (ah*60+am)-(dh*60+dm)}
+function arrivalPoints(x){
+ if(!x.arrival||!x.deadline)return 0;
+ const d=minutesDiff(x.arrival,x.deadline);
+ if(d<=-3)return 3;
+ if(d===-2)return 2;
+ if(d===-1)return 1;
+ if(d===0)return 0;
+ if(d===1)return -1;
+ if(d===2)return -2;
+ if(d===3)return -3;
+ return -4;
+}
+function arrivalLabel(x){
+ if(!x.arrival||!x.deadline)return 'Sin hora';
+ const d=minutesDiff(x.arrival,x.deadline);
+ if(d<0)return `${Math.abs(d)} min temprano`;
+ if(d===0)return 'Puntual';
+ return `${d} min tarde`;
+}
+function performance(mId){
+ const attendance=db.attendance.filter(x=>x.musicianId===mId),responsibilities=db.responsibilities.filter(x=>x.musicianId===mId);
+ const present=attendance.filter(x=>x.status==='present').length;
+ const justifiedLate=attendance.filter(x=>isJustifiedLate(x)).length;
+ const late=attendance.filter(x=>x.status==='late'&&!isJustifiedLate(x)).length;
+ const absent=attendance.filter(x=>x.status==='absent'&&!isJustifiedAbsent(x)).length;
+ const justifiedAbsent=attendance.filter(isJustifiedAbsent).length;
+ const attendanceOk=present+justifiedLate+justifiedAbsent;
+ const responsibilitiesOk=responsibilities.filter(x=>x.done).length;
+ const total=attendance.length+responsibilities.length;
+ const basePoints=present*10+justifiedLate*7+justifiedAbsent*9-late*4-absent*10;
+ const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
+ const responsibilityPoints=responsibilitiesOk*12-(responsibilities.length-responsibilitiesOk)*8;
+ const points=basePoints+arrival+responsibilityPoints;
+ return {attendance,responsibilities,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk,total,basePoints,arrival,responsibilityPoints,points,grade:total?Math.round((attendanceOk+responsibilitiesOk)/total*100):0};
+}
+function score(mId){return performance(mId).grade}
+function birthdayDays(m){if(!m.birth)return 9999;const n=new Date(),b=new Date(m.birth+'T00:00:00');let d=new Date(n.getFullYear(),b.getMonth(),b.getDate());if(d<new Date(n.getFullYear(),n.getMonth(),n.getDate()))d.setFullYear(n.getFullYear()+1);return Math.ceil((d-new Date(n.getFullYear(),n.getMonth(),n.getDate()))/86400000)}
+function renderDashboard(){
+ document.getElementById('sMusicos').textContent=db.musicians.length;
+ document.getElementById('sPresent').textContent=db.attendance.filter(x=>x.status==='present').length;
+ document.getElementById('sLate').textContent=db.attendance.filter(x=>x.status==='late').length;
+ document.getElementById('sAbsent').textContent=db.attendance.filter(x=>x.status==='absent').length;
+ document.getElementById('sBirth').textContent=db.musicians.filter(m=>birthdayDays(m)<=30).length;
+ const dm=document.getElementById('dashMusicians');
+ dm.innerHTML=db.musicians.length?db.musicians.slice(0,12).map(m=>{let c=counts(m.id);return `<div class="person" style="padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="openProfile('${m.id}')"><div class="avatar">${avatar(m)}</div><div style="flex:1"><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div><span class="badge present">${c.present}</span><span class="badge late">${c.late}</span><span class="badge absent">${c.absent}</span></div>`}).join(''):'<div class="empty">Aún no hay músicos.</div>';
+ const upcoming=[...db.musicians].sort((a,b)=>birthdayDays(a)-birthdayDays(b)).filter(m=>birthdayDays(m)<=60).slice(0,8);
+ document.getElementById('dashEvents').innerHTML=upcoming.length?upcoming.map(m=>`<div class="item" style="padding:10px;border-bottom:1px solid var(--line)"><b><i data-lucide="cake" class="icon"></i> ${esc(m.first)} ${esc(m.last)}</b><br><small>En ${birthdayDays(m)} día(s) · ${fmtDate(m.birth)} · cumplirá ${ageYears(m.birth)+1}</small></div>`).join(''):'<div class="empty">No hay cumpleaños próximos en 60 días.</div>';
+}
+function renderMusicians(){
+ const q=(document.getElementById('musicSearch')?.value||'').toLowerCase();
+ const arr=db.musicians.filter(m=>(m.first+' '+m.last+' '+(m.role||'')).toLowerCase().includes(q));
+ document.getElementById('musicianTable').innerHTML=arr.length?arr.map(m=>{let c=counts(m.id);return `<tr><td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.phone||'')}</small></div></div></td><td>${esc(m.role||'—')}</td><td>${fmtDate(m.birth)}<br><b>${ageExact(m.birth)}</b></td><td>${Object.values(m.special||{}).some(x=>x.enabled)?'⏱️ Configurado':'—'}</td><td><span class="status-dot present"></span> ${c.present} · <span class="status-dot late"></span> ${c.late} · <span class="status-dot absent"></span> ${c.absent}</td><td><button class="btn" onclick="openProfile('${m.id}')">Ver</button> <button class="btn" onclick="openMusicianModal('${m.id}')">Editar</button> <button class="btn danger" onclick="deleteMusician('${m.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay músicos.</td></tr>';
+}
+function populateSelects(){
+ const opts=db.musicians.map(m=>`<option value="${m.id}">${esc(m.first)} ${esc(m.last)}</option>`).join('');
+ ['respMusician'].forEach(id=>{const el=document.getElementById(id);if(el){const v=el.value;el.innerHTML='<option value="">Todos los músicos</option>'+opts;el.value=v}});
+ const ao=document.getElementById('histActivity');if(ao){const v=ao.value;ao.innerHTML='<option value="">Todas las actividades</option>'+db.activities.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');ao.value=v}
+}
+function renderAttendance(){
+ const date=document.getElementById('histDate').value,status=document.getElementById('histStatus').value,act=document.getElementById('histActivity').value,q=(document.getElementById('histSearch').value||'').toLowerCase();
+ let arr=db.attendance.filter(x=>(!date||x.date===date)&&(!status||x.status===status)&&(!act||x.activityId===act));
+ arr=arr.filter(x=>{let m=db.musicians.find(z=>z.id===x.musicianId);return m&&(m.first+' '+m.last).toLowerCase().includes(q)});
+ document.getElementById('attendanceTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);return `<tr><td>${fmtDate(x.date)}</td><td>${esc(a?.name||'—')}</td><td><b>${esc(m?.first+' '+m?.last||'Eliminado')}</b></td><td>${esc(x.arrival||'—')}</td><td>${statusBadge(x)}</td><td>${esc(justificationText(x))}</td><td><button class="btn danger" onclick="deleteAttendance('${x.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No hay registros con estos filtros.</td></tr>';
+}
+function renderActivities(){document.getElementById('activityTable').innerHTML=db.activities.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${days[a.day]}</td><td>${a.time}</td><td>${esc(a.type||'Personalizada')}</td><td><button class="btn" onclick="openActivityModal('${a.id}')">Editar</button> ${a.custom?`<button class="btn danger" onclick="deleteActivity('${a.id}')">Eliminar</button>`:''}</td></tr>`).join('')}
+function renderResponsibilities(){
+ const mid=document.getElementById('respMusician').value,st=document.getElementById('respStatus').value;
+ let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
+ document.getElementById('respTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.title)}</b></td><td>${esc(m?.first+' '+m?.last||'—')}</td><td>${esc(a?.name||'—')}</td><td>${r.done?'<span class="badge present">Cumplida</span>':'<span class="badge absent">No cumplida</span>'}</td><td><button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay responsabilidades.</td></tr>';
+}
+function renderBirthdays(){
+ const arr=[...db.musicians].filter(m=>m.birth).sort((a,b)=>birthdayDays(a)-birthdayDays(b));
+ const el=document.getElementById('birthdayList');if(!el)return;
+ el.innerHTML=arr.length?arr.map(m=>`<div class="person" style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="avatar">${avatar(m)}</div><div style="flex:1"><b>${esc(m.first)} ${esc(m.last)}</b><div style="color:var(--muted)"><i data-lucide="cake" class="icon"></i> ${fmtDate(m.birth)} · ${ageYears(m.birth)+1} años · ${birthdayDays(m)===0?'¡Hoy!':'en '+birthdayDays(m)+' día(s)'}</div></div></div>`).join(''):'<div class="empty">Registra la fecha de nacimiento de tus músicos.</div>';
+}
+function renderRanking(){
+ const order=document.getElementById('rankingOrder')?.value||'points',arr=[...db.musicians];
+ if(order!=='none')arr.sort((a,b)=>{const pa=performance(a.id),pb=performance(b.id);return order==='grade'?pb.grade-pa.grade||pb.points-pa.points||pb.total-pa.total:pb.points-pa.points||pb.grade-pa.grade||pb.total-pa.total||(a.first+' '+a.last).localeCompare(b.first+' '+b.last)});
+ document.getElementById('rankingTable').innerHTML=arr.length?arr.map((m,i)=>{
+   const p=performance(m.id),c=counts(m.id),g=p.grade;
+   const llegadaClass=p.arrival>0?'positive':p.arrival<0?'negative':'zero';
+   return `<tr>
+    <td><b>${order==='none'?'—':'#'+(i+1)}</b></td>
+    <td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div></div></td>
+    <td><span class="status-dot present"></span> ${c.present} puntuales<br><span class="status-dot late"></span> ${c.late} tardanzas · <span class="status-dot late"></span> ${c.justifiedLate} tard. justif.<br><span class="status-dot absent"></span> ${c.absent} inasist. · <span class="status-dot present"></span> ${c.justifiedAbsent} inasist. justif.</td>
+    <td><b class="${llegadaClass}">${p.arrival>0?'+':''}${p.arrival} pts</b><br><small>puntaje acumulado por hora</small></td>
+    <td>${p.responsibilitiesOk}/${p.responsibilities.length} cumplidas</td>
+    <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${p.points}</b><br><small>Base ${p.basePoints} · Llegada ${p.arrival} · Resp. ${p.responsibilityPoints}</small></td>
+    <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span></td>
+   </tr>`
+ }).join(''):'<tr><td colspan="7" class="empty">Aún no hay músicos para calificar.</td></tr>'
+}
+function renderAll(){populateSelects();renderDashboard();renderMusicians();renderAttendance();renderActivities();renderResponsibilities();renderBirthdays();renderRanking();if(window.lucide)lucide.createIcons()}
+function modal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!document.querySelector('.authbox'))closeModal()});
+
+function openMusicianModal(id){
+ const m=db.musicians.find(x=>x.id===id)||{first:'',last:'',birth:'',role:'',phone:'',photo:'',special:{}};
+ window._pendingPhoto=m.photo||'';
+ const sp=m.special||{};
+ const specialRows=db.activities.map(a=>{let s=sp[a.id]||{};return `<div class="schedulebox"><b>${esc(a.name)} (${days[a.day]})</b><div class="checkrow"><input type="checkbox" id="sp_${a.id}" ${s.enabled?'checked':''}> <label for="sp_${a.id}">Tiene horario especial</label></div><label>Puede llegar hasta</label><input type="time" id="time_${a.id}" value="${s.time||a.time}"></div>`}).join('');
+ modal(`<div class="modalhead"><h2>${id?'Editar':'Crear'} músico</h2><button class="close" onclick="closeModal()">×</button></div>
+ <div class="formgrid"><div class="field"><label>Nombre *</label><input id="mf" value="${esc(m.first)}"></div><div class="field"><label>Apellido *</label><input id="ml" value="${esc(m.last)}"></div>
+ <div class="field"><label>Fecha de nacimiento *</label><input type="date" id="mb" value="${m.birth}"><small id="mage">${ageExact(m.birth)}</small></div>
+ <div class="field"><label>Rol / instrumento</label><select id="mr">${['Baterista','Corista','Líder de alabanza','Pianista','Guitarrista','Bajista','Tecladista','Otro'].map(r=>`<option ${m.role===r?'selected':''}>${r}</option>`).join('')}</select></div>
+ <div class="field"><label>Teléfono</label><input id="mp" value="${esc(m.phone||'')}"></div>
+ <div class="field"><label>Foto de perfil</label><input type="file" id="mphoto" accept="image/png,image/jpeg,image/webp" onchange="loadProfilePhoto(event)"><small>PNG, JPG o WebP. Máximo 5 MB; se optimiza al guardar.</small><button type="button" class="btn danger" onclick="removeProfilePhoto()">Quitar foto de perfil</button></div>
+ <div class="field full"><label>Notas</label><textarea id="mn">${esc(m.notes||'')}</textarea></div>
+ <div class="full"><h3>⏱️ Horarios especiales de ingreso</h3><p style="color:var(--muted)">Solo activa los días en que, por trabajo u otra causa, autorizas una hora de llegada diferente.</p><div class="schedule">${specialRows}</div></div>
+ <div class="full"><button class="btn primary" onclick="saveMusician('${id||''}')">${id?'Guardar cambios':'Crear músico'}</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+ document.getElementById('mb').oninput=e=>document.getElementById('mage').textContent=ageExact(e.target.value);
+}
+function saveMusician(id){
+ const first=document.getElementById('mf').value.trim(),last=document.getElementById('ml').value.trim(),birth=document.getElementById('mb').value;
+ if(!first||!last||!birth)return alert('Nombre, apellido y fecha de nacimiento son obligatorios.');
+ const special={};db.activities.forEach(a=>{const en=document.getElementById('sp_'+a.id)?.checked,tm=document.getElementById('time_'+a.id)?.value;if(en)special[a.id]={enabled:true,time:tm||a.time}});
+ const data={first,last,birth,role:document.getElementById('mr').value,phone:document.getElementById('mp').value,notes:document.getElementById('mn').value,photo:window._pendingPhoto||'',special};
+ if(id)Object.assign(db.musicians.find(m=>m.id===id),data);else db.musicians.push({id:uid('m'),...data});
+ closeModal();save();
+}
+function loadProfilePhoto(e){const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/'))return alert('Selecciona una imagen válida.');if(file.size>5*1024*1024)return alert('La foto debe pesar máximo 5 MB.');const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const max=500,scale=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);window._pendingPhoto=c.toDataURL('image/jpeg',.78);alert('Foto lista. Guarda los cambios del músico para conservarla.');};img.src=r.result;};r.readAsDataURL(file)}
+function removeProfilePhoto(){window._pendingPhoto='';const input=document.getElementById('mphoto');if(input)input.value='';alert('La foto se quitará cuando guardes los cambios del músico.');}
+function deleteMusician(id){const m=db.musicians.find(x=>x.id===id);if(!m||!confirm(`¿Eliminar a ${m.first} ${m.last}? También se eliminarán sus registros asociados.`))return;db.musicians=db.musicians.filter(x=>x.id!==id);db.attendance=db.attendance.filter(x=>x.musicianId!==id);db.responsibilities=db.responsibilities.filter(x=>x.musicianId!==id);save()}
+function profileStatsGraphic(mId){
+ const el=document.getElementById('profileChart');if(!el)return;
+ const p=performance(mId),resp=p.responsibilities;
+ const metrics=[
+  {label:'Asistencias puntuales',value:p.present,color:'#16a34a'},
+  {label:'Tardanzas sin justificar',value:p.late,color:'#d97706'},
+  {label:'Tardanzas justificadas',value:p.justifiedLate,color:'#eab308'},
+  {label:'Inasistencias sin justificar',value:p.absent,color:'#dc2626'},
+  {label:'Inasistencias justificadas',value:p.justifiedAbsent,color:'#7c3aed'},
+  {label:'Responsabilidades cumplidas',value:p.responsibilitiesOk,color:'#285bb5'},
+  {label:'Responsabilidades no cumplidas',value:Math.max(0,resp.length-p.responsibilitiesOk),color:'#5b8ed1'}
+ ]
+ const max=Math.max(1,...metrics.map(x=>x.value));
+ const W=1000,H=575,left=300,barW=530,barH=28,top=42,gap=38;
+ const bars=metrics.map((m,i)=>{
+   const y=top+i*gap,w=Math.round((m.value/max)*barW);
+   return `<circle cx="24" cy="${y+16}" r="6" fill="${m.color}"/><text x="40" y="${y+22}" class="chart-label">${esc(m.label)}</text><rect x="${left}" y="${y}" width="${barW}" height="${barH}" rx="9" fill="#eef0f6"/><rect x="${left}" y="${y}" width="${w}" height="${barH}" rx="9" fill="${m.color}"/><text x="${Math.min(left+barW-2,left+w+10)}" y="${y+22}" class="chart-label" font-weight="700">${m.value}</text>`;
+ }).join('');
+ const hist=[...p.attendance].filter(x=>x.arrival&&x.deadline).sort((a,b)=>((a.date||'')+' '+(a.arrival||'')).localeCompare((b.date||'')+' '+(b.arrival||'')));
+ const x0=70,x1=930,y0=465;
+ const arrivalVals=hist.map(x=>minutesDiff(x.arrival,x.deadline)).filter(x=>x!==null);
+ const amin=arrivalVals.length?Math.min(-5,...arrivalVals):-5,amax=arrivalVals.length?Math.max(5,...arrivalVals):5;
+ const scaleY=d=>y0-((d-amin)/(amax-amin))*110;
+ const zeroY=scaleY(0);
+ const points=hist.map((x,i)=>{const xx=hist.length===1?500:x0+(i*(x1-x0)/(hist.length-1));const d=minutesDiff(x.arrival,x.deadline);return {x,xx,yy:scaleY(d),d}});
+ const poly=points.length>1?`<polyline points="${points.map(o=>`${o.xx},${o.yy}`).join(' ')}" fill="none" stroke="#285bb5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`:'';
+ const pts=points.map(o=>`<circle cx="${o.xx}" cy="${o.yy}" r="6" fill="${o.d<=0?'#16a34a':'#dc2626'}"><title>${esc(fmtDate(o.x.date))} · Llegó ${esc(o.x.arrival)} · ${esc(arrivalLabel(o.x))}</title></circle><text x="${o.xx}" y="${o.yy-11}" text-anchor="middle" class="chart-muted">${esc(o.x.arrival)}</text><text x="${o.xx}" y="${y0+28}" text-anchor="middle" class="chart-muted">${esc((o.x.date||'').slice(5))}</text>`).join('');
+ const noData=hist.length?`<line x1="${x0}" y1="${zeroY}" x2="${x1}" y2="${zeroY}" stroke="#9ca3af" stroke-dasharray="6 5"/><text x="${x1}" y="${zeroY-7}" text-anchor="end" class="chart-muted">Puntual</text>${poly}${pts}`:`<text x="500" y="395" text-anchor="middle" class="chart-muted">Aún no hay horas de llegada registradas.</text>`;
+ const justified=p.justifiedAbsent+p.justifiedLate;
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfica estadística del músico"><text x="18" y="24" class="chart-label" font-weight="800">Resumen de registros</text>${bars}<line x1="18" y1="326" x2="982" y2="326" stroke="#e5e7eb"/><text x="18" y="353" class="chart-label" font-weight="800">Hora real de llegada por registro</text><text x="18" y="372" class="chart-muted">Verde = puntual/temprano · Rojo = tarde · Etiqueta = hora exacta</text>${noData}<text x="18" y="555" class="chart-muted">Justificados: ${justified} · Puntos por llegada acumulados: ${p.arrival>0?'+':''}${p.arrival}</text></svg>`;
+}
+function openProfile(id){
+ const m=db.musicians.find(x=>x.id===id);if(!m)return;const c=counts(id),p=performance(id),resp=p.responsibilities,grade=p.grade,total=p.total;
+ const hist=db.attendance.filter(x=>x.musicianId===id).sort((a,b)=>b.date.localeCompare(a.date));
+ modal(`<div class="modalhead"><h2>Perfil individual</h2><button class="close" onclick="closeModal()">×</button></div>
+ <div class="profile"><div><div class="bigavatar">${avatar(m,true)}</div><div style="text-align:center;margin-top:8px"><b>${esc(m.first)} ${esc(m.last)}</b><br><span class="badge neutral">${esc(m.role||'Sin rol')}</span></div></div>
+ <div><h2>${esc(m.first)} ${esc(m.last)}</h2><p><b>Fecha de nacimiento:</b> ${fmtDate(m.birth)}<br><b>Edad:</b> ${ageExact(m.birth)}<br><b>Teléfono:</b> ${esc(m.phone||'—')}</p>${m.notes?`<p style="white-space:pre-wrap"><b>Notas:</b><br>${esc(m.notes)}</p>`:''}
+ <div class="kpis"><div class="mini"><span class="status-dot present"></span><b>${c.present}</b>Asistencias</div><div class="mini"><span class="status-dot late"></span><b>${c.late}</b>Tardanzas</div><div class="mini"><span class="status-dot absent"></span><b>${c.absent}</b>Inasistencias</div><div class="mini">⭐<b>${grade}%</b>Calificación</div></div></div></div>
+ <h3><i data-lucide="chart-line" class="icon"></i> Gráfica estadística del músico</h3><div id="profileChart" class="profile-chart"></div>
+ <p class="chart-help">La gráfica reúne en una sola vista el resumen de asistencia y responsabilidades, además del historial de hora real de llegada. En la línea inferior se muestra la hora exacta registrada y su diferencia frente a la hora límite.</p>
+ <h3>Estadística de cumplimiento</h3><div class="tablewrap"><table class="table"><thead><tr><th>Indicador</th><th>Registros</th><th>Resultado</th></tr></thead><tbody><tr><td>Asistencias puntuales</td><td>${c.present}</td><td>Cuenta como cumplimiento</td></tr><tr><td>Tardanzas sin justificar</td><td>${c.late}</td><td>Cuenta como cumplimiento · afecta puntos</td></tr><tr><td>Tardanzas justificadas</td><td>${c.justifiedLate}</td><td>Cuenta como cumplimiento · refleja puntos</td></tr><tr><td>Inasistencias sin justificar</td><td>${c.absent}</td><td>No cuenta como cumplimiento · resta puntos</td></tr><tr><td>Inasistencias justificadas</td><td>${c.justifiedAbsent}</td><td><b>Cuenta como cumplimiento</b> · refleja puntos</td></tr><tr><td><b>Cumplimiento de responsabilidades</b></td><td><b>${p.responsibilitiesOk}/${resp.length}</b></td><td>${p.responsibilitiesOk} cumplida(s) · ${resp.length-p.responsibilitiesOk} no cumplida(s)</td></tr><tr><td><b>Calificación final</b></td><td><b>${total} registros evaluados</b></td><td><span class="badge ${grade>=70?'present':grade>=40?'late':'absent'}">${grade}%</span></td></tr></tbody></table></div>
+ <hr><div class="toolbar"><button class="btn primary" onclick="closeModal();openAttendanceModal('', '${id}')">+ Registrar asistencia</button><button class="btn" onclick="closeModal();openResponsibilityModal('', '${id}')">+ Responsabilidad</button><button class="btn" onclick="openMusicianModal('${id}')">Editar perfil</button></div>
+ <h3>Historial individual</h3><div class="toolbar"><select id="pfStatus" onchange="filterProfileHist('${id}')"><option value="">Todos</option><option value="present">Asistencias</option><option value="late">Tardanzas</option><option value="absent">Inasistencias</option></select><input type="date" id="pfDate" onchange="filterProfileHist('${id}')"></div><div id="profileHist"></div>
+ <h3>Responsabilidades</h3><div class="timeline">${resp.length?resp.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="item"><b>${esc(r.title)}</b> · ${fmtDate(r.date)}<br>${r.done?'✅ Cumplida':'❌ No cumplida'}</div>`).join(''):'<div class="empty">Sin responsabilidades.</div>'}</div>`);
+ window._profileHist=hist;filterProfileHist(id);profileStatsGraphic(id);
+}
+function filterProfileHist(id){const st=document.getElementById('pfStatus')?.value||'',dt=document.getElementById('pfDate')?.value||'';let arr=window._profileHist||[];arr=arr.filter(x=>(!st||x.status===st)&&(!dt||x.date===dt));document.getElementById('profileHist').innerHTML=arr.length?arr.map(x=>{let a=getActivity(x.activityId);return `<div class="item" style="margin-bottom:7px"><b>${fmtDate(x.date)} · ${esc(a?.name||'—')}</b> ${statusBadge(x)}<br>Hora: ${esc(x.arrival||'—')} · ${esc(justificationText(x))}</div>`}).join(''):'<div class="empty">No hay registros para este filtro.</div>'}
+function openAttendanceModal(_,mid=''){
+ const opts=db.musicians.map(m=>`<option value="${m.id}" ${m.id===mid?'selected':''}>${esc(m.first)} ${esc(m.last)}</option>`).join('');
+ const acts=db.activities.map(a=>`<option value="${a.id}">${esc(a.name)} — ${days[a.day]} ${a.time}</option>`).join('');
+ modal(`<div class="modalhead"><h2>Registrar asistencia</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+ <div class="field"><label>Músico *</label><select id="am">${opts}</select></div><div class="field"><label>Actividad *</label><select id="aa">${acts}</select></div>
+ <div class="field"><label>Fecha *</label><input type="date" id="ad" value="${today()}"></div><div class="field"><label>Hora real de llegada</label><input type="time" id="at" value="${new Date().toTimeString().slice(0,5)}"></div>
+ <div class="field"><label>Estado</label><select id="as"><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select></div>
+ <div class="field"><label>Justificación / causa</label><select id="ar"><option value="">Sin justificación</option><option>Enfermedad</option><option>Trabajo</option><option>Estudio</option><option>Familia</option><option>Transporte</option><option>Otro</option></select></div>
+ <div class="field full"><label>Justificación personalizada / detalle</label><textarea id="an" placeholder="Escribe aquí la justificación. Si el estado es Inasistencia, al justificarla contará como asistencia y restará 1 punto."></textarea><small>Una inasistencia con causa o detalle se considera <b>justificada</b>: cuenta en el porcentaje de asistencia y recibe +9 puntos en vez de -10.</small></div>
+ <div class="full"><button class="btn warn" onclick="autoStatus()">⏱️ Calcular estado por hora</button> <button class="btn primary" onclick="saveAttendance()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button><p id="deadlineInfo" style="color:var(--muted)"></p></div></div>`);
+ document.getElementById('aa').onchange=updateDeadline;document.getElementById('am').onchange=updateDeadline;document.getElementById('at').onchange=autoStatus;updateDeadline();
+}
+function getDeadline(mid,aid){const m=db.musicians.find(x=>x.id===mid),a=getActivity(aid);return m?.special?.[aid]?.enabled?m.special[aid].time:a?.time}
+function updateDeadline(){const mid=document.getElementById('am').value,aid=document.getElementById('aa').value,a=getActivity(aid);const dl=getDeadline(mid,aid);document.getElementById('deadlineInfo').textContent=`Hora límite aplicable: ${dl||'—'}${mSpecial(mid,aid)?' (horario especial autorizado)':''}`;autoStatus()}
+function mSpecial(mid,aid){return !!db.musicians.find(x=>x.id===mid)?.special?.[aid]?.enabled}
+function autoStatus(){const t=document.getElementById('at').value,dl=getDeadline(document.getElementById('am').value,document.getElementById('aa').value);if(!t||!dl)return;document.getElementById('as').value=t<=dl?'present':'late'}
+function saveAttendance(){
+ const musicianId=document.getElementById('am').value,activityId=document.getElementById('aa').value,date=document.getElementById('ad').value,reason=document.getElementById('ar').value,notes=document.getElementById('an').value.trim();
+ if(!musicianId||!activityId||!date)return alert('Completa músico, actividad y fecha.');
+ if(reason==='Otro'&&!notes)return alert('Escribe la justificación personalizada.');
+ const status=document.getElementById('as').value;
+ const arrival=document.getElementById('at').value;
+ const deadline=getDeadline(musicianId,activityId)||'';
+ if(status==='absent'&&reason==='Otro'&&!notes)return alert('Para justificar una inasistencia con “Otro”, escribe el detalle.');
+ db.attendance.push({id:uid('att'),musicianId,activityId,date,arrival,deadline,status,reason,notes});closeModal();save()
+}
+function deleteAttendance(id){if(confirm('¿Eliminar este registro?')){db.attendance=db.attendance.filter(x=>x.id!==id);save()}}
+function openActivityModal(id){
+ const a=getActivity(id)||{name:'',day:0,time:'08:00',type:'Actividad personalizada',custom:true};
+ modal(`<div class="modalhead"><h2>${id?'Editar':'Crear'} actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+ <div class="field"><label>Nombre *</label><input id="xn" value="${esc(a.name)}"></div><div class="field"><label>Tipo</label><input id="xt" value="${esc(a.type||'')}"></div>
+ <div class="field"><label>Día</label><select id="xd">${days.map((d,i)=>`<option value="${i}" ${a.day===i?'selected':''}>${d}</option>`).join('')}</select></div><div class="field"><label>Hora límite de llegada</label><input type="time" id="xh" value="${a.time}"></div>
+ <div class="full"><button class="btn primary" onclick="saveActivity('${id||''}')">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+}
+function saveActivity(id){const data={name:document.getElementById('xn').value.trim(),day:+document.getElementById('xd').value,time:document.getElementById('xh').value,type:document.getElementById('xt').value.trim()||'Personalizada'};if(!data.name)return alert('Escribe un nombre.');if(id)Object.assign(db.activities.find(a=>a.id===id),data);else db.activities.push({id:uid('a'),...data,custom:true});closeModal();save()}
+function deleteActivity(id){const a=db.activities.find(x=>x.id===id);if(!a)return;if(confirm(`¿Eliminar la actividad "${a.name}"? Sus registros históricos, asistencias, tardanzas, justificaciones y responsabilidades conservarán toda la información de esta actividad.`)){db.archivedActivities=db.archivedActivities||[];if(!db.archivedActivities.some(x=>x.id===id))db.archivedActivities.push({...a,archivedAt:new Date().toISOString()});db.activities=db.activities.filter(x=>x.id!==id);save()}}
+function openResponsibilityModal(_,mid=''){
+ const opts=db.musicians.map(m=>`<option value="${m.id}" ${m.id===mid?'selected':''}>${esc(m.first)} ${esc(m.last)}</option>`).join(''),acts=db.activities.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+ modal(`<div class="modalhead"><h2>Asignar responsabilidad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+ <div class="field"><label>Músico *</label><select id="rm">${opts}</select></div><div class="field"><label>Actividad</label><select id="ra"><option value="">Sin actividad</option>${acts}</select></div>
+ <div class="field"><label>Responsabilidad *</label><input id="rt" placeholder="Ej. Devocional para ensayo, palabra para ayuno..."></div><div class="field"><label>Fecha</label><input type="date" id="rd" value="${today()}"></div>
+ <div class="field full"><label>Estado inicial</label><select id="rc"><option value="false">Pendiente / no cumplida</option><option value="true">Cumplida</option></select></div>
+ <div class="full"><button class="btn primary" onclick="saveResp()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+}
+function saveResp(){const musicianId=document.getElementById('rm').value,title=document.getElementById('rt').value.trim();if(!musicianId||!title)return alert('Selecciona un músico y escribe la responsabilidad.');db.responsibilities.push({id:uid('r'),musicianId,title,activityId:document.getElementById('ra').value,date:document.getElementById('rd').value,done:document.getElementById('rc').value==='true'});closeModal();save()}
+function toggleResp(id){const r=db.responsibilities.find(x=>x.id===id);r.done=!r.done;save()}
+function deleteResp(id){if(confirm('¿Eliminar responsabilidad?')){db.responsibilities=db.responsibilities.filter(x=>x.id!==id);save()}}
+function showFiltered(type){showPage('asistencia');document.getElementById('histStatus').value=type==='all'?'':type;renderAttendance()}
+function exportExcel(){
+ if(typeof XLSX==='undefined')return alert('La librería de Excel no está disponible. Conéctate a internet y vuelve a intentarlo.');
+ const wb=XLSX.utils.book_new();
+ const musicians=db.musicians.map(m=>({ID:m.id,Nombre:m.first,Apellido:m.last,Rol:m.role,'Fecha nacimiento':m.birth,Edad:ageExact(m.birth),Teléfono:m.phone,Notas:m.notes}));
+ const att=db.attendance.map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);const p=arrivalPoints(x);return {ID:x.id||'',Fecha:x.date,Actividad:a?.name||'',Músico:m?m.first+' '+m.last:'',Llegada:x.arrival,'Hora límite':x.deadline||getDeadline(x.musicianId,x.activityId)||'',Estado:x.status==='present'?'Asistencia':x.status==='late'?(isJustifiedLate(x)?'Tardanza justificada':'Tardanza'):(isJustifiedAbsent(x)?'Inasistencia justificada':'Inasistencia'),'Puntos llegada':p,Justificación:justificationText(x)}});
+ const acts=db.activities.map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type}));
+ const resp=db.responsibilities.map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);return {ID:r.id||'',Fecha:r.date,Responsabilidad:r.title,Músico:m?m.first+' '+m.last:'',Actividad:a?.name||'',Cumplida:r.done?'Sí':'No'}});
+ const sp=[];db.musicians.forEach(m=>db.activities.forEach(a=>{let s=m.special?.[a.id];if(s?.enabled)sp.push({Músico:m.first+' '+m.last,Actividad:a.name,Día:days[a.day],'Hora normal':a.time,'Hora especial':s.time})}));
+ const archived=(db.archivedActivities||[]).map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type,Archivada:a.archivedAt||''}));
+ [['Músicos',musicians],['Asistencias',att],['Actividades',acts],['Actividades archivadas',archived],['Responsabilidades',resp],['Horarios especiales',sp]].forEach(([n,data])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),n));
+ // Hoja técnica: conserva la base de datos completa para poder restaurarla en otro dispositivo.
+ const transferRows=[{VERSION:'RUAH_TRANSFER_1',DATOS_JSON:JSON.stringify(db)}];
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(transferRows),'_RUAH_DATOS');
+ if(wb.Workbook?.Sheets){const sh=wb.Workbook.Sheets.find(x=>x.name==='_RUAH_DATOS');if(sh)sh.Hidden=1;}
+ XLSX.writeFile(wb,`Ruah_Transferencia_${today()}.xlsx`);
+}
+function importExcel(e){
+ const f=e.target.files[0];if(!f)return;
+ if(typeof XLSX==='undefined'){e.target.value='';return alert('La librería de Excel no está disponible. Conéctate a internet y vuelve a intentarlo.');}
+ const r=new FileReader();
+ r.onload=()=>{try{
+   const wb=XLSX.read(r.result,{type:'array'});
+   const ws=wb.Sheets['_RUAH_DATOS'];
+   if(!ws)throw new Error('Este archivo no contiene los datos de transferencia de Ruah. Descarga el Excel desde la opción "Descargar Excel con datos".');
+   const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+   const raw=rows[0]?.DATOS_JSON;
+   if(!raw)throw new Error('No se encontraron los datos completos de la aplicación.');
+   const x=JSON.parse(raw);
+   if(!x||!Array.isArray(x.musicians)||!Array.isArray(x.activities)||!Array.isArray(x.attendance)||!Array.isArray(x.responsibilities))throw new Error('La estructura del respaldo no es válida.');
+   if(!confirm(`Se encontraron ${x.musicians.length} músicos, ${x.attendance.length} registros de asistencia y ${x.responsibilities.length} responsabilidades.\n\nEsto reemplazará los datos actuales de este dispositivo. ¿Deseas continuar?`))return;
+   db=x;save();alert('✅ ¡Datos transferidos correctamente! Todo el contenido del Excel ya está cargado en este dispositivo.');
+ }catch(err){alert('No se pudo importar el Excel. '+(err?.message||'Verifica que sea un Excel generado por este proyecto.'));}
+ finally{e.target.value='';}
+ };r.readAsArrayBuffer(f);
+}
+function backup(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Ruah_Respaldo_${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
+function restore(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);if(!x.musicians||!x.activities)throw 0;if(confirm('Esto reemplazará los datos actuales. ¿Continuar?')){db=x;save()}}catch{alert('Archivo de respaldo inválido.')}};r.readAsText(f)}
+const LEADER_KEY='ruah_leader_v1',LOCK_KEY='ruah_locked_v1';
+function leader(){try{return JSON.parse(localStorage.getItem(LEADER_KEY)||'null')}catch{return null}}
+function setAppAccess(open){document.querySelector('.app').style.display=open?'':'none';document.getElementById('leaderActions').hidden=!open}
+function startAuth(){setAppAccess(false);const l=leader();if(!l)return openRegistration();localStorage.getItem(LOCK_KEY)==='1'?openPinAccess():openPasswordAccess()}
+function openRegistration(){modal(`<div class="authbox"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>Registro de líder de alabanza</h2><p>Registra una sola cuenta para administrar esta aplicación en este dispositivo.</p><div class="field"><label>Correo electrónico</label><input id="le" type="email" autocomplete="email" placeholder="tu@correo.com"></div><div class="field"><label>Contraseña</label><input id="lp" type="password" autocomplete="new-password" minlength="6" placeholder="Mínimo 6 caracteres"></div><div class="field"><label>Confirmar contraseña</label><input id="lpc" type="password" autocomplete="new-password"></div><div class="field"><label>PIN de acceso</label><input id="lpin" type="password" inputmode="numeric" autocomplete="new-password" maxlength="4" placeholder="4 números"></div><button class="btn primary" onclick="registerLeader()">Crear mi acceso</button></div>`)}
+function registerLeader(){const email=document.getElementById('le').value.trim(),password=document.getElementById('lp').value,pin=document.getElementById('lpin').value;if(!/^\S+@\S+\.\S+$/.test(email))return alert('Escribe un correo válido.');if(password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(password!==document.getElementById('lpc').value)return alert('Las contraseñas no coinciden.');if(!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');localStorage.setItem(LEADER_KEY,JSON.stringify({email,password,pin}));localStorage.removeItem(LOCK_KEY);closeModal();setAppAccess(true)}
+function openPasswordAccess(){const l=leader();modal(`<div class="authbox"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>Bienvenido</h2><p>Ingresa como líder de alabanza.</p><div class="field"><label>Correo electrónico</label><input id="ae" type="email" autocomplete="email" value="${esc(l.email)}"></div><div class="field"><label>Contraseña</label><input id="ap" type="password" autocomplete="current-password"></div><button class="btn primary" onclick="passwordAccess()">Ingresar</button></div>`)}
+function passwordAccess(){const l=leader();if(document.getElementById('ae').value.trim()!==l.email||document.getElementById('ap').value!==l.password)return alert('Correo o contraseña incorrectos.');closeModal();setAppAccess(true)}
+function openPinAccess(){modal(`<div class="authbox"><div class="brandmark"><i data-lucide="lock" class="icon"></i></div><h2>Aplicación bloqueada</h2><p>Ingresa tu PIN de 4 números para continuar.</p><div class="field"><label>PIN</label><input id="upin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" placeholder="••••"></div><button class="btn primary" onclick="pinAccess()">Desbloquear</button><button class="btn" onclick="openPasswordAccess()">Ingresar con correo y contraseña</button></div>`)}
+function pinAccess(){if(document.getElementById('upin').value!==leader().pin)return alert('PIN incorrecto.');localStorage.removeItem(LOCK_KEY);closeModal();setAppAccess(true)}
+function lockApp(){if(!confirm('¿Deseas salir y bloquear la aplicación?'))return;localStorage.setItem(LOCK_KEY,'1');closeModal();startAuth()}
+function openLeaderProfile(){const l=leader();modal(`<div class="modalhead"><h2>Mi perfil de líder</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid"><div class="field full"><label>Correo electrónico</label><input id="pe" type="email" value="${esc(l.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="pp" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="ppi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="full"><button class="btn primary" onclick="saveLeaderProfile()">Guardar cambios</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`)}
+function saveLeaderProfile(){const l=leader(),email=document.getElementById('pe').value.trim(),password=document.getElementById('pp').value,pin=document.getElementById('ppi').value;if(!/^\S+@\S+\.\S+$/.test(email))return alert('Escribe un correo válido.');if(password&&password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(pin&&!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');l.email=email;if(password)l.password=password;if(pin)l.pin=pin;localStorage.setItem(LEADER_KEY,JSON.stringify(l));closeModal();alert('Perfil actualizado.');}
+const USERS_KEY='ruah_users_v1',SESSION_KEY='ruah_user_session_v1',FORCE_PASSWORD_KEY='ruah_force_password_v1';
+function users(){try{const saved=JSON.parse(localStorage.getItem(USERS_KEY)||'null');if(Array.isArray(saved))return saved;const old=JSON.parse(localStorage.getItem(LEADER_KEY)||'null'),list=old?[{id:uid('u'),first:'',last:'',age:'',...old}]:[];localStorage.setItem(USERS_KEY,JSON.stringify(list));return list}catch{return []}}
+function saveUsers(list){localStorage.setItem(USERS_KEY,JSON.stringify(list))}
+function leader(){const list=users(),id=localStorage.getItem(SESSION_KEY);return list.find(u=>u.id===id)||list[0]||null}
+function startAuth(){setAppAccess(false);const l=leader();if(!users().length)return openRegistration();(localStorage.getItem(FORCE_PASSWORD_KEY)!=='1'&&(localStorage.getItem(LOCK_KEY)==='1'||l?.quickAccess))?openPinAccess():openPasswordAccess()}
+function openRegistration(addOnly=false){window._addUserOnly=addOnly;modal(`<div class="authbox"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>Registrar nuevo usuario</h2><p>Crea un acceso para administrar esta aplicación.</p><div class="formgrid"><div class="field"><label>Nombre</label><input id="lf"></div><div class="field"><label>Apellido</label><input id="ll"></div><div class="field"><label>Edad</label><input id="la" type="number" min="1" max="120"></div><div class="field"><label>Correo electrónico</label><input id="le" type="email"></div><div class="field full"><label>Contraseña</label><input id="lp" type="password" minlength="6"></div><div class="field"><label>Confirmar contraseña</label><input id="lpc" type="password"></div><div class="field"><label>PIN de acceso</label><input id="lpin" type="password" inputmode="numeric" maxlength="4"></div></div><button class="btn primary" onclick="registerLeader()">Crear acceso</button>${addOnly?'<button class="btn" onclick="openLeaderProfile()">Cancelar</button>':users().length?'<button class="btn" onclick="openPasswordAccess()">Volver a ingresar</button>':''}</div>`) }
+function registerLeader(){const first=document.getElementById('lf').value.trim(),last=document.getElementById('ll').value.trim(),age=+document.getElementById('la').value,email=document.getElementById('le').value.trim().toLowerCase(),password=document.getElementById('lp').value,pin=document.getElementById('lpin').value,list=users(),addOnly=window._addUserOnly;if(!first||!last||!age)return alert('Completa nombre, apellido y edad.');if(!/^\S+@\S+\.\S+$/.test(email))return alert('Escribe un correo válido.');if(list.some(u=>u.email.toLowerCase()===email))return alert('Ya existe un usuario con este correo.');if(password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(password!==document.getElementById('lpc').value)return alert('Las contraseñas no coinciden.');if(!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');const user={id:uid('u'),first,last,age,email,password,pin};list.push(user);saveUsers(list);window._addUserOnly=false;if(addOnly)return openLeaderProfile();localStorage.setItem(SESSION_KEY,user.id);localStorage.removeItem(LOCK_KEY);localStorage.removeItem(FORCE_PASSWORD_KEY);enterApp()}
+function openPasswordAccess(){modal(`<div class="authbox"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>Bienvenido</h2><p>Ingresa como líder de alabanza.</p><div class="field"><label>Correo electrónico</label><input id="ae" type="email"></div><div class="field"><label>Contraseña</label><input id="ap" type="password"></div><div class="checkrow"><input id="aquick" type="checkbox"><label for="aquick">Recordar acceso y pedir solo mi PIN la próxima vez</label></div><button class="btn primary" onclick="passwordAccess()">Ingresar</button><button class="btn" onclick="openRegistration()">Registrar nuevo usuario</button></div>`) }
+function passwordAccess(){const email=document.getElementById('ae').value.trim().toLowerCase(),list=users(),user=list.find(u=>u.email.toLowerCase()===email&&u.password===document.getElementById('ap').value);if(!user)return alert('Correo o contraseña incorrectos.');if(document.getElementById('aquick').checked){user.quickAccess=true;saveUsers(list)}localStorage.setItem(SESSION_KEY,user.id);localStorage.removeItem(LOCK_KEY);localStorage.removeItem(FORCE_PASSWORD_KEY);enterApp()}
+function openPinAccess(){modal(`<div class="authbox"><div class="brandmark"><i data-lucide="lock" class="icon"></i></div><h2>Aplicación bloqueada</h2><p>Ingresa tu PIN de 4 números para continuar.</p><div class="field"><label>PIN</label><input id="upin" type="password" inputmode="numeric" maxlength="4"></div><button class="btn primary" onclick="pinAccess()">Desbloquear</button><button class="btn" onclick="openPasswordAccess()">Ingresar con correo y contraseña</button><button class="btn" onclick="openRegistration()">Registrar nuevo usuario</button></div>`) }
+function pinAccess(){if(document.getElementById('upin').value!==leader().pin)return alert('PIN incorrecto.');localStorage.removeItem(LOCK_KEY);localStorage.removeItem(FORCE_PASSWORD_KEY);enterApp()}
+function enterApp(){const l=leader();setAppAccess(false);modal(`<div class="authbox welcome"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>¡Bienvenido${l?.first?' '+esc(l.first):''}!</h2><p>Ministerio de Alabanza Ruah</p><p><b>Igleico Hechos del Espíritu Santo</b></p><div class="spinner"></div><small>Preparando tu espacio...</small></div>`);setTimeout(()=>{closeModal();setAppAccess(true)},1500)}
+function closeSession(){if(!confirm('¿Deseas cerrar sesión por completo?'))return;localStorage.removeItem(LOCK_KEY);localStorage.setItem(FORCE_PASSWORD_KEY,'1');closeModal();startAuth()}
+function userRows(){const me=leader();return users().map(u=>`<tr><td><b>${esc(u.first)} ${esc(u.last)}</b>${u.id===me.id?' <span class="badge neutral">Tú</span>':''}<small style="display:block;color:var(--muted)">${esc(u.email)} · ${esc(u.age)} años</small></td><td><button class="btn" onclick="openUserEditor('${u.id}')">Editar</button>${u.id!==me.id?` <button class="btn danger" onclick="deleteUser('${u.id}')">Eliminar</button>`:''}</td></tr>`).join('')}
+function openLeaderProfile(){const l=leader();modal(`<div class="modalhead"><h2>Mi perfil de líder</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid"><div class="field"><label>Nombre</label><input id="pf" value="${esc(l.first)}"></div><div class="field"><label>Apellido</label><input id="pl" value="${esc(l.last)}"></div><div class="field"><label>Edad</label><input id="pa" type="number" min="1" max="120" value="${esc(l.age)}"></div><div class="field"><label>Correo electrónico</label><input id="pe" type="email" value="${esc(l.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="pp" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="ppi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="field full"><div class="checkrow"><input type="checkbox" id="pquick" ${l.quickAccess?'checked':''}><label for="pquick">Recordar mi acceso en este dispositivo y pedir solo el PIN al ingresar</label></div><small>Desmarca esta opción y guarda para volver a pedir correo y contraseña.</small></div><div class="full"><button class="btn primary" onclick="saveLeaderProfile()">Guardar mis cambios</button></div></div><hr><div class="pagehead"><h3>Usuarios con acceso</h3><button class="btn primary" onclick="openRegistration(true)">+ Registrar usuario</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Usuario</th><th>Acciones</th></tr></thead><tbody>${userRows()}</tbody></table></div>`) }
+function saveLeaderProfile(){const l=leader(),first=document.getElementById('pf').value.trim(),last=document.getElementById('pl').value.trim(),age=+document.getElementById('pa').value,email=document.getElementById('pe').value.trim().toLowerCase(),password=document.getElementById('pp').value,pin=document.getElementById('ppi').value,quick=document.getElementById('pquick').checked,list=users();if(!first||!last||!age||!/^\S+@\S+\.\S+$/.test(email))return alert('Completa nombre, apellido, edad y un correo válido.');if(list.some(u=>u.id!==l.id&&u.email.toLowerCase()===email))return alert('Ya existe un usuario con este correo.');if(password&&password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(pin&&!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');Object.assign(list.find(u=>u.id===l.id),{first,last,age,email,quickAccess:quick},password?{password}:{},pin?{pin}:{});saveUsers(list);closeModal();alert(quick?'Perfil actualizado. Al ingresar se solicitará solo el PIN.':'Perfil actualizado. Al ingresar se solicitarán correo y contraseña.');}
+function openUserEditor(id){const u=users().find(x=>x.id===id);if(!u)return;modal(`<div class="modalhead"><h2>Editar usuario</h2><button class="close" onclick="openLeaderProfile()">×</button></div><div class="formgrid"><div class="field"><label>Nombre</label><input id="uf" value="${esc(u.first)}"></div><div class="field"><label>Apellido</label><input id="ul" value="${esc(u.last)}"></div><div class="field"><label>Edad</label><input id="ua" type="number" min="1" max="120" value="${esc(u.age)}"></div><div class="field"><label>Correo electrónico</label><input id="ue" type="email" value="${esc(u.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="up" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="upi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="full"><button class="btn primary" onclick="saveUser('${u.id}')">Guardar cambios</button> <button class="btn" onclick="openLeaderProfile()">Cancelar</button></div></div>`) }
+function saveUser(id){const list=users(),u=list.find(x=>x.id===id),first=document.getElementById('uf').value.trim(),last=document.getElementById('ul').value.trim(),age=+document.getElementById('ua').value,email=document.getElementById('ue').value.trim().toLowerCase(),password=document.getElementById('up').value,pin=document.getElementById('upi').value;if(!u||!first||!last||!age||!/^\S+@\S+\.\S+$/.test(email))return alert('Completa nombre, apellido, edad y un correo válido.');if(list.some(x=>x.id!==id&&x.email.toLowerCase()===email))return alert('Ya existe un usuario con este correo.');if(password&&password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(pin&&!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');Object.assign(u,{first,last,age,email},password?{password}:{},pin?{pin}:{});saveUsers(list);openLeaderProfile()}
+function deleteUser(id){const list=users();if(list.length<2)return alert('Debe quedar al menos un usuario con acceso.');const u=list.find(x=>x.id===id);if(!u||!confirm(`¿Eliminar el acceso de ${u.first} ${u.last}?`))return;saveUsers(list.filter(x=>x.id!==id));openLeaderProfile()}
+document.getElementById('histDate').value='';
+renderAll();
+startAuth();
+if(window.lucide)lucide.createIcons();
+</script>
+</body>
+</html>
