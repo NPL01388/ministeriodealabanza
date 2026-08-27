@@ -617,10 +617,11 @@ function openProfile(id){
 }
 function filterProfileHist(id){const st=document.getElementById('pfStatus')?.value||'',dt=document.getElementById('pfDate')?.value||'';let arr=window._profileHist||[];arr=arr.filter(x=>(!st||x.status===st)&&(!dt||x.date===dt));document.getElementById('profileHist').innerHTML=arr.length?arr.map(x=>{let a=getActivity(x.activityId);return `<div class="item" style="margin-bottom:7px"><b>${fmtDate(x.date)} · ${esc(a?.name||'—')}</b> ${statusBadge(x)}<br>Hora: ${esc(x.arrival||'—')} · ${esc(justificationText(x))}</div>`}).join(''):'<div class="empty">No hay registros para este filtro.</div>'}
 function openAttendanceModal(_,mid=''){
- const opts=db.musicians.map(m=>`<option value="${m.id}" ${m.id===mid?'selected':''}>${esc(m.first)} ${esc(m.last)}</option>`).join('');
- const acts=db.activities.map(a=>`<option value="${a.id}">${esc(a.name)} — ${days[a.day]} ${a.time}</option>`).join('');
+ const musicians=db.musicians.map(m=>`<option value="${esc(m.first+' '+m.last)}"></option>`).join('');
+ const activities=db.activities.map(a=>`<option value="${esc(a.name)}">${esc(days[a.day]||'')} ${esc(a.time||'')}</option>`).join('');
+ const selectedMus=db.musicians.find(m=>m.id===mid);
  modal(`<div class="modalhead"><h2>Registrar asistencia</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
- <div class="field"><label>Músico *</label><select id="am">${opts}</select></div><div class="field"><label>Actividad *</label><select id="aa">${acts}</select></div>
+ <div class="field"><label>Músico *</label><input id="amSearch" list="amList" placeholder="Buscar músico por nombre..." value="${esc(selectedMus?selectedMus.first+' '+selectedMus.last:'')}" autocomplete="off"><datalist id="amList">${musicians}</datalist></div><div class="field"><label>Actividad *</label><input id="aaSearch" list="aaList" placeholder="Buscar actividad..." autocomplete="off"><datalist id="aaList">${activities}</datalist></div>
  <div class="field"><label>Fecha *</label><input type="date" id="ad" value="${today()}"></div><div class="field"><label>Hora real de llegada</label><input type="time" id="at" value="${new Date().toTimeString().slice(0,5)}"></div>
  <div class="field"><label>Estado</label><select id="as"><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select></div>
  <div class="field"><label>Justificación / causa</label><select id="ar"><option value="">Sin justificación</option><option>Enfermedad</option><option>Trabajo</option><option>Estudio</option><option>Familia</option><option>Transporte</option><option>Otro</option></select></div>
@@ -633,8 +634,11 @@ function updateDeadline(){const mid=document.getElementById('am').value,aid=docu
 function mSpecial(mid,aid){return !!db.musicians.find(x=>x.id===mid)?.special?.[aid]?.enabled}
 function autoStatus(){const t=document.getElementById('at').value,dl=getDeadline(document.getElementById('am').value,document.getElementById('aa').value);if(!t||!dl)return;document.getElementById('as').value=t<=dl?'present':'late'}
 function saveAttendance(){
- const musicianId=document.getElementById('am').value,activityId=document.getElementById('aa').value,date=document.getElementById('ad').value,reason=document.getElementById('ar').value,notes=document.getElementById('an').value.trim();
- if(!musicianId||!activityId||!date)return alert('Completa músico, actividad y fecha.');
+ const musicianText=document.getElementById('amSearch').value.trim(),activityText=document.getElementById('aaSearch').value.trim();
+ const musician=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===musicianText.toLowerCase());
+ const activity=db.activities.find(a=>a.name.toLowerCase()===activityText.toLowerCase());
+ const musicianId=musician?.id||'',activityId=activity?.id||'',date=document.getElementById('ad').value,reason=document.getElementById('ar').value,notes=document.getElementById('an').value.trim();
+ if(!musicianId||!activityId||!date)return alert('Selecciona un músico y una actividad válidos, y completa la fecha.');
  if(reason==='Otro'&&!notes)return alert('Escribe la justificación personalizada.');
  const status=document.getElementById('as').value;
  const arrival=document.getElementById('at').value;
@@ -653,14 +657,16 @@ function openActivityModal(id){
 function saveActivity(id){const data={name:document.getElementById('xn').value.trim(),day:+document.getElementById('xd').value,time:document.getElementById('xh').value,type:document.getElementById('xt').value.trim()||'Personalizada'};if(!data.name)return alert('Escribe un nombre.');if(id)Object.assign(db.activities.find(a=>a.id===id),data);else db.activities.push({id:uid('a'),...data,custom:true});closeModal();save()}
 function deleteActivity(id){const a=db.activities.find(x=>x.id===id);if(!a)return;if(confirm(`¿Eliminar la actividad "${a.name}"? Sus registros históricos, asistencias, tardanzas, justificaciones y responsabilidades conservarán toda la información de esta actividad.`)){db.archivedActivities=db.archivedActivities||[];if(!db.archivedActivities.some(x=>x.id===id))db.archivedActivities.push({...a,archivedAt:new Date().toISOString()});db.activities=db.activities.filter(x=>x.id!==id);save()}}
 function openResponsibilityModal(_,mid=''){
- const opts=db.musicians.map(m=>`<option value="${m.id}" ${m.id===mid?'selected':''}>${esc(m.first)} ${esc(m.last)}</option>`).join(''),acts=db.activities.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+ const musicians=db.musicians.map(m=>`<option value="${esc(m.first+' '+m.last)}"></option>`).join('');
+ const activities=db.activities.map(a=>`<option value="${esc(a.name)}"></option>`).join('');
+ const selectedMus=db.musicians.find(m=>m.id===mid);
  modal(`<div class="modalhead"><h2>Asignar responsabilidad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
- <div class="field"><label>Músico *</label><select id="rm">${opts}</select></div><div class="field"><label>Actividad</label><select id="ra"><option value="">Sin actividad</option>${acts}</select></div>
+ <div class="field"><label>Músico *</label><input id="rmSearch" list="rmList" placeholder="Buscar músico por nombre..." value="${esc(selectedMus?selectedMus.first+' '+selectedMus.last:'')}" autocomplete="off"><datalist id="rmList">${musicians}</datalist></div><div class="field"><label>Actividad</label><input id="raSearch" list="raList" placeholder="Buscar actividad (opcional)..." autocomplete="off"><datalist id="raList">${activities}</datalist></div>
  <div class="field"><label>Responsabilidad *</label><input id="rt" placeholder="Ej. Devocional para ensayo, palabra para ayuno..."></div><div class="field"><label>Fecha</label><input type="date" id="rd" value="${today()}"></div>
  <div class="field full"><label>Estado inicial</label><select id="rc"><option value="false">Pendiente / no cumplida</option><option value="true">Cumplida</option></select></div>
  <div class="full"><button class="btn primary" onclick="saveResp()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
 }
-function saveResp(){const musicianId=document.getElementById('rm').value,title=document.getElementById('rt').value.trim();if(!musicianId||!title)return alert('Selecciona un músico y escribe la responsabilidad.');db.responsibilities.push({id:uid('r'),musicianId,title,activityId:document.getElementById('ra').value,date:document.getElementById('rd').value,done:document.getElementById('rc').value==='true'});closeModal();save()}
+function saveResp(){const musicianText=document.getElementById('rmSearch').value.trim(),activityText=document.getElementById('raSearch').value.trim(),musician=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===musicianText.toLowerCase()),activity=activityText?db.activities.find(a=>a.name.toLowerCase()===activityText.toLowerCase()):null,musicianId=musician?.id||'',title=document.getElementById('rt').value.trim();if(!musicianId||!title)return alert('Selecciona un músico válido y escribe la responsabilidad.');if(activityText&&!activity)return alert('Selecciona una actividad válida de la lista.');db.responsibilities.push({id:uid('r'),musicianId,title,activityId:activity?.id||'',date:document.getElementById('rd').value,done:document.getElementById('rc').value==='true'});closeModal();save()}
 function toggleResp(id){const r=db.responsibilities.find(x=>x.id===id);r.done=!r.done;save()}
 function deleteResp(id){if(confirm('¿Eliminar responsabilidad?')){db.responsibilities=db.responsibilities.filter(x=>x.id!==id);save()}}
 function showFiltered(type){showPage('asistencia');document.getElementById('histStatus').value=type==='all'?'':type;renderAttendance()}
