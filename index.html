@@ -92,13 +92,92 @@ img,svg,video,canvas{max-width:100%;height:auto}
   .content{padding:8px}
 }
 
+
+.profile-chart:fullscreen{background:#fff;width:100vw;height:100vh;padding:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:auto}
+.profile-chart:fullscreen svg{width:100%;height:100%;max-width:none;max-height:none}
+.profile-chart:-webkit-full-screen{background:#fff;width:100vw;height:100vh;padding:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;overflow:auto}
+.profile-chart:-webkit-full-screen svg{width:100%;height:100%;max-width:none;max-height:none}
+.chart-fullscreen-btn{margin-left:auto;white-space:nowrap}
+@media(max-width:600px){.profile-chart:fullscreen{padding:8px}.profile-chart:-webkit-full-screen{padding:8px}.chart-fullscreen-btn{width:100%;margin-left:0}}
 </style>
 <style>
 .topactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topactions .btn{background:#ffffff22;color:#fff;border:1px solid #ffffff44}.topactions .power{background:#fff;color:#542fb4}.authbox{width:min(440px,100%)}.authbox .brandmark{text-align:center;font-size:42px;margin:8px}.authbox p{color:var(--muted)}.authbox .btn{width:100%;margin-top:6px}.mobilehint{display:none}.spinner{width:42px;height:42px;margin:20px auto;border:5px solid #dbe5ff;border-top-color:#133478;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.welcome{text-align:center;padding:18px 4px}.welcome h2{margin-bottom:6px}
 @media(max-width:700px){.top{padding:15px 14px;align-items:flex-start}.brand{width:100%}.brand h1{font-size:21px}.clock{width:100%;text-align:left;font-size:14px}.topactions{width:100%;display:grid;grid-template-columns:1fr 1fr}.topactions .btn{padding:11px 8px}.side{padding:10px}.nav{gap:6px}.nav button{min-height:48px;padding:10px;font-size:14px}.content{padding:12px}.pagehead{align-items:stretch}.pagehead .btn{width:100%}.toolbar{display:grid;grid-template-columns:1fr}.toolbar input,.toolbar select,.toolbar .btn{width:100%;min-width:0!important}.card{padding:14px;border-radius:13px}.modal{padding:8px}.modalbox{padding:16px;border-radius:15px;max-height:96vh}.table{min-width:620px}.table th,.table td{padding:9px;font-size:13px}.table td .btn{margin:2px 0}.bigavatar{width:120px;height:120px}.mobilehint{display:block;color:var(--muted);font-size:12px;margin:0 0 7px}.authbox{padding:20px}.authbox .field input{font-size:16px}.cards{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}.kpis{grid-template-columns:1fr 1fr}}
 @media(max-width:390px){.cards{grid-template-columns:1fr}.stat:last-child{grid-column:auto}.nav{grid-template-columns:1fr 1fr}.formgrid{grid-template-columns:1fr}}
 </style>
-<script src="https://unpkg.com/lucide@latest"></script><style>.icon{width:1.05em;height:1.05em;stroke-width:2;vertical-align:-.18em;display:inline-block}.nav-link .icon,.btn .icon,.brandmark .icon{transition:transform .35s ease}.nav-link:hover .icon,.btn:hover .icon{transform:translateY(-2px) rotate(-4deg)}.nav-link.active .icon{animation:iconPulse 1.8s ease-in-out infinite}@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}.status-dot{display:inline-block;width:.65em;height:.65em;border-radius:50%;margin-right:.3em;vertical-align:middle}.status-dot.present{background:#22c55e}.status-dot.late{background:#f59e0b}.status-dot.absent{background:#ef4444}@media(max-width:600px){.icon{width:1em;height:1em}}</style></head>
+<script src="https://unpkg.com/lucide@latest"></script><style>.icon{width:1.05em;height:1.05em;stroke-width:2;vertical-align:-.18em;display:inline-block}.nav-link .icon,.btn .icon,.brandmark .icon{transition:transform .35s ease}.nav-link:hover .icon,.btn:hover .icon{transform:translateY(-2px) rotate(-4deg)}.nav-link.active .icon{animation:iconPulse 1.8s ease-in-out infinite}@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}.status-dot{display:inline-block;width:.65em;height:.65em;border-radius:50%;margin-right:.3em;vertical-align:middle}.status-dot.present{background:#22c55e}.status-dot.late{background:#f59e0b}.status-dot.absent{background:#ef4444}@media(max-width:600px){.icon{width:1em;height:1em}}</style>
+<style>
+/* Comparación de llegadas: músicos lado a lado */
+.arrival-compare-grid{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:14px;
+  align-items:start;
+  width:100%;
+}
+.arrival-compare-card{
+  min-width:0;
+  box-sizing:border-box;
+  border:1px solid #d9e2ec;
+  border-radius:12px;
+  padding:14px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.05);
+}
+.arrival-compare-card .name{font-weight:800;margin-bottom:8px}
+.arrival-compare-card .time{font-size:21px;font-weight:800;margin-bottom:5px}
+.arrival-compare-card .meta{font-size:12px;line-height:1.5;color:#5b6775}
+.arrival-compare-card.early{border-top:4px solid #1f9d55}
+.arrival-compare-card.late{border-top:4px solid #d64545}
+.arrival-compare-card.on-time{border-top:4px solid #4b5563}
+@media (max-width:700px){
+  .arrival-compare-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  .arrival-compare-card{padding:10px}
+  .arrival-compare-card .time{font-size:17px}
+}
+@media (max-width:430px){
+  .arrival-compare-grid{grid-template-columns:1fr !important}
+}
+</style>
+
+<style id="comparison-point-spacing">
+/* ÚNICA CORRECCIÓN: separar horizontalmente los puntos de cada músico
+   en la gráfica comparativa, conservando los colores/leyenda existentes. */
+.arrival-comparison-chart,
+.arrival-compare-chart,
+[id*="arrival"][id*="Chart"],
+[class*="arrival"][class*="chart"]{
+  width:100%;
+  max-width:100%;
+}
+</style>
+<script>
+/* Mantiene la leyenda y colores actuales; solo evita que puntos de músicos
+   distintos ocupen exactamente la misma posición horizontal. */
+(function(){
+  window.__separateComparisonPoints = function(chart){
+    if(!chart || !chart.data || !Array.isArray(chart.data.datasets)) return;
+    const datasets = chart.data.datasets;
+    const n = datasets.length;
+    datasets.forEach(function(ds, i){
+      // offset permite que cada músico tenga una columna/posición X distinta.
+      ds.offset = true;
+      ds._musicianIndex = i;
+      if (n > 1 && Array.isArray(ds.data)) {
+        ds.data = ds.data.map(function(pt){
+          if (pt && typeof pt === 'object' && Number.isFinite(pt.x)) {
+            return Object.assign({}, pt, {x: pt.x + (i-(n-1)/2)*0.16});
+          }
+          return pt;
+        });
+      }
+    });
+    if(typeof chart.update === 'function') chart.update('none');
+  };
+})();
+</script>
+
+</head>
 <body>
 <div class="app">
 <header class="top">
@@ -363,6 +442,122 @@ function saveMusician(id){
 function loadProfilePhoto(e){const file=e.target.files[0];if(!file)return;if(!file.type.startsWith('image/'))return alert('Selecciona una imagen válida.');if(file.size>5*1024*1024)return alert('La foto debe pesar máximo 5 MB.');const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const max=500,scale=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);window._pendingPhoto=c.toDataURL('image/jpeg',.78);alert('Foto lista. Guarda los cambios del músico para conservarla.');};img.src=r.result;};r.readAsDataURL(file)}
 function removeProfilePhoto(){window._pendingPhoto='';const input=document.getElementById('mphoto');if(input)input.value='';alert('La foto se quitará cuando guardes los cambios del músico.');}
 function deleteMusician(id){const m=db.musicians.find(x=>x.id===id);if(!m||!confirm(`¿Eliminar a ${m.first} ${m.last}? También se eliminarán sus registros asociados.`))return;db.musicians=db.musicians.filter(x=>x.id!==id);db.attendance=db.attendance.filter(x=>x.musicianId!==id);db.responsibilities=db.responsibilities.filter(x=>x.musicianId!==id);save()}
+function toggleChartFullscreen(){
+ const el=document.getElementById('profileChart'); if(!el)return;
+ if(document.fullscreenElement===el){document.exitFullscreen?.();return;}
+ if(el.requestFullscreen)el.requestFullscreen();
+ else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+}
+function compareArrivalHours(mId){
+ const el=document.getElementById('profileChart'); if(!el)return;
+ const selected=[...document.querySelectorAll('#pfCompareMusicians option:checked')].map(o=>o.value).filter(Boolean);
+ const ids=[mId,...selected.filter(id=>id!==mId)].slice(0,6);
+ const year=document.getElementById('pfChartYear')?.value||'',month=document.getElementById('pfChartMonth')?.value||'';
+ const palette=['#285bb5','#16a34a','#d97706','#7c3aed','#dc2626','#0891b2'];
+
+ const musicians=ids.map((id,i)=>{
+   const m=db.musicians.find(x=>x.id===id);
+   return {id,name:m?`${m.first} ${m.last}`:'Músico',color:palette[i%palette.length]};
+ });
+
+ const records=ids.flatMap((id,mi)=>
+   db.attendance.filter(x=>x.musicianId===id&&x.arrival&&x.date)
+   .map(x=>({
+     musicianId:id,
+     mi,
+     date:String(x.date),
+     arrival:normalizeTime(x.arrival),
+     deadline:x.deadline||getDeadline(x.musicianId,x.activityId),
+     activity:getActivity(x.activityId)?.name||x.activityName||'Actividad'
+   }))
+   .filter(x=>x.arrival&&x.date&&x.deadline&&(!year||x.date.slice(0,4)===year)&&(!month||x.date.slice(5,7)===month))
+   .map(x=>({...x,diff:minutesDiff(x.arrival,x.deadline)}))
+   .filter(x=>x.diff!==null)
+ );
+
+ if(!records.length){
+   el.innerHTML='<div class="chart-empty">No hay horas comparables para los músicos y filtros seleccionados.</div>';
+   return;
+ }
+
+ /* Cada grupo es una fecha + actividad. Dentro de cada grupo,
+    cada músico recibe una columna X propia: nunca se montan entre sí. */
+ const groups=[];
+ const groupMap=new Map();
+ records.sort((a,b)=>a.date.localeCompare(b.date)||a.activity.localeCompare(b.activity)||a.mi-b.mi);
+ records.forEach(r=>{
+   const key=r.date+'||'+r.activity;
+   if(!groupMap.has(key)){
+     const g={date:r.date,activity:r.activity,items:[]};
+     groupMap.set(key,g);groups.push(g);
+   }
+   groupMap.get(key).items.push(r);
+ });
+
+ const slotW=96, groupGap=70, left=90, right=40, top=70, bottom=125;
+ const groupW=Math.max(150,ids.length*slotW);
+ const W=Math.max(900,left+right+groups.length*groupW+(groups.length-1)*groupGap);
+ const H=560;
+ const plotTop=top,plotBottom=390;
+ const allDiff=records.map(r=>r.diff);
+ const amin=Math.min(-10,...allDiff),amax=Math.max(10,...allDiff);
+ const range=Math.max(1,amax-amin);
+ const y=d=>plotBottom-((d-amin)/range)*(plotBottom-plotTop);
+ const zero=y(0);
+
+ const escHtml=v=>esc(String(v??''));
+ const shortName=(n,max=15)=>n.length>max?n.slice(0,max-1)+'…':n;
+ const status=r=>r.diff>0?`${r.diff} min tarde`:r.diff<0?`${Math.abs(r.diff)} min temprano`:'Puntual';
+
+ let grid='';
+ for(let d=Math.ceil(amin/5)*5;d<=amax;d+=5){
+   const yy=y(d);
+   grid+=`<line x1="${left}" y1="${yy}" x2="${W-right}" y2="${yy}" stroke="#e5e7eb" stroke-width="1"/>`;
+   
+ }
+ grid+=`<line x1="${left}" y1="${zero}" x2="${W-right}" y2="${zero}" stroke="#6b7280" stroke-width="2" stroke-dasharray="7 5"/>`;
+ grid+=`<text x="${W-right}" y="${zero-8}" text-anchor="end" class="chart-muted" font-size="10" font-weight="700">HORA LÍMITE · PUNTUAL</text>`;
+
+ let pointEls='',groupLabels='';
+ groups.forEach((g,gi)=>{
+   const gx=left+gi*(groupW+groupGap);
+   const center=gx+groupW/2;
+   groupLabels+=`<line x1="${center}" y1="${plotTop-12}" x2="${center}" y2="${plotBottom+8}" stroke="#f1f5f9" stroke-width="1"/>`;
+   groupLabels+=`<text x="${center}" y="${plotBottom+32}" text-anchor="middle" class="chart-label" font-size="10" font-weight="800">${escHtml(fmtDate(g.date)||g.date)}</text>`;
+   groupLabels+=`<text x="${center}" y="${plotBottom+47}" text-anchor="middle" class="chart-muted" font-size="9">${escHtml(g.activity.length>24?g.activity.slice(0,24)+'…':g.activity)}</text>`;
+   const byMusician=new Map(g.items.map(r=>[r.musicianId,r]));
+   ids.forEach((id,mi)=>{
+     const r=byMusician.get(id);
+     const px=gx+slotW/2+mi*slotW;
+     if(!r){
+       pointEls+=`<text x="${px}" y="${plotBottom+4}" text-anchor="middle" class="chart-muted" font-size="9">—</text>`;
+       return;
+     }
+     const py=y(r.diff), color=palette[mi%palette.length];
+     pointEls+=`
+       <line x1="${px}" y1="${zero}" x2="${px}" y2="${py}" stroke="${color}" stroke-width="2" opacity=".28"/>
+       <circle cx="${px}" cy="${py}" r="8" fill="${color}" stroke="#fff" stroke-width="3">
+         <title>${escHtml(musicians[mi].name)} · ${escHtml(r.arrival)} · ${escHtml(r.activity)} · ${escHtml(fmtDate(r.date)||r.date)} · ${escHtml(status(r))}</title>
+       </circle>
+       <text x="${px}" y="${py-14}" text-anchor="middle" class="chart-label" font-size="11" font-weight="800">${escHtml(r.arrival)}</text>`;
+   });
+ });
+
+ let legend='';
+ musicians.forEach((m,i)=>{
+   const x=left+i*160;
+   legend+=`<circle cx="${x}" cy="${H-24}" r="5" fill="${m.color}"/><text x="${x+10}" y="${H-20}" class="chart-label" font-size="11">${escHtml(shortName(m.name,18))}</text>`;
+ });
+
+ const svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Comparación de horas de llegada entre músicos" style="display:block;max-width:none">
+   <text x="24" y="27" class="chart-label" font-weight="800">Comparación de llegada entre músicos</text>
+   <text x="24" y="44" class="chart-muted">Cada músico tiene su propia posición horizontal · altura = minutos respecto a la hora límite</text>
+   ${grid}${groupLabels}${pointEls}
+   <text x="${left}" y="${plotBottom+78}" class="chart-muted" font-size="9">Cada columna representa un músico. Pasa el cursor sobre un punto para ver hora, actividad, fecha y resultado.</text>
+   ${legend}
+ </svg>`;
+ el.innerHTML=`<div style="width:100%;overflow-x:auto;overflow-y:hidden;border-radius:10px">${svg}</div>`;
+}
 function profileStatsGraphic(mId){
  const el=document.getElementById('profileChart');if(!el)return;
  const p=performance(mId),resp=p.responsibilities;
@@ -410,8 +605,8 @@ function openProfile(id){
  <div class="profile"><div><div class="bigavatar">${avatar(m,true)}</div><div style="text-align:center;margin-top:8px"><b>${esc(m.first)} ${esc(m.last)}</b><br><span class="badge neutral">${esc(m.role||'Sin rol')}</span></div></div>
  <div><h2>${esc(m.first)} ${esc(m.last)}</h2><p><b>Fecha de nacimiento:</b> ${fmtDate(m.birth)}<br><b>Edad:</b> ${ageExact(m.birth)}<br><b>Teléfono:</b> ${esc(m.phone||'—')}</p>${m.notes?`<p style="white-space:pre-wrap"><b>Notas:</b><br>${esc(m.notes)}</p>`:''}
  <div class="kpis"><div class="mini"><span class="status-dot present"></span><b>${c.present}</b>Asistencias</div><div class="mini"><span class="status-dot late"></span><b>${c.late}</b>Tardanzas</div><div class="mini"><span class="status-dot absent"></span><b>${c.absent}</b>Inasistencias</div><div class="mini">⭐<b>${grade}%</b>Calificación</div></div></div></div>
- <h3><i data-lucide="chart-line" class="icon"></i> Gráfica estadística del músico</h3>
- <div class="chart-filters"><label>Año <select id="pfChartYear" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option></select></label><label>Mes <select id="pfChartMonth" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></label></div>
+ <div class="section-title-row"><h3><i data-lucide="chart-line" class="icon"></i> Gráfica estadística del músico</h3><button type="button" class="btn chart-fullscreen-btn" onclick="toggleChartFullscreen()"><i data-lucide="maximize-2" class="icon"></i> Pantalla completa</button></div>
+ <div class="chart-filters"><label>Año <select id="pfChartYear" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option></select></label><label>Mes <select id="pfChartMonth" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></label></div><label>Comparar con <select id="pfCompareMusicians" multiple size="1" onchange="compareArrivalHours('${id}')">${db.musicians.filter(m=>m.id!==id).map(m=>`<option value="${m.id}">${esc(m.first)} ${esc(m.last)}</option>`).join('')}</select></label><button type="button" class="btn" onclick="compareArrivalHours('${id}')"><i data-lucide="git-compare" class="icon"></i> Comparar llegadas</button>
  <div id="profileChart" class="profile-chart"></div>
  <p class="chart-help">La gráfica muestra las horas de llegada organizadas cronológicamente por mes. Cada registro conserva la hora, la actividad y la fecha. Puedes filtrar por año y mes.</p>
  <h3>Estadística de cumplimiento</h3><div class="tablewrap"><table class="table"><thead><tr><th>Indicador</th><th>Registros</th><th>Resultado</th></tr></thead><tbody><tr><td>Asistencias puntuales</td><td>${c.present}</td><td>Cuenta como cumplimiento</td></tr><tr><td>Tardanzas sin justificar</td><td>${c.late}</td><td>Cuenta como cumplimiento · afecta puntos</td></tr><tr><td>Tardanzas justificadas</td><td>${c.justifiedLate}</td><td>Cuenta como cumplimiento · refleja puntos</td></tr><tr><td>Inasistencias sin justificar</td><td>${c.absent}</td><td>No cuenta como cumplimiento · resta puntos</td></tr><tr><td>Inasistencias justificadas</td><td>${c.justifiedAbsent}</td><td><b>Cuenta como cumplimiento</b> · refleja puntos</td></tr><tr><td><b>Cumplimiento de responsabilidades</b></td><td><b>${p.responsibilitiesOk}/${resp.length}</b></td><td>${p.responsibilitiesOk} cumplida(s) · ${resp.length-p.responsibilitiesOk} no cumplida(s)</td></tr><tr><td><b>Calificación final</b></td><td><b>${total} registros evaluados</b></td><td><span class="badge ${grade>=70?'present':grade>=40?'late':'absent'}">${grade}%</span></td></tr></tbody></table></div>
