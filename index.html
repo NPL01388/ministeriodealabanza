@@ -177,6 +177,52 @@ img,svg,video,canvas{max-width:100%;height:auto}
 })();
 </script>
 
+
+<style id="searchable-combos">
+.search-combo{position:relative;width:100%}
+.search-combo input{width:100%;box-sizing:border-box;padding:10px 38px 10px 12px;border:1px solid #d6d9e1;border-radius:10px;background:#fff}
+.search-combo .combo-arrow{position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:12px;color:#64748b}
+.search-combo .combo-menu{display:none;position:absolute;z-index:9999;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;background:#fff;border:1px solid #d6d9e1;border-radius:10px;box-shadow:0 8px 24px rgba(15,23,42,.14)}
+.search-combo.open .combo-menu{display:block}
+.search-combo .combo-option{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 12px;cursor:pointer;font-size:14px}
+.search-combo .combo-option:hover{background:#eef4ff}
+.search-combo .combo-empty{padding:10px 12px;color:#64748b;font-size:13px}
+@media(max-width:600px){
+ .search-combo .combo-menu{max-height:180px}
+ .search-combo .combo-option{padding:12px}
+}
+</style>
+
+<style id="chart-zoom-fullscreen">
+.chart-fullscreen-wrap{position:relative}
+.chart-fullscreen-wrap .zoom-controls{
+ display:flex;gap:6px;align-items:center;justify-content:flex-end;
+ margin:0 0 8px;flex-wrap:wrap
+}
+.chart-fullscreen-wrap .zoom-controls button{
+ border:1px solid #d6d9e1;background:#fff;border-radius:8px;
+ padding:6px 10px;cursor:pointer;font-weight:700
+}
+.chart-fullscreen-wrap .zoom-controls .zoom-level{
+ font-size:12px;color:#64748b;min-width:48px;text-align:center
+}
+.chart-fullscreen-wrap.chart-fs{
+ position:fixed!important;inset:0!important;z-index:99999!important;
+ background:#fff!important;padding:18px!important;overflow:auto!important;
+ box-sizing:border-box
+}
+.chart-fullscreen-wrap.chart-fs .chart-zoom-area{
+ min-width:700px;min-height:calc(100vh - 90px)
+}
+.chart-fullscreen-wrap.chart-fs .chart-zoom-area svg,
+.chart-fullscreen-wrap.chart-fs .chart-zoom-area canvas{
+ transform-origin:top left
+}
+@media(max-width:600px){
+ .chart-fullscreen-wrap.chart-fs{padding:10px!important}
+ .chart-fullscreen-wrap.chart-fs .chart-zoom-area{min-width:650px}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -411,7 +457,49 @@ function renderRanking(){
  }).join(''):'<tr><td colspan="7" class="empty">Aún no hay músicos para calificar.</td></tr>'
 }
 function renderAll(){populateSelects();renderDashboard();renderMusicians();renderAttendance();renderActivities();renderResponsibilities();renderBirthdays();renderRanking();if(window.lucide)lucide.createIcons()}
-function modal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modal').classList.add('open')}
+
+function searchableCombo(id,items,placeholder,selected=''){
+ return `<div class="search-combo" id="${id}Wrap">
+ <input id="${id}" autocomplete="off" placeholder="${esc(placeholder)}" value="${esc(selected)}"
+ onfocus="openSearchCombo('${id}')" oninput="filterSearchCombo('${id}')">
+ <span class="combo-arrow">▼</span><div class="combo-menu" id="${id}Menu"></div></div>`;
+}
+function initSearchCombo(id,items){
+ const wrap=document.getElementById(id+'Wrap'); if(!wrap)return;
+ wrap._comboItems=items.map(x=>({id:String(x.id),name:String(x.name)}));
+ renderSearchCombo(id,document.getElementById(id).value);
+}
+function renderSearchCombo(id,q=''){
+ const wrap=document.getElementById(id+'Wrap'),menu=document.getElementById(id+'Menu'); if(!wrap||!menu)return;
+ const query=(q||'').toLowerCase().trim();
+ const items=(wrap._comboItems||[]).filter(x=>!query||x.name.toLowerCase().includes(query));
+ menu.innerHTML=items.length?items.map(x=>`<button type="button" class="combo-option" data-value="${esc(x.name)}">${esc(x.name)}</button>`).join(''):'<div class="combo-empty">No se encontraron resultados</div>';
+ menu.querySelectorAll('.combo-option').forEach(b=>b.onclick=()=>selectSearchCombo(id,b.dataset.value));
+}
+function openSearchCombo(id){
+ const wrap=document.getElementById(id+'Wrap'); if(!wrap)return;
+ wrap.classList.add('open'); renderSearchCombo(id,document.getElementById(id).value);
+}
+function filterSearchCombo(id){openSearchCombo(id)}
+function selectSearchCombo(id,name){
+ document.getElementById(id).value=name;
+ document.getElementById(id+'Wrap').classList.remove('open');
+}
+function initAttendanceResponsibilityCombos(){
+ initSearchCombo('amSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})));
+ initSearchCombo('aaSearch',db.activities.map(a=>({id:a.id,name:a.name})));
+ initSearchCombo('rmSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})));
+ initSearchCombo('raSearch',db.activities.map(a=>({id:a.id,name:a.name})));
+ document.querySelectorAll('.search-combo').forEach(w=>{
+   if(!w._outsideBound){w._outsideBound=true;document.addEventListener('click',e=>{if(!w.contains(e.target))w.classList.remove('open')})}
+ });
+}
+
+function modal(html){
+ document.getElementById('modalBox').innerHTML=html;
+ document.getElementById('modal').classList.add('open');
+ setTimeout(initAttendanceResponsibilityCombos,0);
+}
 function closeModal(){document.getElementById('modal').classList.remove('open')}
 document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!document.querySelector('.authbox'))closeModal()});
 
@@ -621,7 +709,7 @@ function openAttendanceModal(_,mid=''){
  const activities=db.activities.map(a=>`<option value="${esc(a.name)}">${esc(days[a.day]||'')} ${esc(a.time||'')}</option>`).join('');
  const selectedMus=db.musicians.find(m=>m.id===mid);
  modal(`<div class="modalhead"><h2>Registrar asistencia</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
- <div class="field"><label>Músico *</label><input id="amSearch" list="amList" placeholder="Buscar músico por nombre..." value="${esc(selectedMus?selectedMus.first+' '+selectedMus.last:'')}" autocomplete="off"><datalist id="amList">${musicians}</datalist></div><div class="field"><label>Actividad *</label><input id="aaSearch" list="aaList" placeholder="Buscar actividad..." autocomplete="off"><datalist id="aaList">${activities}</datalist></div>
+ <div class="field"><label>Músico *</label>${searchableCombo('amSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})),'Buscar músico por nombre...',selectedMus?selectedMus.first+' '+selectedMus.last:'')}</div><div class="field"><label>Actividad *</label>${searchableCombo('aaSearch',db.activities.map(a=>({id:a.id,name:a.name})),'Buscar actividad...','')}</div>
  <div class="field"><label>Fecha *</label><input type="date" id="ad" value="${today()}"></div><div class="field"><label>Hora real de llegada</label><input type="time" id="at" value="${new Date().toTimeString().slice(0,5)}"></div>
  <div class="field"><label>Estado</label><select id="as"><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select></div>
  <div class="field"><label>Justificación / causa</label><select id="ar"><option value="">Sin justificación</option><option>Enfermedad</option><option>Trabajo</option><option>Estudio</option><option>Familia</option><option>Transporte</option><option>Otro</option></select></div>
@@ -661,7 +749,7 @@ function openResponsibilityModal(_,mid=''){
  const activities=db.activities.map(a=>`<option value="${esc(a.name)}"></option>`).join('');
  const selectedMus=db.musicians.find(m=>m.id===mid);
  modal(`<div class="modalhead"><h2>Asignar responsabilidad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
- <div class="field"><label>Músico *</label><input id="rmSearch" list="rmList" placeholder="Buscar músico por nombre..." value="${esc(selectedMus?selectedMus.first+' '+selectedMus.last:'')}" autocomplete="off"><datalist id="rmList">${musicians}</datalist></div><div class="field"><label>Actividad</label><input id="raSearch" list="raList" placeholder="Buscar actividad (opcional)..." autocomplete="off"><datalist id="raList">${activities}</datalist></div>
+ <div class="field"><label>Músico *</label>${searchableCombo('rmSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})),'Buscar músico por nombre...',selectedMus?selectedMus.first+' '+selectedMus.last:'')}</div><div class="field"><label>Actividad</label>${searchableCombo('raSearch',db.activities.map(a=>({id:a.id,name:a.name})),'Buscar actividad (opcional)...','')}</div>
  <div class="field"><label>Responsabilidad *</label><input id="rt" placeholder="Ej. Devocional para ensayo, palabra para ayuno..."></div><div class="field"><label>Fecha</label><input type="date" id="rd" value="${today()}"></div>
  <div class="field full"><label>Estado inicial</label><select id="rc"><option value="false">Pendiente / no cumplida</option><option value="true">Cumplida</option></select></div>
  <div class="full"><button class="btn primary" onclick="saveResp()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
@@ -748,6 +836,69 @@ document.getElementById('histDate').value='';
 renderAll();
 startAuth();
 if(window.lucide)lucide.createIcons();
+</script>
+
+<script id="chart-zoom-fullscreen-js">
+(function(){
+ function installZoom(root){
+   if(!root || root.dataset.zoomInstalled)return;
+   root.dataset.zoomInstalled="1";
+   root.classList.add("chart-fullscreen-wrap");
+
+   let area=root.querySelector(".chart-zoom-area");
+   if(!area){
+     const candidates=root.querySelectorAll("svg,canvas");
+     if(!candidates.length)return;
+     area=document.createElement("div");
+     area.className="chart-zoom-area";
+     const parent=candidates[0].parentElement;
+     parent.insertBefore(area,candidates[0]);
+     candidates.forEach(x=>area.appendChild(x));
+   }
+
+   const controls=document.createElement("div");
+   controls.className="zoom-controls";
+   controls.innerHTML=
+     '<button type="button" data-zminus title="Alejar">−</button>'+
+     '<span class="zoom-level">100%</span>'+
+     '<button type="button" data-zplus title="Acercar">+</button>'+
+     '<button type="button" data-zreset title="Restablecer">100%</button>'+
+     '<button type="button" data-zfs title="Pantalla completa">⛶ Pantalla completa</button>';
+   root.insertBefore(controls,root.firstChild);
+
+   let scale=1;
+   function apply(){
+     area.style.transform="scale("+scale+")";
+     area.style.transformOrigin="top left";
+     area.style.width=(100/scale)+"%";
+     controls.querySelector(".zoom-level").textContent=Math.round(scale*100)+"%";
+   }
+   controls.querySelector("[data-zplus]").onclick=()=>{
+     scale=Math.min(3,Math.round((scale+.25)*100)/100);apply();
+   };
+   controls.querySelector("[data-zminus]").onclick=()=>{
+     scale=Math.max(.5,Math.round((scale-.25)*100)/100);apply();
+   };
+   controls.querySelector("[data-zreset]").onclick=()=>{scale=1;apply()};
+   controls.querySelector("[data-zfs]").onclick=()=>{
+     root.classList.toggle("chart-fs");
+     controls.querySelector("[data-zfs]").textContent=root.classList.contains("chart-fs")?"✕ Salir":"⛶ Pantalla completa";
+     apply();
+   };
+   apply();
+ }
+
+ function scan(){
+   document.querySelectorAll("svg,canvas").forEach(el=>{
+     let root=el.closest(".card,.panel,.chart-card,.profile-chart,.chart-container");
+     if(root)installZoom(root);
+   });
+ }
+ window.addEventListener("load",()=>setTimeout(scan,300));
+ const obs=new MutationObserver(()=>setTimeout(scan,50));
+ obs.observe(document.body,{childList:true,subtree:true});
+ window.installChartZoom=installZoom;
+})();
 </script>
 </body>
 </html>
