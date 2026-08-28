@@ -99,6 +99,24 @@ img,svg,video,canvas{max-width:100%;height:auto}
 .profile-chart:-webkit-full-screen svg{width:100%;height:100%;max-width:none;max-height:none}
 .chart-fullscreen-btn{margin-left:auto;white-space:nowrap}
 @media(max-width:600px){.profile-chart:fullscreen{padding:8px}.profile-chart:-webkit-full-screen{padding:8px}.chart-fullscreen-btn{width:100%;margin-left:0}}
+
+/* ===== DETALLE DEL RANKING ===== */
+.ranking-detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.ranking-detail-card{background:#f8f9fc;border:1px solid var(--line);border-radius:12px;padding:12px}
+.ranking-detail-card h4{margin:0 0 7px;font-size:13px}
+.ranking-detail-card .big{font-size:24px;font-weight:900}
+.ranking-detail-list{display:grid;gap:7px;margin:8px 0 16px}
+.ranking-detail-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:9px 11px;border-radius:10px;background:#fafafa;border:1px solid var(--line)}
+.ranking-detail-row small{display:block;color:var(--muted);margin-top:2px}
+.ranking-detail-impact{border-radius:12px;padding:13px;margin:12px 0;border:1px solid var(--line);background:#fff}
+.ranking-detail-impact h4{margin:0 0 8px}
+.ranking-detail-good{color:var(--ok);font-weight:800}
+.ranking-detail-bad{color:var(--bad);font-weight:800}
+.ranking-detail-neutral{color:var(--muted);font-weight:800}
+.ranking-detail-formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#f4f6fb;border-radius:10px;padding:11px;overflow:auto;font-size:12px;line-height:1.55}
+.ranking-detail-compare{background:#eef4ff;border:1px solid #cfe0ff;border-radius:12px;padding:12px;margin:12px 0}
+@media(max-width:760px){.ranking-detail-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.ranking-detail-grid{grid-template-columns:1fr}.ranking-detail-row{flex-direction:column;gap:4px}}
 </style>
 <style>
 .topactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topactions .btn{background:#ffffff22;color:#fff;border:1px solid #ffffff44}.topactions .power{background:#fff;color:#542fb4}.authbox{width:min(440px,100%)}.authbox .brandmark{text-align:center;font-size:42px;margin:8px}.authbox p{color:var(--muted)}.authbox .btn{width:100%;margin-top:6px}.mobilehint{display:none}.spinner{width:42px;height:42px;margin:20px auto;border:5px solid #dbe5ff;border-top-color:#133478;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.welcome{text-align:center;padding:18px 4px}.welcome h2{margin-bottom:6px}
@@ -319,7 +337,7 @@ Ej.: 30 min antes = <span class="positive">+2.50</span> · 3 min antes = <span c
     </div>
   </div>
   <div class="toolbar"><select id="rankingOrder" onchange="renderRanking()"><option value="points">Ordenar por puntos</option><option value="grade">Ordenar por porcentaje</option><option value="none">Sin orden seleccionado</option></select></div>
-  <div class="card tablewrap"><table class="table"><thead><tr><th>Puesto</th><th>Músico</th><th>Asistencia</th><th>Llegadas</th><th>Responsabilidades</th><th>Puntos</th><th>Calificación</th></tr></thead><tbody id="rankingTable"></tbody></table></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Puesto</th><th>Músico</th><th>Asistencia</th><th>Llegadas</th><th>Responsabilidades</th><th>Puntos</th><th>Calificación</th><th>Detalle</th></tr></thead><tbody id="rankingTable"></tbody></table></div>
 </section>
 
 <section id="exportar" class="page">
@@ -471,9 +489,49 @@ function renderRanking(){
     <td>${p.responsibilitiesOk}/${p.responsibilities.length} cumplidas</td>
     <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${p.responsibilityPoints}</small></td>
     <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span></td>
+    <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td>
    </tr>`
- }).join(''):'<tr><td colspan="7" class="empty">Aún no hay músicos para calificar.</td></tr>'
+ }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>'
 }
+function openRankingDetail(id,position,order='points'){
+ const m=db.musicians.find(x=>x.id===id); if(!m)return;
+ const p=performance(id),c=counts(id),g=p.grade;
+ const baseAttendance=p.present*10+p.justifiedLate*7+p.justifiedAbsent*9-p.late*4-p.absent*10;
+ const early=p.attendance.filter(x=>{const d=minutesDiff(x.arrival,x.deadline||getDeadline(x.musicianId,x.activityId));return x.arrival&&d!==null&&d<0}).length;
+ const onTime=p.attendance.filter(x=>{const d=minutesDiff(x.arrival,x.deadline||getDeadline(x.musicianId,x.activityId));return x.arrival&&d===0}).length;
+ const lateArrival=p.attendance.filter(x=>{const d=minutesDiff(x.arrival,x.deadline||getDeadline(x.musicianId,x.activityId));return x.arrival&&d>0}).length;
+ const arrivalPositive=p.arrival>0?formatArrivalScore(p.arrival):'0.00';
+ const arrivalNegative=p.arrival<0?formatArrivalScore(Math.abs(p.arrival)):'0.00';
+ const respBad=p.responsibilities.length-p.responsibilitiesOk;
+ const factors=[];
+ if(p.absent)factors.push({label:`${p.absent} inasistencia(s) sin justificar`,value:`-${formatArrivalScore(p.absent*10)} pts`,detail:'Cada una resta 10 puntos de base.',bad:true});
+ if(p.late)factors.push({label:`${p.late} tardanza(s) sin justificar`,value:`-${formatArrivalScore(p.late*4)} pts base`,detail:'Cada una resta 4 puntos, además del ajuste por hora de llegada.',bad:true});
+ if(p.arrival<0)factors.push({label:`Llegadas tarde acumuladas`,value:`-${arrivalNegative} pts`,detail:'El horario resta hasta 5 puntos por registro según los minutos de retraso.',bad:true});
+ if(respBad)factors.push({label:`${respBad} responsabilidad(es) no cumplida(s)`,value:`-${formatArrivalScore(respBad*8)} pts`,detail:'Cada responsabilidad no cumplida resta 8 puntos.',bad:true});
+ if(!factors.length)factors.push({label:'No hay factores negativos de puntuación',value:'0.00 pts',detail:'El puntaje actual no tiene descuentos por estas categorías.',bad:false});
+ const positives=[];
+ if(p.present)positives.push({label:`${p.present} asistencia(s) puntual(es)`,value:`+${formatArrivalScore(p.present*10)} pts`,detail:'+10 puntos por asistencia.'});
+ if(p.justifiedLate)positives.push({label:`${p.justifiedLate} tardanza(s) justificada(s)`,value:`+${formatArrivalScore(p.justifiedLate*7)} pts`,detail:'+7 puntos base por cada una.'});
+ if(p.justifiedAbsent)positives.push({label:`${p.justifiedAbsent} inasistencia(s) justificada(s)`,value:`+${formatArrivalScore(p.justifiedAbsent*9)} pts`,detail:'Cuenta como cumplimiento y recibe +9 puntos.'});
+ if(p.arrival>0)positives.push({label:'Puntos positivos por llegada',value:`+${arrivalPositive} pts`,detail:`${early} llegada(s) temprano(s) · ${onTime} puntual(es) · ${lateArrival} tarde(s).`});
+ if(p.responsibilitiesOk)positives.push({label:`${p.responsibilitiesOk} responsabilidad(es) cumplida(s)`,value:`+${formatArrivalScore(p.responsibilitiesOk*12)} pts`,detail:'+12 puntos por cada responsabilidad cumplida.'});
+ const all=[...db.musicians].sort((a,b)=>{const pa=performance(a.id),pb=performance(b.id);return order==='grade'?pb.grade-pa.grade||pb.points-pa.points:pb.points-pa.points||pb.grade-pa.grade});
+ const realPos=all.findIndex(x=>x.id===id)+1;
+ const prev=realPos>1?all[realPos-2]:null;
+ const prevP=prev?performance(prev.id):null;
+ const compare=prev?`<div class="ranking-detail-compare"><b>Comparación con el puesto anterior</b><br>${esc(prev.first)} ${esc(prev.last)} tiene <b>${formatArrivalScore(prevP.points)} pts</b>. Este músico tiene <b>${formatArrivalScore(p.points)} pts</b>, una diferencia de <b class="${p.points>=prevP.points?'ranking-detail-good':'ranking-detail-bad'}">${p.points-prevP.points>=0?'+':''}${formatArrivalScore(p.points-prevP.points)} pts</b>.</div>`:'<div class="ranking-detail-compare"><b>Está en el primer puesto</b><br>No hay un músico por encima para comparar.</div>';
+ const list=(items)=>items.map(x=>`<div class="ranking-detail-row"><div><b>${esc(x.label)}</b><small>${esc(x.detail)}</small></div><span class="${x.bad?'ranking-detail-bad':'ranking-detail-good'}">${esc(x.value)}</span></div>`).join('');
+ modal(`<div class="modalhead"><h2><i data-lucide="trophy" class="icon"></i> Detalle del ranking</h2><button class="close" onclick="closeModal()">×</button></div>
+ <div class="person" style="margin:10px 0 15px"><div class="avatar">${avatar(m)}</div><div><h3 style="margin:0">${esc(m.first)} ${esc(m.last)}</h3><small style="color:var(--muted)">${esc(m.role||'Sin rol')} · Puesto #${realPos}</small></div></div>
+ ${compare}
+ <div class="ranking-detail-grid"><div class="ranking-detail-card"><h4>Puntaje total</h4><div class="big ${p.points<0?'ranking-detail-bad':'ranking-detail-good'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</div><small>Base ${formatArrivalScore(p.basePoints)} · Llegada ${formatArrivalScore(p.arrival)} · Responsabilidades ${formatArrivalScore(p.responsibilityPoints)}</small></div><div class="ranking-detail-card"><h4>Cumplimiento</h4><div class="big">${g}%</div><small>${p.attendanceOk} de ${p.attendance.length} asistencias cuentan · ${p.responsibilitiesOk}/${p.responsibilities.length} responsabilidades</small></div><div class="ranking-detail-card"><h4>Registros evaluados</h4><div class="big">${p.total}</div><small>${c.present} puntuales · ${c.late} tardanzas · ${c.absent} inasistencias</small></div></div>
+ <div class="ranking-detail-impact"><h4>⚠️ ¿Qué está afectando su posición?</h4>${list(factors)}</div>
+ <h3>Desglose que suma puntos</h3><div class="ranking-detail-list">${positives.length?list(positives):'<div class="empty">No hay puntos positivos registrados.</div>'}</div>
+ <h3>Fórmula del puntaje</h3><div class="ranking-detail-formula">Asistencia base: ${formatArrivalScore(baseAttendance)} pts<br>Hora de llegada: ${formatArrivalScore(p.arrival)} pts<br>Responsabilidades: ${formatArrivalScore(p.responsibilityPoints)} pts<br>────────────────────<br>Total: ${formatArrivalScore(p.points)} pts</div>
+ <div class="toolbar" style="margin-top:14px"><button class="btn primary" onclick="closeModal();openProfile('${id}')">Ver historial completo</button><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
+ if(window.lucide)lucide.createIcons();
+}
+
 function renderAll(){populateSelects();renderDashboard();renderMusicians();renderAttendance();renderActivities();renderResponsibilities();renderBirthdays();renderRanking();if(window.lucide)lucide.createIcons()}
 
 function searchableCombo(id,items,placeholder,selected=''){
