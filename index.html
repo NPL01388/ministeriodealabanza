@@ -861,22 +861,50 @@ function saveResp(){const musicianText=document.getElementById('rmSearch').value
 function toggleResp(id){const r=db.responsibilities.find(x=>x.id===id);r.done=!r.done;save()}
 function deleteResp(id){if(confirm('¿Eliminar responsabilidad?')){db.responsibilities=db.responsibilities.filter(x=>x.id!==id);save()}}
 function showFiltered(type){showPage('asistencia');document.getElementById('histStatus').value=type==='all'?'':type;renderAttendance()}
+function ruahXmlEsc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
+function ruahColName(n){let out='';while(n>0){let r=(n-1)%26;out=String.fromCharCode(65+r)+out;n=Math.floor((n-1)/26);}return out;}
+function ruahSheetXml(rows){
+ const headers=rows.length?Object.keys(rows[0]):['Datos'];
+ const all=[headers,...rows.map(r=>headers.map(h=>r[h]??''))];
+ return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+all.map((row,ri)=>'<row r="'+(ri+1)+'">'+row.map((v,ci)=>'<c r="'+ruahColName(ci+1)+(ri+1)+'" t="inlineStr"><is><t xml:space="preserve">'+ruahXmlEsc(v)+'</t></is></c>').join('')+'</row>').join('')+'</sheetData></worksheet>';
+}
+function ruahCrc32(bytes){let table=ruahCrc32.table;if(!table){table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xedb88320^(c>>>1)):(c>>>1);table[n]=c>>>0;}ruahCrc32.table=table;}let c=0xffffffff;for(const b of bytes)c=table[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
+function ruahU16(v){return new Uint8Array([v&255,(v>>>8)&255]);}
+function ruahU32(v){return new Uint8Array([v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255]);}
+function ruahConcat(parts){let len=parts.reduce((n,p)=>n+p.length,0),out=new Uint8Array(len),o=0;for(const p of parts){out.set(p,o);o+=p.length;}return out;}
+function ruahZip(files){
+ const enc=new TextEncoder(),local=[],central=[];let offset=0;
+ for(const f of files){const name=enc.encode(f.name),data=enc.encode(f.data),crc=ruahCrc32(data);const lh=ruahConcat([new Uint8Array([80,75,3,4,20,0,0,0,0,0,0,0,0,0]),ruahU32(crc),ruahU32(data.length),ruahU32(data.length),ruahU16(name.length),ruahU16(0),name,data]);local.push(lh);const ch=ruahConcat([new Uint8Array([80,75,1,2,20,0,20,0,0,0,0,0,0,0]),ruahU32(crc),ruahU32(data.length),ruahU32(data.length),ruahU16(name.length),ruahU16(0),ruahU16(0),ruahU16(0),ruahU16(0),ruahU32(0),ruahU32(offset),name]);central.push(ch);offset+=lh.length;}
+ const cd=ruahConcat(central),body=ruahConcat(local);const end=ruahConcat([new Uint8Array([80,75,5,6,0,0,0,0]),ruahU16(files.length),ruahU16(files.length),ruahU32(cd.length),ruahU32(body.length),ruahU16(0)]);return ruahConcat([body,cd,end]);
+}
+function ruahDownloadOfflineXlsx(sheets,filename){
+ const enc=new TextEncoder(),names=sheets.map((s,i)=>s.name||('Hoja'+(i+1))),safe=names.map((n,i)=>n.replace(/[\\\/:?*\[\]]/g,'').slice(0,31)||('Hoja'+(i+1)));
+ const overrides=safe.map((_,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('');
+ const files=[
+  {name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+overrides+'</Types>'},
+  {name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+  {name:'xl/workbook.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+safe.map((n,i)=>'<sheet name="'+ruahXmlEsc(n)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>'},
+  {name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+safe.map((_,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'</Relationships>'}
+ ];
+ sheets.forEach((s,i)=>files.push({name:'xl/worksheets/sheet'+(i+1)+'.xml',data:ruahSheetXml(s.rows)}));
+ const blob=new Blob([ruahZip(files)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
 function exportExcel(){
- if(typeof XLSX==='undefined')return alert('La librería de Excel no está disponible. Conéctate a internet y vuelve a intentarlo.');
- const wb=XLSX.utils.book_new();
  const musicians=db.musicians.map(m=>({ID:m.id,Nombre:m.first,Apellido:m.last,Rol:m.role,'Fecha nacimiento':m.birth,Edad:ageExact(m.birth),Teléfono:m.phone,Notas:m.notes}));
  const att=db.attendance.map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);const p=arrivalPoints(x);return {ID:x.id||'',Fecha:x.date,Actividad:a?.name||'',Músico:m?m.first+' '+m.last:'',Llegada:x.arrival,'Hora límite':x.deadline||getDeadline(x.musicianId,x.activityId)||'',Estado:x.status==='present'?'Asistencia':x.status==='late'?(isJustifiedLate(x)?'Tardanza justificada':'Tardanza'):(isJustifiedAbsent(x)?'Inasistencia justificada':'Inasistencia'),'Puntos llegada':p,Justificación:justificationText(x)}});
  const acts=db.activities.map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type}));
  const resp=db.responsibilities.map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);const d=db.musicians.find(z=>z.id===r.delegatedTo);return {ID:r.id||'',Fecha:r.date,Responsabilidad:r.title,Músico:m?m.first+' '+m.last:'',Actividad:a?.name||'',Delegada:r.delegatedTo?'Sí':'No','Delegada a':d?d.first+' '+d.last:'','Impacto responsable':r.delegatedTo?-2:(r.done?12:-8),'Impacto delegado':r.delegatedTo?(r.done?6:-4):0,Cumplida:r.done?'Sí':'No'}});
  const sp=[];db.musicians.forEach(m=>db.activities.forEach(a=>{let s=m.special?.[a.id];if(s?.enabled)sp.push({Músico:m.first+' '+m.last,Actividad:a.name,Día:days[a.day],'Hora normal':a.time,'Hora especial':s.time})}));
  const archived=(db.archivedActivities||[]).map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type,Archivada:a.archivedAt||''}));
- [['Músicos',musicians],['Asistencias',att],['Actividades',acts],['Actividades archivadas',archived],['Responsabilidades',resp],['Horarios especiales',sp]].forEach(([n,data])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),n));
- // Hoja técnica: conserva la base de datos completa para poder restaurarla en otro dispositivo.
+ const base=[['Músicos',musicians],['Asistencias',att],['Actividades',acts],['Actividades archivadas',archived],['Responsabilidades',resp],['Horarios especiales',sp]];
  const transferRows=[{VERSION:'RUAH_TRANSFER_2',DATOS_JSON:JSON.stringify({db,branding:getBranding()})}];
- XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(transferRows),'_RUAH_DATOS');
- if(wb.Workbook?.Sheets){const sh=wb.Workbook.Sheets.find(x=>x.name==='_RUAH_DATOS');if(sh)sh.Hidden=1;}
- XLSX.writeFile(wb,`Ruah_Transferencia_${today()}.xlsx`);
+ if(typeof XLSX!=='undefined'){
+  const wb=XLSX.utils.book_new();base.forEach(([n,data])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),n));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(transferRows),'_RUAH_DATOS');if(wb.Workbook?.Sheets){const sh=wb.Workbook.Sheets.find(x=>x.name==='_RUAH_DATOS');if(sh)sh.Hidden=1;}XLSX.writeFile(wb,`Ruah_Transferencia_${today()}.xlsx`);return;
+ }
+ // Modo sin conexión: genera un XLSX válido sin depender de la librería externa.
+ ruahDownloadOfflineXlsx([...base.map(([name,rows])=>({name,rows})),{name:'_RUAH_DATOS',rows:transferRows}],`Ruah_Transferencia_${today()}.xlsx`);
 }
+
 function importExcel(e){
  const f=e.target.files[0];if(!f)return;
  if(typeof XLSX==='undefined'){e.target.value='';return alert('La librería de Excel no está disponible. Conéctate a internet y vuelve a intentarlo.');}
