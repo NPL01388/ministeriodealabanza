@@ -467,7 +467,7 @@ function renderActivities(){document.getElementById('activityTable').innerHTML=d
 function renderResponsibilities(){
  const mid=document.getElementById('respMusician').value,st=document.getElementById('respStatus').value;
  let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
- document.getElementById('respTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.title)}</b></td><td>${esc(m?.first+' '+m?.last||'—')}</td><td>${esc(a?.name||'—')}</td><td>${r.done?'<span class="badge present">Cumplida</span>':'<span class="badge absent">No cumplida</span>'}</td><td><button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay responsabilidades.</td></tr>';
+ document.getElementById('respTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.title)}</b></td><td>${esc(m?.first+' '+m?.last||'—')}</td><td>${esc(a?.name||'—')}</td><td>${r.done?'<span class="badge present">Cumplida</span>':'<span class="badge absent">No cumplida</span>'}</td><td><button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button> <button class="btn" onclick="openResponsibilityEdit('${r.id}')">Editar</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay responsabilidades.</td></tr>';
 }
 function renderBirthdays(){
  const arr=[...db.musicians].filter(m=>m.birth).sort((a,b)=>birthdayDays(a)-birthdayDays(b));
@@ -489,7 +489,7 @@ function renderRanking(){
     <td>${p.responsibilitiesOk}/${p.responsibilities.length} cumplidas</td>
     <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${p.responsibilityPoints}</small></td>
     <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span></td>
-    <td><button class="btn ranking-detail-btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><svg class="icon ranking-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.06 12.35a1 1 0 0 1 0-.7C3.8 7.56 7.52 5 12 5s8.2 2.56 9.94 6.65a1 1 0 0 1 0 .7C20.2 16.44 16.48 19 12 19s-8.2-2.56-9.94-6.65Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg> Ver detalle</button></td>
+    <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td>
    </tr>`
  }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>'
 }
@@ -840,7 +840,7 @@ function exportExcel(){
  const musicians=db.musicians.map(m=>({ID:m.id,Nombre:m.first,Apellido:m.last,Rol:m.role,'Fecha nacimiento':m.birth,Edad:ageExact(m.birth),Teléfono:m.phone,Notas:m.notes}));
  const att=db.attendance.map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);const p=arrivalPoints(x);return {ID:x.id||'',Fecha:x.date,Actividad:a?.name||'',Músico:m?m.first+' '+m.last:'',Llegada:x.arrival,'Hora límite':x.deadline||getDeadline(x.musicianId,x.activityId)||'',Estado:x.status==='present'?'Asistencia':x.status==='late'?(isJustifiedLate(x)?'Tardanza justificada':'Tardanza'):(isJustifiedAbsent(x)?'Inasistencia justificada':'Inasistencia'),'Puntos llegada':p,Justificación:justificationText(x)}});
  const acts=db.activities.map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type}));
- const resp=db.responsibilities.map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);return {ID:r.id||'',Fecha:r.date,Responsabilidad:r.title,Músico:m?m.first+' '+m.last:'',Actividad:a?.name||'',Cumplida:r.done?'Sí':'No'}});
+ const resp=db.responsibilities.map(r=>{let m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);const d=db.musicians.find(z=>z.id===r.delegatedTo);return {ID:r.id||'',Fecha:r.date,Responsabilidad:r.title,Músico:m?m.first+' '+m.last:'',Actividad:a?.name||'',Delegada:r.delegatedTo?'Sí':'No','Delegada a':d?d.first+' '+d.last:'','Impacto responsable':r.delegatedTo?-2:(r.done?12:-8),'Impacto delegado':r.delegatedTo?(r.done?6:-4):0,Cumplida:r.done?'Sí':'No'}});
  const sp=[];db.musicians.forEach(m=>db.activities.forEach(a=>{let s=m.special?.[a.id];if(s?.enabled)sp.push({Músico:m.first+' '+m.last,Actividad:a.name,Día:days[a.day],'Hora normal':a.time,'Hora especial':s.time})}));
  const archived=(db.archivedActivities||[]).map(a=>({ID:a.id,Actividad:a.name,Día:days[a.day],'Hora límite':a.time,Tipo:a.type,Archivada:a.archivedAt||''}));
  [['Músicos',musicians],['Asistencias',att],['Actividades',acts],['Actividades archivadas',archived],['Responsabilidades',resp],['Horarios especiales',sp]].forEach(([n,data])=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),n));
@@ -1013,9 +1013,579 @@ function calculateArrivalPointsForMusician(musicianId, records){
 </script>
 
 
-<style id="ranking-detail-eye-style">
-.ranking-detail-btn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-.ranking-detail-btn .ranking-eye{width:18px;height:18px;display:block;flex:0 0 18px}
+<style id="attendance-delegation-mods">
+.attendance-session{background:#eef6ff;border:1px solid #cfe0ff;border-radius:12px;padding:12px;margin-bottom:12px}
+.attendance-session strong{display:block;margin-bottom:4px}
+.delegation-box{border:1px solid #dbe3ec;border-radius:12px;padding:12px;background:#f8fafc}
+.delegation-box .checkrow{padding:4px 0}
+.delegation-note{font-size:12px;color:var(--muted);margin-top:5px}
+.delegated{background:#eef4ff;color:#285bb5}
 </style>
+
+<script id="attendance-delegation-mods-js">
+/* ===== MODIFICACIONES: asistencia sin duplicados + edición de historial + delegación ===== */
+window._attendanceSession = window._attendanceSession || null;
+
+function attendanceAlreadyRegistered(musicianId, activityId, date, ignoreId=''){
+  return db.attendance.some(x=>x.musicianId===musicianId && x.activityId===activityId && x.date===date && x.id!==ignoreId);
+}
+function pendingAttendanceMusicians(activityId,date,ignoreId=''){
+  return db.musicians.filter(m=>!attendanceAlreadyRegistered(m.id,activityId,date,ignoreId));
+}
+function refreshAttendanceSession(){
+  const sess=window._attendanceSession;
+  if(!sess)return;
+  const pending=pendingAttendanceMusicians(sess.activityId,sess.date);
+  const input=document.getElementById('amSearch');
+  const wrap=document.getElementById('amSearchWrap');
+  const info=document.getElementById('attendancePendingInfo');
+  if(input&&wrap){
+    initSearchCombo('amSearch',pending.map(m=>({id:m.id,name:m.first+' '+m.last})));
+    input.value='';
+  }
+  if(info){
+    info.innerHTML=pending.length
+      ? `<b>${pending.length}</b> músico(s) pendientes de registrar para esta actividad y fecha.`
+      : `<b>Todos los músicos ya tienen registro.</b> Puedes finalizar esta asistencia.`;
+  }
+  const saveBtn=document.getElementById('attendanceSaveBtn');
+  if(saveBtn)saveBtn.disabled=!pending.length;
+}
+function finishAttendanceSession(){
+  window._attendanceSession=null;
+  closeModal();
+}
+function openAttendanceModal(_,mid='',editId=''){
+  const editing=editId?db.attendance.find(x=>x.id===editId):null;
+  const date=editing?.date||today();
+  const activity=editing?getActivity(editing.activityId):null;
+  const selectedMus=db.musicians.find(m=>m.id===(editing?.musicianId||mid));
+  let pending=editing ? db.musicians : pendingAttendanceMusicians('',date);
+
+  modal(`<div class="modalhead"><h2>${editing?'Editar asistencia':'Registrar asistencia'}</h2><button class="close" onclick="${editing?'closeModal()':'finishAttendanceSession()'}">×</button></div>
+  ${!editing?`<div id="attendanceSessionBox" class="attendance-session"><strong>Registro inteligente</strong><div id="attendancePendingInfo">Selecciona una actividad y una fecha para ver los músicos pendientes.</div><div class="delegation-note">Después de guardar un músico, su nombre desaparece de esta lista para evitar registros duplicados. Puedes corregir cualquier registro desde el historial.</div></div>`:''}
+  <div class="formgrid">
+   <div class="field"><label>Músico *</label>${searchableCombo('amSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})),'Buscar músico por nombre...',selectedMus?selectedMus.first+' '+selectedMus.last:'')}</div>
+   <div class="field"><label>Actividad *</label>${searchableCombo('aaSearch',db.activities.map(a=>({id:a.id,name:a.name})),'Buscar actividad...',activity?.name||'')}</div>
+   <div class="field"><label>Fecha *</label><input type="date" id="ad" value="${date}"></div>
+   <div class="field"><label>Hora real de llegada</label><input type="time" id="at" value="${editing?.arrival||new Date().toTimeString().slice(0,5)}"></div>
+   <div class="field"><label>Estado</label><select id="as">
+    <option value="present" ${editing?.status==='present'?'selected':''}>Asistencia</option>
+    <option value="late" ${editing?.status==='late'?'selected':''}>Tardanza</option>
+    <option value="absent" ${editing?.status==='absent'?'selected':''}>Inasistencia</option>
+   </select></div>
+   <div class="field"><label>Justificación / causa</label><select id="ar">
+    <option value="" ${!editing?.reason?'selected':''}>Sin justificación</option>
+    ${['Enfermedad','Trabajo','Estudio','Familia','Transporte','Otro'].map(x=>`<option ${editing?.reason===x?'selected':''}>${x}</option>`).join('')}
+   </select></div>
+   <div class="field full"><label>Justificación personalizada / detalle</label><textarea id="an" placeholder="Escribe aquí la justificación.">${esc(editing?.notes||'')}</textarea>
+    <small>Una inasistencia con causa o detalle se considera justificada: cuenta en el porcentaje y recibe +9 puntos en vez de -10.</small>
+   </div>
+   <div class="full"><button type="button" class="btn warn" onclick="autoStatus()">⏱️ Calcular estado por hora</button>
+   <button type="button" id="attendanceSaveBtn" class="btn primary" onclick="saveAttendance('${editId||''}')">${editing?'Guardar cambios':'Registrar músico'}</button>
+   ${editing?'<button type="button" class="btn" onclick="closeModal()">Cancelar</button>':'<button type="button" class="btn ok" onclick="finishAttendanceSession()">✓ Finalizar asistencia</button>'}
+   <p id="deadlineInfo" style="color:var(--muted)"></p></div>
+  </div>`);
+  if(editing){
+    document.getElementById('ad').onchange=updateDeadline;
+  }else{
+    window._attendanceSession={date,activityId:activity?.id||''};
+  }
+  const originalUpdate=window.updateDeadline;
+  /* Los combos de búsqueda usan amSearch/aaSearch, no am/aa. */
+  window.updateDeadline=function(){
+    const midText=document.getElementById('amSearch')?.value.trim()||'';
+    const aidText=document.getElementById('aaSearch')?.value.trim()||'';
+    const mid=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===midText.toLowerCase())?.id||'';
+    const aid=db.activities.find(a=>a.name.toLowerCase()===aidText.toLowerCase())?.id||'';
+    if(window._attendanceSession&&!editing){
+      window._attendanceSession.activityId=aid;
+      window._attendanceSession.date=document.getElementById('ad')?.value||today();
+      refreshAttendanceSession();
+    }
+    const dl=getDeadline(mid,aid),info=document.getElementById('deadlineInfo');
+    if(info)info.textContent=`Hora límite aplicable: ${dl||'—'}${mSpecial(mid,aid)?' (horario especial autorizado)':''}`;
+    if(dl)autoStatus();
+  };
+  const ad=document.getElementById('ad'), at=document.getElementById('at');
+  if(ad)ad.onchange=()=>window.updateDeadline();
+  if(at)at.onchange=autoStatus;
+  const aa=document.getElementById('aaSearch'),am=document.getElementById('amSearch');
+  if(aa)aa.oninput=()=>window.updateDeadline();
+  if(am)am.oninput=()=>window.updateDeadline();
+  setTimeout(()=>{
+    if(editing)window.updateDeadline();
+    else{
+      if(activity?.id)window._attendanceSession.activityId=activity.id;
+      refreshAttendanceSession();
+      window.updateDeadline();
+    }
+  },0);
+}
+function saveAttendance(editId=''){
+  const musicianText=document.getElementById('amSearch')?.value.trim()||'';
+  const activityText=document.getElementById('aaSearch')?.value.trim()||'';
+  const musician=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===musicianText.toLowerCase());
+  const activity=db.activities.find(a=>a.name.toLowerCase()===activityText.toLowerCase());
+  const musicianId=musician?.id||'',activityId=activity?.id||'',date=document.getElementById('ad')?.value||'';
+  const reason=document.getElementById('ar')?.value||'',notes=document.getElementById('an')?.value.trim()||'';
+  if(!musicianId||!activityId||!date)return alert('Selecciona un músico y una actividad válidos, y completa la fecha.');
+  if(reason==='Otro'&&!notes)return alert('Escribe la justificación personalizada.');
+  if(!editId && attendanceAlreadyRegistered(musicianId,activityId,date))return alert('Este músico ya tiene un registro para esta actividad y fecha. Puedes editarlo desde el historial.');
+  const status=document.getElementById('as').value,arrival=status==='absent'?'':(document.getElementById('at')?.value||'');
+  const deadline=getDeadline(musicianId,activityId)||'';
+  const data={musicianId,activityId,date,arrival,deadline,status,reason,notes};
+  if(editId){
+    const row=db.attendance.find(x=>x.id===editId);
+    if(!row)return alert('No se encontró el registro.');
+    Object.assign(row,data);
+    closeModal();save();
+    if(window._profileHist)window._profileHist=db.attendance.filter(x=>x.musicianId===row.musicianId).sort((a,b)=>b.date.localeCompare(a.date));
+    return;
+  }
+  db.attendance.push({id:uid('att'),...data});
+  /* Mantener el modal abierto: el músico registrado desaparece de la lista. */
+  if(window._attendanceSession){
+    window._attendanceSession.activityId=activityId;
+    window._attendanceSession.date=date;
+  }
+  save();
+  refreshAttendanceSession();
+  document.getElementById('amSearch').value='';
+  document.getElementById('at').value=new Date().toTimeString().slice(0,5);
+  document.getElementById('as').value='present';
+  document.getElementById('ar').value='';
+  document.getElementById('an').value='';
+  updateDeadline();
+  alert(`Asistencia de ${musician.first} ${musician.last} registrada. El músico fue retirado de la lista.`);
+}
+function openAttendanceEdit(id){
+  openAttendanceModal('', '', id);
+}
+function renderAttendance(){
+  const date=document.getElementById('histDate')?.value||'',status=document.getElementById('histStatus')?.value||'',act=document.getElementById('histActivity')?.value||'',q=(document.getElementById('histSearch')?.value||'').toLowerCase();
+  let arr=db.attendance.filter(x=>(!date||x.date===date)&&(!status||x.status===status)&&(!act||x.activityId===act));
+  arr=arr.filter(x=>{const m=db.musicians.find(z=>z.id===x.musicianId);return m&&(m.first+' '+m.last).toLowerCase().includes(q)});
+  document.getElementById('attendanceTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
+    const m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);
+    return `<tr><td>${fmtDate(x.date)}</td><td>${esc(a?.name||'—')}</td><td><b>${esc(m?.first+' '+m?.last||'Eliminado')}</b></td><td>${esc(x.arrival||'—')}</td><td>${statusBadge(x)}</td><td>${esc(justificationText(x))}</td>
+    <td><button class="btn" onclick="openAttendanceEdit('${x.id}')">Editar</button> <button class="btn danger" onclick="deleteAttendance('${x.id}')">Eliminar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="7" class="empty">No hay registros con estos filtros.</td></tr>';
+}
+function filterProfileHist(id){
+  const st=document.getElementById('pfStatus')?.value||'',dt=document.getElementById('pfDate')?.value||'';
+  let arr=window._profileHist||[];
+  arr=arr.filter(x=>(!st||x.status===st)&&(!dt||x.date===dt));
+  document.getElementById('profileHist').innerHTML=arr.length?arr.map(x=>{
+    const a=getActivity(x.activityId);
+    return `<div class="item" style="margin-bottom:7px"><b>${fmtDate(x.date)} · ${esc(a?.name||'—')}</b> ${statusBadge(x)}<br>Hora: ${esc(x.arrival||'—')} · ${esc(justificationText(x))}
+    <br><button class="btn" style="margin-top:6px" onclick="openAttendanceEdit('${x.id}')">Editar asistencia</button></div>`;
+  }).join(''):'<div class="empty">No hay registros para este filtro.</div>';
+}
+
+/* Puntuación de delegación:
+   - El responsable original recibe -2 pts por delegar (en lugar de +12).
+   - El músico delegado recibe +6 pts si cumple; si no cumple, -4 pts.
+   - La responsabilidad sigue apareciendo en el historial del responsable original.
+*/
+function responsibilityScoreForMusician(mId){
+  let total=0, ownDone=0, ownCount=0, delegatedInDone=0, delegatedInCount=0;
+  db.responsibilities.forEach(r=>{
+    const delegatedTo=r.delegatedTo||'';
+    if(r.musicianId===mId){
+      ownCount++;
+      if(delegatedTo){
+        total+=-2;
+        if(r.done)ownDone++;
+      }else{
+        total+=r.done?12:-8;
+        if(r.done)ownDone++;
+      }
+    }
+    if(delegatedTo===mId){
+      delegatedInCount++;
+      total+=r.done?6:-4;
+      if(r.done)delegatedInDone++;
+    }
+  });
+  return {total,ownDone,ownCount,delegatedInDone,delegatedInCount};
+}
+function performance(mId){
+  const attendance=db.attendance.filter(x=>x.musicianId===mId);
+  const responsibilities=db.responsibilities.filter(x=>x.musicianId===mId);
+  const delegatedIn=db.responsibilities.filter(x=>(x.delegatedTo||'')===mId);
+  const present=attendance.filter(x=>x.status==='present').length;
+  const justifiedLate=attendance.filter(isJustifiedLate).length;
+  const late=attendance.filter(x=>x.status==='late'&&!isJustifiedLate(x)).length;
+  const absent=attendance.filter(x=>x.status==='absent'&&!isJustifiedAbsent(x)).length;
+  const justifiedAbsent=attendance.filter(isJustifiedAbsent).length;
+  const attendanceOk=present+justifiedLate+justifiedAbsent;
+  const ownOk=responsibilities.filter(x=>x.done).length;
+  const delegatedOk=delegatedIn.filter(x=>x.done).length;
+  const total=attendance.length+responsibilities.length+delegatedIn.length;
+  const basePoints=present*10+justifiedLate*7+justifiedAbsent*9-late*4-absent*10;
+  const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
+  const responsibilityData=responsibilityScoreForMusician(mId);
+  const responsibilityPoints=responsibilityData.total;
+  /* Para porcentaje: una delegación cumplida cuenta como cumplimiento para el delegado;
+     para el responsable original, la delegación también conserva su registro como gestionado. */
+  const compliance=attendanceOk+ownOk+delegatedOk;
+  const points=basePoints+arrival+responsibilityPoints;
+  return {attendance,responsibilities,delegatedIn,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk:ownOk,total,basePoints,arrival,responsibilityPoints,points,grade:total?Math.round(compliance/total*100):0,delegatedInDone:delegatedOk,delegatedInCount:delegatedIn.length};
+}
+function renderResponsibilities(){
+  const mid=document.getElementById('respMusician')?.value||'',st=document.getElementById('respStatus')?.value||'';
+  let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
+  document.getElementById('respTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>{
+    const m=db.musicians.find(z=>z.id===r.musicianId),d=db.musicians.find(z=>z.id===r.delegatedTo),a=getActivity(r.activityId);
+    const delegation=d?`<span class="badge delegated">Delegada a ${esc(d.first+' '+d.last)}</span>`:'';
+    return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.title)}</b><br>${delegation}</td><td>${esc(m?.first+' '+m?.last||'—')}</td><td>${esc(a?.name||'—')}</td><td>${r.done?'<span class="badge present">Cumplida</span>':'<span class="badge absent">No cumplida</span>'}</td>
+    <td><button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button> <button class="btn" onclick="openResponsibilityEdit('${r.id}')">Editar</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button></td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty">No hay responsabilidades.</td></tr>';
+}
+function openResponsibilityModal(_,mid='',editId=''){
+  const editing=editId?db.responsibilities.find(x=>x.id===editId):null;
+  const selectedMus=db.musicians.find(m=>m.id===(editing?.musicianId||mid));
+  const selectedDel=db.musicians.find(m=>m.id===editing?.delegatedTo);
+  const selectedAct=getActivity(editing?.activityId);
+  modal(`<div class="modalhead"><h2>${editing?'Editar':'Asignar'} responsabilidad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+   <div class="field"><label>Músico responsable *</label>${searchableCombo('rmSearch',db.musicians.map(m=>({id:m.id,name:m.first+' '+m.last})),'Buscar músico por nombre...',selectedMus?selectedMus.first+' '+selectedMus.last:'')}</div>
+   <div class="field"><label>Actividad</label>${searchableCombo('raSearch',db.activities.map(a=>({id:a.id,name:a.name})),'Buscar actividad (opcional)...',selectedAct?.name||'')}</div>
+   <div class="field"><label>Responsabilidad *</label><input id="rt" value="${esc(editing?.title||'')}" placeholder="Ej. Devocional para ensayo"></div>
+   <div class="field"><label>Fecha</label><input type="date" id="rd" value="${editing?.date||today()}"></div>
+   <div class="field full delegation-box">
+     <div class="checkrow"><input type="checkbox" id="rdelegated" ${editing?.delegatedTo?'checked':''} onchange="toggleDelegationFields()"> <label for="rdelegated"><b>El músico no puede realizarla y delega la responsabilidad</b></label></div>
+     <div id="delegationFields" style="${editing?.delegatedTo?'':'display:none'}">
+       <div class="field" style="margin-top:8px"><label>Delegar a *</label>${searchableCombo('rdSearch',db.musicians.filter(m=>m.id!==(editing?.musicianId||mid)).map(m=>({id:m.id,name:m.first+' '+m.last})),'Buscar músico que asumirá la responsabilidad...',selectedDel?selectedDel.first+' '+selectedDel.last:'')}</div>
+       <div class="delegation-note">El responsable original recibirá un pequeño ajuste por delegar y el músico que recibe la responsabilidad tendrá un ajuste en su ranking según la cumpla o no.</div>
+     </div>
+   </div>
+   <div class="field full"><label>Estado inicial</label><select id="rc"><option value="false" ${!editing?.done?'selected':''}>Pendiente / no cumplida</option><option value="true" ${editing?.done?'selected':''}>Cumplida</option></select></div>
+   <div class="full"><button class="btn primary" onclick="saveResp('${editId||''}')">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+  setTimeout(()=>initSearchCombo('rdSearch',db.musicians.filter(m=>m.id!==(editing?.musicianId||mid)).map(m=>({id:m.id,name:m.first+' '+m.last}))),0);
+}
+function toggleDelegationFields(){
+  const checked=document.getElementById('rdelegated')?.checked;
+  const box=document.getElementById('delegationFields');
+  if(box)box.style.display=checked?'block':'none';
+}
+function saveResp(editId=''){
+  const musicianText=document.getElementById('rmSearch')?.value.trim()||'';
+  const activityText=document.getElementById('raSearch')?.value.trim()||'';
+  const delText=document.getElementById('rdSearch')?.value.trim()||'';
+  const musician=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===musicianText.toLowerCase());
+  const activity=activityText?db.activities.find(a=>a.name.toLowerCase()===activityText.toLowerCase()):null;
+  const delegated=document.getElementById('rdelegated')?.checked;
+  const delegate=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===delText.toLowerCase());
+  const title=document.getElementById('rt').value.trim(),date=document.getElementById('rd').value,done=document.getElementById('rc').value==='true';
+  if(!musician||!title)return alert('Selecciona un músico válido y escribe la responsabilidad.');
+  if(activityText&&!activity)return alert('Selecciona una actividad válida de la lista.');
+  if(delegated&&(!delegate||delegate.id===musician.id))return alert('Selecciona a otro músico que recibirá la responsabilidad.');
+  const data={musicianId:musician.id,title,activityId:activity?.id||'',date,done,delegatedTo:delegated?delegate.id:'',delegatedAt:delegated?new Date().toISOString():'',delegationStatus:delegated?'delegated':''};
+  if(editId){
+    const row=db.responsibilities.find(x=>x.id===editId);if(!row)return;
+    Object.assign(row,data);
+  }else db.responsibilities.push({id:uid('r'),...data});
+  closeModal();save();
+}
+function openResponsibilityEdit(id){openResponsibilityModal('', '', id);}
+
+/* Ranking: añade delegaciones al detalle y a la tabla sin perder las funciones existentes. */
+function renderRanking(){
+  const order=document.getElementById('rankingOrder')?.value||'points',arr=[...db.musicians];
+  if(order!=='none')arr.sort((a,b)=>{const pa=performance(a.id),pb=performance(b.id);return order==='grade'?pb.grade-pa.grade||pb.points-pa.points||pb.total-pa.total:pb.points-pa.points||pb.grade-pa.grade||pb.total-pa.total||(a.first+' '+a.last).localeCompare(b.first+' '+b.last)});
+  document.getElementById('rankingTable').innerHTML=arr.length?arr.map((m,i)=>{
+    const p=performance(m.id),c=counts(m.id),g=p.grade,delIn=p.delegatedInCount||0,delDone=p.delegatedInDone||0;
+    const llegadaClass=p.arrival>0?'positive':p.arrival<0?'negative':'zero';
+    return `<tr><td><b>${order==='none'?'—':'#'+(i+1)}</b></td>
+    <td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div></div></td>
+    <td><span class="status-dot present"></span> ${c.present} puntuales<br><span class="status-dot late"></span> ${c.late} tardanzas · ${c.justifiedLate} tard. justif.<br><span class="status-dot absent"></span> ${c.absent} inasist. · ${c.justifiedAbsent} inasist. justif.</td>
+    <td><b class="${llegadaClass}">${p.arrival>0?'+':''}${formatArrivalScore(p.arrival)} pts</b><br><small>puntaje por hora</small></td>
+    <td>${p.responsibilitiesOk}/${p.responsibilities.length} propias<br><small>${delIn} delegada(s) recibida(s) · ${delDone} cumplida(s)</small></td>
+    <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${formatArrivalScore(p.responsibilityPoints)}</small></td>
+    <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span></td>
+    <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>';
+  if(window.lucide)lucide.createIcons();
+}
+function renderRankingLegendDelegation(){
+  const legend=document.querySelector('#calificacion .scorelegend');
+  if(legend&&!document.getElementById('delegationScoreLegend')){
+    legend.insertAdjacentHTML('beforeend',`<div class="scoreitem" id="delegationScoreLegend"><b>🔄 Responsabilidad delegada</b><small>Responsable original: <span class="negative">-2 pts</span> por delegar. Músico que recibe: <span class="positive">+6 pts</span> si la cumple o <span class="negative">-4 pts</span> si no la cumple.</small></div>`);
+  }
+}
+
+/* Parche del detalle del ranking: conservar el detalle original y añadir delegaciones. */
+const __originalOpenRankingDetail=window.openRankingDetail;
+window.openRankingDetail=function(id,position,order='points'){
+  __originalOpenRankingDetail(id,position,order);
+  setTimeout(()=>{
+    const m=db.musicians.find(x=>x.id===id);if(!m)return;
+    const p=performance(id);
+    const rows=[];
+    db.responsibilities.filter(r=>r.musicianId===id&&r.delegatedTo).forEach(r=>{
+      const d=db.musicians.find(x=>x.id===r.delegatedTo);
+      rows.push(`<div class="ranking-detail-row"><div><b>Responsabilidad delegada</b><small>${esc(r.title)} · ${fmtDate(r.date)} · Delegada a ${esc(d?d.first+' '+d.last:'Músico')}</small></div><span class="ranking-detail-bad">-2.00 pts</span></div>`);
+    });
+    db.responsibilities.filter(r=>r.delegatedTo===id).forEach(r=>{
+      const owner=db.musicians.find(x=>x.id===r.musicianId);
+      rows.push(`<div class="ranking-detail-row"><div><b>Responsabilidad recibida por delegación</b><small>${esc(r.title)} · ${fmtDate(r.date)} · De ${esc(owner?owner.first+' '+owner.last:'Músico')}</small></div><span class="${r.done?'ranking-detail-good':'ranking-detail-bad'}">${r.done?'+6.00':'-4.00'} pts</span></div>`);
+    });
+    if(rows.length){
+      const box=document.querySelector('#modalBox .ranking-detail-impact');
+      if(box)box.insertAdjacentHTML('afterend',`<div class="ranking-detail-impact"><h4>🔄 Delegaciones</h4><div class="ranking-detail-list">${rows.join('')}</div></div>`);
+    }
+  },30);
+};
+
+
+/* Al elegir una opción del buscador de asistencia, recalculamos sin borrar la selección.
+   Solo cambiar la actividad/fecha reconstruye la lista de pendientes. */
+const __oldSelectSearchCombo=window.selectSearchCombo;
+window.selectSearchCombo=function(id,name){
+  __oldSelectSearchCombo(id,name);
+  if(window._attendanceSession && typeof window.updateDeadline==='function'){
+    if(id==='aaSearch') window.updateDeadline();
+    else if(id==='amSearch'){
+      const info=document.getElementById('deadlineInfo');
+      const mid=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===name.toLowerCase())?.id||'';
+      const aid=db.activities.find(a=>a.name.toLowerCase()===(document.getElementById('aaSearch')?.value||'').trim().toLowerCase())?.id||'';
+      const dl=getDeadline(mid,aid);
+      if(info)info.textContent=`Hora límite aplicable: ${dl||'—'}${mSpecial(mid,aid)?' (horario especial autorizado)':''}`;
+      if(dl)autoStatus();
+    }
+  }
+};
+
+/* Exportar delegaciones dentro del respaldo técnico ya funciona porque el objeto db completo se conserva. */
+setTimeout(()=>{
+  renderRankingLegendDelegation();
+  if(typeof renderAll==='function')renderAll();
+  renderRankingLegendDelegation();
+},50);
+</script>
+
+<style id="final-request-mods">
+/* Botones compactos y estables en cualquier tamaño de pantalla */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box;flex:0 0 auto;white-space:nowrap;word-break:normal;overflow-wrap:normal;line-height:1.15}
+.toolbar .btn{flex:0 0 auto}
+.table td .btn{min-width:92px;padding:8px 10px;font-size:13px;white-space:nowrap}
+@media(max-width:700px){
+  .toolbar{align-items:stretch}
+  .toolbar .btn{width:auto;max-width:none;flex:0 0 auto}
+  .pagehead{gap:10px;flex-wrap:wrap}
+  .pagehead>.btn{width:auto;flex:0 0 auto}
+  .table td .btn{min-width:88px;padding:7px 8px;font-size:12px}
+}
+@media(max-width:430px){
+  .table td .btn{min-width:80px;padding:7px 6px;font-size:11px}
+}
+.delegation-completed{background:#f1f5f9;color:#64748b}
+.trend-up{color:#16803c;font-weight:900;white-space:nowrap}
+.trend-down{color:#c62828;font-weight:900;white-space:nowrap}
+.trend-flat{color:#64748b;font-weight:800;white-space:nowrap}
+.trend-box{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:4px 7px;border-radius:999px;background:#f8fafc;font-size:12px}
+.trend-box small{font-weight:600;color:#64748b}
+</style>
+<script id="final-request-logic">
+/* =========================================================
+   DELEGACIONES: una responsabilidad delegada se cierra para
+   el músico original y se crea automáticamente para el nuevo.
+   ========================================================= */
+function ensureDelegationChildren(){
+  if(!Array.isArray(db.responsibilities)) db.responsibilities=[];
+  const originals=db.responsibilities.filter(r=>r.delegatedTo && !r.delegatedFrom);
+  originals.forEach(r=>{
+    let child=db.responsibilities.find(x=>x.delegatedFrom===r.id);
+    const delegateId=r.delegatedTo;
+    if(!delegateId)return;
+    if(!child){
+      child={id:uid('r'),musicianId:delegateId,title:r.title,activityId:r.activityId||'',date:r.date,done:false,delegatedFrom:r.id,delegationReceived:true,delegatedAt:r.delegatedAt||new Date().toISOString()};
+      db.responsibilities.push(child);
+    }else{
+      child.musicianId=delegateId;child.title=r.title;child.activityId=r.activityId||'';child.date=r.date;child.delegationReceived=true;
+    }
+  });
+}
+
+function performance(mId){
+  ensureDelegationChildren();
+  const attendance=db.attendance.filter(x=>x.musicianId===mId);
+  const own=db.responsibilities.filter(x=>x.musicianId===mId&&!x.delegatedTo&&!x.delegatedFrom);
+  const delegatedIn=db.responsibilities.filter(x=>x.delegatedFrom && x.musicianId===mId);
+  const delegatedOut=db.responsibilities.filter(x=>x.musicianId===mId&&x.delegatedTo&&!x.delegatedFrom);
+  const present=attendance.filter(x=>x.status==='present').length;
+  const justifiedLate=attendance.filter(isJustifiedLate).length;
+  const late=attendance.filter(x=>x.status==='late'&&!isJustifiedLate(x)).length;
+  const absent=attendance.filter(x=>x.status==='absent'&&!isJustifiedAbsent(x)).length;
+  const justifiedAbsent=attendance.filter(isJustifiedAbsent).length;
+  const attendanceOk=present+justifiedLate+justifiedAbsent;
+  const ownOk=own.filter(x=>x.done).length;
+  const delegatedOk=delegatedIn.filter(x=>x.done).length;
+  const total=attendance.length+own.length+delegatedIn.length;
+  const basePoints=present*10+justifiedLate*7+justifiedAbsent*9-late*4-absent*10;
+  const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
+  const ownPoints=own.reduce((sum,x)=>sum+(x.done?12:-8),0);
+  const delegationOutPoints=delegatedOut.length*-2;
+  const delegationInPoints=delegatedIn.reduce((sum,x)=>sum+(x.done?6:-4),0);
+  const responsibilityPoints=ownPoints+delegationOutPoints+delegationInPoints;
+  const compliance=attendanceOk+ownOk+delegatedOk;
+  const points=basePoints+arrival+responsibilityPoints;
+  return {attendance,responsibilities:own,delegatedIn,delegatedOut,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk:ownOk,total,basePoints,arrival,responsibilityPoints,points,grade:total?Math.round(compliance/total*100):0,delegatedInDone:delegatedOk,delegatedInCount:delegatedIn.length};
+}
+
+function periodPerformance(mId,year,month){
+  ensureDelegationChildren();
+  const prefix=String(year)+'-'+String(month).padStart(2,'0');
+  const attendance=db.attendance.filter(x=>x.musicianId===mId&&String(x.date||'').startsWith(prefix));
+  const own=db.responsibilities.filter(x=>x.musicianId===mId&&!x.delegatedTo&&!x.delegatedFrom&&String(x.date||'').startsWith(prefix));
+  const delegatedIn=db.responsibilities.filter(x=>x.musicianId===mId&&x.delegatedFrom&&String(x.date||'').startsWith(prefix));
+  const delegatedOut=db.responsibilities.filter(x=>x.musicianId===mId&&x.delegatedTo&&!x.delegatedFrom&&String(x.date||'').startsWith(prefix));
+  const present=attendance.filter(x=>x.status==='present').length;
+  const justifiedLate=attendance.filter(isJustifiedLate).length;
+  const late=attendance.filter(x=>x.status==='late'&&!isJustifiedLate(x)).length;
+  const absent=attendance.filter(x=>x.status==='absent'&&!isJustifiedAbsent(x)).length;
+  const justifiedAbsent=attendance.filter(isJustifiedAbsent).length;
+  const attendanceOk=present+justifiedLate+justifiedAbsent;
+  const ownOk=own.filter(x=>x.done).length, delegatedOk=delegatedIn.filter(x=>x.done).length;
+  const total=attendance.length+own.length+delegatedIn.length;
+  const compliance=attendanceOk+ownOk+delegatedOk;
+  const basePoints=present*10+justifiedLate*7+justifiedAbsent*9-late*4-absent*10;
+  const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
+  const resp=own.reduce((sum,x)=>sum+(x.done?12:-8),0)+delegatedOut.length*-2+delegatedIn.reduce((sum,x)=>sum+(x.done?6:-4),0);
+  return {grade:total?Math.round(compliance/total*100):null,points:basePoints+arrival+resp,total};
+}
+function rankingTrend(mId){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1;
+  let cy=y,cm=m, prevY=cm===1?y-1:y,prevM=cm===1?12:cm-1;
+  let cur=periodPerformance(mId,cy,cm),prev=periodPerformance(mId,prevY,prevM);
+  /* Si este mes todavía no tiene registros, usa los dos últimos meses
+     registrados para que la tendencia siga siendo útil. */
+  if(!cur.total){
+    const keys=new Set();
+    db.attendance.forEach(x=>{if(x.musicianId===mId&&x.date)keys.add(x.date.slice(0,7))});
+    db.responsibilities.forEach(x=>{if((x.musicianId===mId||x.delegatedFrom)&&x.date)keys.add(x.date.slice(0,7))});
+    const sorted=[...keys].sort().reverse();
+    if(sorted[0]){const [yy,mm]=sorted[0].split('-').map(Number);cy=yy;cm=mm;cur=periodPerformance(mId,cy,cm);const d=new Date(yy,mm-2,1);prevY=d.getFullYear();prevM=d.getMonth()+1;prev=periodPerformance(mId,prevY,prevM)}
+  }
+  if(!cur.total||prev.grade===null)return {type:'flat',delta:null,current:cur.grade,previous:prev.grade,label:'Sin comparación'};
+  const delta=cur.grade-prev.grade;
+  return {type:delta>0?'up':delta<0?'down':'flat',delta,current:cur.grade,previous:prev.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio'};
+}
+function trendHtml(t){
+  if(t.delta===null)return '<span class="trend-box trend-flat">— <small>sin mes anterior</small></span>';
+  const n=Math.abs(t.delta).toFixed(1);
+  if(t.type==='up')return `<span class="trend-box trend-up">▲ +${n}% <small>${t.label}</small></span>`;
+  if(t.type==='down')return `<span class="trend-box trend-down">▼ -${n}% <small>${t.label}</small></span>`;
+  return '<span class="trend-box trend-flat">● 0.0% <small>sin cambio</small></span>';
+}
+
+function renderResponsibilities(){
+  ensureDelegationChildren();
+  const mid=document.getElementById('respMusician')?.value||'',st=document.getElementById('respStatus')?.value||'';
+  let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
+  /* El filtro y la tabla muestran al original como cerrado y al delegado como
+     la nueva responsabilidad activa. */
+  document.getElementById('respTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>{
+    const m=db.musicians.find(z=>z.id===r.musicianId),a=getActivity(r.activityId);
+    const isOut=!!r.delegatedTo&&!r.delegatedFrom,isIn=!!r.delegatedFrom;
+    const original=db.responsibilities.find(x=>x.id===r.delegatedFrom);
+    let status='',actions='';
+    if(isOut){
+      const d=db.musicians.find(z=>z.id===r.delegatedTo);
+      status=`<span class="badge delegated">Delegada a ${esc(d?d.first+' '+d.last:'otro músico')}</span><br><small>Responsabilidad cerrada para ${esc(m?.first+' '+m?.last||'')}</small>`;
+      actions=`<button class="btn" onclick="openResponsibilityEdit('${r.id}')">Editar</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button>`;
+    }else if(isIn){
+      const owner=db.musicians.find(z=>z.id===original?.musicianId);
+      status=`<span class="badge neutral">Recibida por delegación</span>${r.done?'<br><span class="badge present">Cumplida</span>':'<br><span class="badge absent">Pendiente</span>'}`;
+      actions=`<button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button>`;
+      if(owner) status+=`<br><small>Delegada por ${esc(owner.first+' '+owner.last)}</small>`;
+    }else{
+      status=r.done?'<span class="badge present">Cumplida</span>':'<span class="badge absent">No cumplida</span>';
+      actions=`<button class="btn ${r.done?'warn':'ok'}" onclick="toggleResp('${r.id}')">${r.done?'Marcar no cumplida':'Marcar cumplida'}</button> <button class="btn" onclick="openResponsibilityEdit('${r.id}')">Editar</button> <button class="btn danger" onclick="deleteResp('${r.id}')">Eliminar</button>`;
+    }
+    return `<tr><td>${fmtDate(r.date)}</td><td><b>${esc(r.title)}</b></td><td>${esc(m?.first+' '+m?.last||'—')}</td><td>${esc(a?.name||'—')}</td><td>${status}</td><td>${actions}</td></tr>`;
+  }).join(''):'<tr><td colspan="6" class="empty">No hay responsabilidades.</td></tr>';
+  if(window.lucide)lucide.createIcons();
+}
+
+function saveResp(editId=''){
+  const musicianText=document.getElementById('rmSearch')?.value.trim()||'',activityText=document.getElementById('raSearch')?.value.trim()||'',delText=document.getElementById('rdSearch')?.value.trim()||'';
+  const musician=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===musicianText.toLowerCase());
+  const activity=activityText?db.activities.find(a=>a.name.toLowerCase()===activityText.toLowerCase()):null;
+  const delegated=document.getElementById('rdelegated')?.checked,delegate=db.musicians.find(m=>(m.first+' '+m.last).toLowerCase()===delText.toLowerCase());
+  const title=document.getElementById('rt')?.value.trim()||'',date=document.getElementById('rd')?.value||'',done=document.getElementById('rc')?.value==='true';
+  if(!musician||!title)return alert('Selecciona un músico válido y escribe la responsabilidad.');
+  if(activityText&&!activity)return alert('Selecciona una actividad válida de la lista.');
+  if(delegated&&(!delegate||delegate.id===musician.id))return alert('Selecciona a otro músico que recibirá la responsabilidad.');
+  if(editId){
+    const row=db.responsibilities.find(x=>x.id===editId);if(!row)return;
+    /* Solo el registro original puede editar la delegación. */
+    if(row.delegatedFrom)return alert('Esta responsabilidad fue recibida por delegación. Edítala desde la responsabilidad original.');
+    const oldDelegate=row.delegatedTo||'';
+    Object.assign(row,{musicianId:musician.id,title,activityId:activity?.id||'',date,done:delegated?true:done,delegatedTo:delegated?delegate.id:'',delegatedAt:delegated?(row.delegatedAt||new Date().toISOString()):'',delegationStatus:delegated?'delegated':''});
+    if(delegated){
+      let child=db.responsibilities.find(x=>x.delegatedFrom===row.id);
+      if(!child){child={id:uid('r'),delegatedFrom:row.id,delegationReceived:true};db.responsibilities.push(child)}
+      Object.assign(child,{musicianId:delegate.id,title,activityId:activity?.id||'',date,done:false});
+    }else if(oldDelegate){db.responsibilities=db.responsibilities.filter(x=>x.delegatedFrom!==row.id)}
+  }else{
+    const row={id:uid('r'),musicianId:musician.id,title,activityId:activity?.id||'',date,done:delegated?true:done,delegatedTo:delegated?delegate.id:'',delegatedAt:delegated?new Date().toISOString():'',delegationStatus:delegated?'delegated':''};
+    db.responsibilities.push(row);
+    if(delegated)db.responsibilities.push({id:uid('r'),musicianId:delegate.id,title,activityId:activity?.id||'',date,done:false,delegatedFrom:row.id,delegationReceived:true,delegatedAt:row.delegatedAt});
+  }
+  ensureDelegationChildren();closeModal();save();
+}
+function toggleResp(id){
+  const r=db.responsibilities.find(x=>x.id===id);if(!r)return;
+  if(r.delegatedTo&&!r.delegatedFrom)return alert('Esta responsabilidad ya fue delegada. El responsable original ya no puede marcarla como cumplida.');
+  r.done=!r.done;save();
+}
+function deleteResp(id){
+  const r=db.responsibilities.find(x=>x.id===id);if(!r)return;
+  if(r.delegatedFrom)return alert('La responsabilidad recibida se administra desde la delegación original.');
+  if(confirm('¿Eliminar responsabilidad?')){db.responsibilities=db.responsibilities.filter(x=>x.id!==id&&x.delegatedFrom!==id);save()}
+}
+
+/* Ranking con indicador tipo bolsa de valores: compara el porcentaje de
+   cumplimiento del mes actual (o último mes con datos) contra el anterior. */
+function renderRanking(){
+  ensureDelegationChildren();
+  const order=document.getElementById('rankingOrder')?.value||'points',arr=[...db.musicians];
+  if(order!=='none')arr.sort((a,b)=>{const pa=performance(a.id),pb=performance(b.id);return order==='grade'?pb.grade-pa.grade||pb.points-pa.points||pb.total-pa.total:pb.points-pa.points||pb.grade-pa.grade||pb.total-pa.total||(a.first+' '+a.last).localeCompare(b.first+' '+b.last)});
+  document.getElementById('rankingTable').innerHTML=arr.length?arr.map((m,i)=>{
+    const p=performance(m.id),c=counts(m.id),g=p.grade,t=rankingTrend(m.id),delIn=p.delegatedInCount||0,delDone=p.delegatedInDone||0;
+    const llegadaClass=p.arrival>0?'positive':p.arrival<0?'negative':'zero';
+    return `<tr><td><b>${order==='none'?'—':'#'+(i+1)}</b></td>
+    <td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div></div></td>
+    <td><span class="status-dot present"></span> ${c.present} puntuales<br><span class="status-dot late"></span> ${c.late} tardanzas · ${c.justifiedLate} tard. justif.<br><span class="status-dot absent"></span> ${c.absent} inasist. · ${c.justifiedAbsent} inasist. justif.</td>
+    <td><b class="${llegadaClass}">${p.arrival>0?'+':''}${formatArrivalScore(p.arrival)} pts</b><br><small>puntaje por hora</small></td>
+    <td>${p.responsibilitiesOk}/${p.responsibilities.length} propias<br><small>${delIn} delegada(s) recibida(s) · ${delDone} cumplida(s)</small></td>
+    <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${formatArrivalScore(p.responsibilityPoints)}</small></td>
+    <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span><br>${trendHtml(t)}</td>
+    <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td></tr>`;
+  }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>';
+  if(window.lucide)lucide.createIcons();
+}
+
+/* Agrega la tendencia también al detalle del músico. */
+const __rrOldDetail=window.openRankingDetail;
+window.openRankingDetail=function(id,position,order='points'){
+  __rrOldDetail(id,position,order);
+  setTimeout(()=>{
+    const box=document.querySelector('#modalBox');if(!box)return;
+    const t=rankingTrend(id),p=performance(id);
+    const anchor=box.querySelector('.ranking-detail-impact');
+    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación compara el porcentaje de cumplimiento con el mes anterior. ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
+    if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else box.insertAdjacentHTML('beforeend',html);
+    if(window.lucide)lucide.createIcons();
+  },50);
+};
+
+ensureDelegationChildren();
+try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
+setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRankingLegendDelegation==='function')renderRankingLegendDelegation();},80);
+</script>
 </body>
 </html>
