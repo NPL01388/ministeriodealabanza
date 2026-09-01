@@ -254,7 +254,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
 <div class="app">
 <header class="top">
   <div class="brand-wrap"><img id="churchLogo" class="brand-logo" alt="Logo de la iglesia"><div class="brand"><h1 id="churchName">Igleico Hechos del Espíritu Santo</h1><p>Asistencia · <span id="ministryName">Ministerio Alabanza Ruah</span></p></div></div>
-  <div class="topactions" id="leaderActions" hidden><button class="btn" onclick="openLeaderProfile()">Mi perfil</button><button class="btn" onclick="closeSession()">Cerrar sesión</button><button class="btn power" onclick="lockApp()">⏻ Salir</button></div>
+  <div class="topactions" id="leaderActions" hidden><button class="btn" onclick="openLeaderProfile()">Mi perfil</button><button class="btn" onclick="closeSession()">Cerrar sesión</button><button class="btn power" onclick="lockApp()"><i data-lucide="log-out" class="icon"></i> Salir</button></div>
   <div class="clock" id="clock">--<small>--</small></div>
 </header>
 <div class="layout">
@@ -262,7 +262,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="nav">
     <button class="active" data-page="dashboard"><i data-lucide="chart-column" class="icon"></i> Panel</button>
     <button data-page="musicos"><i data-lucide="music-2" class="icon"></i> Músicos</button>
-    <button data-page="asistencia">✅ Asistencia</button>
+    <button data-page="asistencia"><i data-lucide="check-circle-2" class="icon"></i> Asistencia</button>
     <button data-page="actividades"><i data-lucide="calendar-days" class="icon"></i> Actividades</button>
     <button data-page="responsabilidades"><i data-lucide="clipboard-list" class="icon"></i> Responsabilidades</button>
     <button data-page="calificacion"><i data-lucide="trophy" class="icon"></i> Calificación</button>
@@ -325,13 +325,13 @@ img,svg,video,canvas{max-width:100%;height:auto}
     <h3><i data-lucide="book-open" class="icon"></i> Leyenda de puntuación</h3>
     <div class="scorelegend">
       <div class="scoreitem"><b><i data-lucide="music-2" class="icon"></i> Asistencia</b><small><span class="positive">+10 pts</span> por asistencia. Una <b>inasistencia justificada</b> cuenta como asistencia para el porcentaje, pero recibe <span class="negative">-1 punto</span>: queda en <span class="positive">+9 pts</span>.</small></div>
-      <div class="scoreitem"><b>⏱️ Hora de llegada</b><small>
+      <div class="scoreitem"><b><i data-lucide="clock-3" class="icon"></i> Hora de llegada</b><small>
 Cada minuto cambia el puntaje proporcionalmente: <span class="positive">+5.00 máx.</span> si llega 60 min antes ·
 <span class="zero">0.00</span> exactamente a la hora · hasta <span class="negative">-5.00</span> si llega 60 min tarde.
 Ej.: 30 min antes = <span class="positive">+2.50</span> · 3 min antes = <span class="positive">+0.25</span> ·
 3 min tarde = <span class="negative">-0.25</span>. Los valores se calculan con 2 decimales.</small></div>
       <div class="scoreitem"><b><span class="status-dot late"></span> Tardanza</b><small>Tardanza sin justificar: <span class="negative">-4 pts</span> de base, más el puntaje negativo de llegada. Tardanza justificada: <span class="positive">+7 pts</span> de base, más el ajuste de llegada.</small></div>
-      <div class="scoreitem"><b>❌ Inasistencia</b><small>Sin justificar: <span class="negative">-10 pts</span>. Justificada: cuenta como asistencia en el porcentaje y queda en <span class="positive">+9 pts</span>.</small></div>
+      <div class="scoreitem"><b><i data-lucide="x-circle" class="icon"></i> Inasistencia</b><small>Sin justificar: <span class="negative">-10 pts</span>. Justificada: cuenta como asistencia en el porcentaje y queda en <span class="positive">+9 pts</span>.</small></div>
       <div class="scoreitem"><b><i data-lucide="clipboard-list" class="icon"></i> Responsabilidad</b><small>Cumplida: <span class="positive">+12 pts</span> · No cumplida: <span class="negative">-8 pts</span>.</small></div>
       <div class="scoreitem"><b><i data-lucide="trophy" class="icon"></i> Total del músico</b><small>La columna <b>Puntos</b> suma asistencia + llegada + tardanzas/inasistencias + responsabilidades. El <b>porcentaje</b> mide cumplimiento.</small></div>
     </div>
@@ -432,7 +432,12 @@ function performance(mId){
  const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
  const responsibilityPoints=responsibilitiesOk*12-(responsibilities.length-responsibilitiesOk)*8;
  const points=basePoints+arrival+responsibilityPoints;
- return {attendance,responsibilities,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk,total,basePoints,arrival,responsibilityPoints,points,grade:total?Math.round((attendanceOk+responsibilitiesOk)/total*100):0};
+ const compliance=total?((attendanceOk+responsibilitiesOk)/total*100):0;
+ const maxPoints=Math.max(1,attendance.length*15+responsibilities.length*12);
+ const pointPercent=Math.max(0,Math.min(100,(points/maxPoints)*100));
+ const rs=window.ruahRankingSettings||{cumplimiento:60,puntos:40};
+ const grade=total?Math.round((compliance*(rs.cumplimiento/100)+pointPercent*(rs.puntos/100))*10)/10:0;
+ return {attendance,responsibilities,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk,total,basePoints,arrival,responsibilityPoints,points,compliance,pointPercent,grade};
 }
 function score(mId){return performance(mId).grade}
 function birthdayDays(m){if(!m.birth)return 9999;const n=new Date(),b=new Date(m.birth+'T00:00:00');let d=new Date(n.getFullYear(),b.getMonth(),b.getDate());if(d<new Date(n.getFullYear(),n.getMonth(),n.getDate()))d.setFullYear(n.getFullYear()+1);return Math.ceil((d-new Date(n.getFullYear(),n.getMonth(),n.getDate()))/86400000)}
@@ -450,7 +455,7 @@ function renderDashboard(){
 function renderMusicians(){
  const q=(document.getElementById('musicSearch')?.value||'').toLowerCase();
  const arr=db.musicians.filter(m=>(m.first+' '+m.last+' '+(m.role||'')).toLowerCase().includes(q));
- document.getElementById('musicianTable').innerHTML=arr.length?arr.map(m=>{let c=counts(m.id);return `<tr><td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.phone||'')}</small></div></div></td><td>${esc(m.role||'—')}</td><td>${fmtDate(m.birth)}<br><b>${ageExact(m.birth)}</b></td><td>${Object.values(m.special||{}).some(x=>x.enabled)?'⏱️ Configurado':'—'}</td><td><span class="status-dot present"></span> ${c.present} · <span class="status-dot late"></span> ${c.late} · <span class="status-dot absent"></span> ${c.absent}</td><td><button class="btn" onclick="openProfile('${m.id}')">Ver</button> <button class="btn" onclick="openMusicianModal('${m.id}')">Editar</button> <button class="btn danger" onclick="deleteMusician('${m.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay músicos.</td></tr>';
+ document.getElementById('musicianTable').innerHTML=arr.length?arr.map(m=>{let c=counts(m.id);return `<tr><td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.phone||'')}</small></div></div></td><td>${esc(m.role||'—')}</td><td>${fmtDate(m.birth)}<br><b>${ageExact(m.birth)}</b></td><td>${Object.values(m.special||{}).some(x=>x.enabled)?'<i data-lucide="clock-3" class="icon"></i> Configurado':'—'}</td><td><span class="status-dot present"></span> ${c.present} · <span class="status-dot late"></span> ${c.late} · <span class="status-dot absent"></span> ${c.absent}</td><td><button class="btn" onclick="openProfile('${m.id}')">Ver</button> <button class="btn" onclick="openMusicianModal('${m.id}')">Editar</button> <button class="btn danger" onclick="deleteMusician('${m.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay músicos.</td></tr>';
 }
 function populateSelects(){
  const opts=db.musicians.map(m=>`<option value="${m.id}">${esc(m.first)} ${esc(m.last)}</option>`).join('');
@@ -526,7 +531,7 @@ function openRankingDetail(id,position,order='points'){
  <div class="person" style="margin:10px 0 15px"><div class="avatar">${avatar(m)}</div><div><h3 style="margin:0">${esc(m.first)} ${esc(m.last)}</h3><small style="color:var(--muted)">${esc(m.role||'Sin rol')} · Puesto #${realPos}</small></div></div>
  ${compare}
  <div class="ranking-detail-grid"><div class="ranking-detail-card"><h4>Puntaje total</h4><div class="big ${p.points<0?'ranking-detail-bad':'ranking-detail-good'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</div><small>Base ${formatArrivalScore(p.basePoints)} · Llegada ${formatArrivalScore(p.arrival)} · Responsabilidades ${formatArrivalScore(p.responsibilityPoints)}</small></div><div class="ranking-detail-card"><h4>Cumplimiento</h4><div class="big">${g}%</div><small>${p.attendanceOk} de ${p.attendance.length} asistencias cuentan · ${p.responsibilitiesOk}/${p.responsibilities.length} responsabilidades</small></div><div class="ranking-detail-card"><h4>Registros evaluados</h4><div class="big">${p.total}</div><small>${c.present} puntuales · ${c.late} tardanzas · ${c.absent} inasistencias</small></div></div>
- <div class="ranking-detail-impact"><h4>⚠️ ¿Qué está afectando su posición?</h4>${list(factors)}</div>
+ <div class="ranking-detail-impact"><h4><i data-lucide="alert-triangle" class="icon"></i> ¿Qué está afectando su posición?</h4>${list(factors)}</div>
  <h3>Desglose que suma puntos</h3><div class="ranking-detail-list">${positives.length?list(positives):'<div class="empty">No hay puntos positivos registrados.</div>'}</div>
  <h3>Fórmula del puntaje</h3><div class="ranking-detail-formula">Asistencia base: ${formatArrivalScore(baseAttendance)} pts<br>Hora de llegada: ${formatArrivalScore(p.arrival)} pts<br>Responsabilidades: ${formatArrivalScore(p.responsibilityPoints)} pts<br>────────────────────<br>Total: ${formatArrivalScore(p.points)} pts</div>
  <div class="toolbar" style="margin-top:14px"><button class="btn primary" onclick="closeModal();openProfile('${id}')">Ver historial completo</button><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
@@ -539,7 +544,7 @@ function searchableCombo(id,items,placeholder,selected=''){
  return `<div class="search-combo" id="${id}Wrap">
  <input id="${id}" autocomplete="off" placeholder="${esc(placeholder)}" value="${esc(selected)}"
  onfocus="openSearchCombo('${id}')" oninput="filterSearchCombo('${id}')">
- <span class="combo-arrow">▼</span><div class="combo-menu" id="${id}Menu"></div></div>`;
+ <span class="combo-arrow"><i data-lucide="chevron-down" class="icon"></i></span><div class="combo-menu" id="${id}Menu"></div></div>`;
 }
 function initSearchCombo(id,items){
  const wrap=document.getElementById(id+'Wrap'); if(!wrap)return;
@@ -592,7 +597,7 @@ function openMusicianModal(id){
  <div class="field"><label>Teléfono</label><input id="mp" value="${esc(m.phone||'')}"></div>
  <div class="field"><label>Foto de perfil</label><input type="file" id="mphoto" accept="image/png,image/jpeg,image/webp" onchange="loadProfilePhoto(event)"><small>PNG, JPG o WebP. Máximo 5 MB; se optimiza al guardar.</small><button type="button" class="btn danger" onclick="removeProfilePhoto()">Quitar foto de perfil</button></div>
  <div class="field full"><label>Notas</label><textarea id="mn">${esc(m.notes||'')}</textarea></div>
- <div class="full"><h3>⏱️ Horarios especiales de ingreso</h3><p style="color:var(--muted)">Solo activa los días en que, por trabajo u otra causa, autorizas una hora de llegada diferente.</p><div class="schedule">${specialRows}</div></div>
+ <div class="full"><h3><i data-lucide="clock-3" class="icon"></i> Horarios especiales de ingreso</h3><p style="color:var(--muted)">Solo activa los días en que, por trabajo u otra causa, autorizas una hora de llegada diferente.</p><div class="schedule">${specialRows}</div></div>
  <div class="full"><button class="btn primary" onclick="saveMusician('${id||''}')">${id?'Guardar cambios':'Crear músico'}</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
  document.getElementById('mb').oninput=e=>document.getElementById('mage').textContent=ageExact(e.target.value);
 }
@@ -769,7 +774,7 @@ function openProfile(id){
  modal(`<div class="modalhead"><h2>Perfil individual</h2><button class="close" onclick="closeModal()">×</button></div>
  <div class="profile"><div><div class="bigavatar">${avatar(m,true)}</div><div style="text-align:center;margin-top:8px"><b>${esc(m.first)} ${esc(m.last)}</b><br><span class="badge neutral">${esc(m.role||'Sin rol')}</span></div></div>
  <div><h2>${esc(m.first)} ${esc(m.last)}</h2><p><b>Fecha de nacimiento:</b> ${fmtDate(m.birth)}<br><b>Edad:</b> ${ageExact(m.birth)}<br><b>Teléfono:</b> ${esc(m.phone||'—')}</p>${m.notes?`<p style="white-space:pre-wrap"><b>Notas:</b><br>${esc(m.notes)}</p>`:''}
- <div class="kpis"><div class="mini"><span class="status-dot present"></span><b>${c.present}</b>Asistencias</div><div class="mini"><span class="status-dot late"></span><b>${c.late}</b>Tardanzas</div><div class="mini"><span class="status-dot absent"></span><b>${c.absent}</b>Inasistencias</div><div class="mini">⭐<b>${grade}%</b>Calificación</div></div></div></div>
+ <div class="kpis"><div class="mini"><span class="status-dot present"></span><b>${c.present}</b>Asistencias</div><div class="mini"><span class="status-dot late"></span><b>${c.late}</b>Tardanzas</div><div class="mini"><span class="status-dot absent"></span><b>${c.absent}</b>Inasistencias</div><div class="mini"><i data-lucide="star" class="icon"></i><b>${grade}%</b>Calificación</div></div></div></div>
  <div class="section-title-row"><h3><i data-lucide="chart-line" class="icon"></i> Gráfica estadística del músico</h3><button type="button" class="btn chart-fullscreen-btn" onclick="toggleChartFullscreen()"><i data-lucide="maximize-2" class="icon"></i> Pantalla completa</button></div>
  <div class="chart-filters"><label>Año <select id="pfChartYear" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option></select></label><label>Mes <select id="pfChartMonth" onchange="profileStatsGraphic('${id}')"><option value="">Todos</option><option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option><option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option><option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></label></div><label>Comparar con <select id="pfCompareMusicians" multiple size="1" onchange="compareArrivalHours('${id}')">${db.musicians.filter(m=>m.id!==id).map(m=>`<option value="${m.id}">${esc(m.first)} ${esc(m.last)}</option>`).join('')}</select></label><button type="button" class="btn" onclick="compareArrivalHours('${id}')"><i data-lucide="git-compare" class="icon"></i> Comparar llegadas</button>
  <div id="profileChart" class="profile-chart"></div>
@@ -777,7 +782,7 @@ function openProfile(id){
  <h3>Estadística de cumplimiento</h3><div class="tablewrap"><table class="table"><thead><tr><th>Indicador</th><th>Registros</th><th>Resultado</th></tr></thead><tbody><tr><td>Asistencias puntuales</td><td>${c.present}</td><td>Cuenta como cumplimiento</td></tr><tr><td>Tardanzas sin justificar</td><td>${c.late}</td><td>Cuenta como cumplimiento · afecta puntos</td></tr><tr><td>Tardanzas justificadas</td><td>${c.justifiedLate}</td><td>Cuenta como cumplimiento · refleja puntos</td></tr><tr><td>Inasistencias sin justificar</td><td>${c.absent}</td><td>No cuenta como cumplimiento · resta puntos</td></tr><tr><td>Inasistencias justificadas</td><td>${c.justifiedAbsent}</td><td><b>Cuenta como cumplimiento</b> · refleja puntos</td></tr><tr><td><b>Cumplimiento de responsabilidades</b></td><td><b>${p.responsibilitiesOk}/${resp.length}</b></td><td>${p.responsibilitiesOk} cumplida(s) · ${resp.length-p.responsibilitiesOk} no cumplida(s)</td></tr><tr><td><b>Calificación final</b></td><td><b>${total} registros evaluados</b></td><td><span class="badge ${grade>=70?'present':grade>=40?'late':'absent'}">${grade}%</span></td></tr></tbody></table></div>
  <hr><div class="toolbar"><button class="btn primary" onclick="closeModal();openAttendanceModal('', '${id}')">+ Registrar asistencia</button><button class="btn" onclick="closeModal();openResponsibilityModal('', '${id}')">+ Responsabilidad</button><button class="btn" onclick="openMusicianModal('${id}')">Editar perfil</button></div>
  <h3>Historial individual</h3><div class="toolbar"><select id="pfStatus" onchange="filterProfileHist('${id}')"><option value="">Todos</option><option value="present">Asistencias</option><option value="late">Tardanzas</option><option value="absent">Inasistencias</option></select><input type="date" id="pfDate" onchange="filterProfileHist('${id}')"></div><div id="profileHist"></div>
- <h3>Responsabilidades</h3><div class="timeline">${resp.length?resp.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="item"><b>${esc(r.title)}</b> · ${fmtDate(r.date)}<br>${r.done?'✅ Cumplida':'❌ No cumplida'}</div>`).join(''):'<div class="empty">Sin responsabilidades.</div>'}</div>`);
+ <h3>Responsabilidades</h3><div class="timeline">${resp.length?resp.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<div class="item"><b>${esc(r.title)}</b> · ${fmtDate(r.date)}<br>${r.done?'<i data-lucide="check-circle-2" class="icon"></i> Cumplida':'<i data-lucide="x-circle" class="icon"></i> No cumplida'}</div>`).join(''):'<div class="empty">Sin responsabilidades.</div>'}</div>`);
  window._profileHist=hist;filterProfileHist(id);profileStatsGraphic(id);
 }
 function filterProfileHist(id){const st=document.getElementById('pfStatus')?.value||'',dt=document.getElementById('pfDate')?.value||'';let arr=window._profileHist||[];arr=arr.filter(x=>(!st||x.status===st)&&(!dt||x.date===dt));document.getElementById('profileHist').innerHTML=arr.length?arr.map(x=>{let a=getActivity(x.activityId);return `<div class="item" style="margin-bottom:7px"><b>${fmtDate(x.date)} · ${esc(a?.name||'—')}</b> ${statusBadge(x)}<br>Hora: ${esc(x.arrival||'—')} · ${esc(justificationText(x))}</div>`}).join(''):'<div class="empty">No hay registros para este filtro.</div>'}
@@ -791,7 +796,7 @@ function openAttendanceModal(_,mid=''){
  <div class="field"><label>Estado</label><select id="as"><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select></div>
  <div class="field"><label>Justificación / causa</label><select id="ar"><option value="">Sin justificación</option><option>Enfermedad</option><option>Trabajo</option><option>Estudio</option><option>Familia</option><option>Transporte</option><option>Otro</option></select></div>
  <div class="field full"><label>Justificación personalizada / detalle</label><textarea id="an" placeholder="Escribe aquí la justificación. Si el estado es Inasistencia, al justificarla contará como asistencia y restará 1 punto."></textarea><small>Una inasistencia con causa o detalle se considera <b>justificada</b>: cuenta en el porcentaje de asistencia y recibe +9 puntos en vez de -10.</small></div>
- <div class="full"><button class="btn warn" onclick="autoStatus()">⏱️ Calcular estado por hora</button> <button class="btn primary" onclick="saveAttendance()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button><p id="deadlineInfo" style="color:var(--muted)"></p></div></div>`);
+ <div class="full"><button class="btn warn" onclick="autoStatus()"><i data-lucide="timer" class="icon"></i> Calcular estado por hora</button> <button class="btn primary" onclick="saveAttendance()">Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button><p id="deadlineInfo" style="color:var(--muted)"></p></div></div>`);
  document.getElementById('aa').onchange=updateDeadline;document.getElementById('am').onchange=updateDeadline;document.getElementById('at').onchange=autoStatus;updateDeadline();
 }
 function getDeadline(mid,aid){const m=db.musicians.find(x=>x.id===mid),a=getActivity(aid);return m?.special?.[aid]?.enabled?m.special[aid].time:a?.time}
@@ -870,7 +875,7 @@ function importExcel(e){
    db.attendance=Array.isArray(db.attendance)?db.attendance:[];
    db.responsibilities=Array.isArray(db.responsibilities)?db.responsibilities:[];
    db.attendance.forEach(a=>{a.arrival=normalizeTime(a.arrival);if(!a.deadline)a.deadline=getDeadline(a.musicianId,a.activityId);});
-   save();alert('✅ ¡Datos transferidos correctamente! Todo el contenido del Excel ya está cargado en este dispositivo.');
+   save();alert('<i data-lucide="check-circle-2" class="icon"></i> ¡Datos transferidos correctamente! Todo el contenido del Excel ya está cargado en este dispositivo.');
  }catch(err){alert('No se pudo importar el Excel. '+(err?.message||'Verifica que sea un Excel generado por este proyecto.'));}
  finally{e.target.value='';}
  };r.readAsArrayBuffer(f);
@@ -904,7 +909,7 @@ function pinAccess(){if(document.getElementById('upin').value!==leader().pin)ret
 function enterApp(){const l=leader();branding=getBranding();setAppAccess(false);modal(`<div class="authbox welcome"><div class="brandmark"><i data-lucide="music-2" class="icon"></i></div><h2>¡Bienvenido${l?.first?' '+esc(l.first):''}!</h2><p id="welcomeMinistry"></p><p><b id="welcomeChurch"></b></p><div class="spinner"></div><small>Preparando tu espacio...</small></div>`);setTimeout(()=>{document.getElementById('welcomeMinistry').textContent=branding.ministryName;document.getElementById('welcomeChurch').textContent=branding.churchName;closeModal();setAppAccess(true);applyBranding()},1500)}
 function closeSession(){if(!confirm('¿Deseas cerrar sesión por completo?'))return;localStorage.removeItem(LOCK_KEY);localStorage.setItem(FORCE_PASSWORD_KEY,'1');closeModal();startAuth()}
 function userRows(){const me=leader();return users().map(u=>`<tr><td><b>${esc(u.first)} ${esc(u.last)}</b>${u.id===me.id?' <span class="badge neutral">Tú</span>':''}<small style="display:block;color:var(--muted)">${esc(u.email)} · ${esc(u.age)} años</small></td><td><button class="btn" onclick="openUserEditor('${u.id}')">Editar</button>${u.id!==me.id?` <button class="btn danger" onclick="deleteUser('${u.id}')">Eliminar</button>`:''}</td></tr>`).join('')}
-function openLeaderProfile(){const l=leader();branding=getBranding();window._pendingBrandLogo=branding.logo||'';modal(`<div class="modalhead"><h2>Mi perfil de líder</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid"><div class="field"><label>Nombre</label><input id="pf" value="${esc(l.first)}"></div><div class="field"><label>Apellido</label><input id="pl" value="${esc(l.last)}"></div><div class="field"><label>Edad</label><input id="pa" type="number" min="1" max="120" value="${esc(l.age)}"></div><div class="field"><label>Correo electrónico</label><input id="pe" type="email" value="${esc(l.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="pp" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="ppi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="full"><hr><h3>⛪ Identidad de la iglesia</h3><p style="color:var(--muted)">Estos datos se muestran en el encabezado y pueden cambiarse si la aplicación se utiliza en otra iglesia o ministerio.</p></div><div class="field"><label>Nombre de la iglesia</label><input id="churchNameInput" value="${esc(branding.churchName)}" placeholder="Nombre de la iglesia"></div><div class="field"><label>Nombre del ministerio</label><input id="ministryNameInput" value="${esc(branding.ministryName)}" placeholder="Nombre del ministerio"></div><div class="field full"><label>Logo de la iglesia (opcional)</label><input type="file" id="brandLogoFile" accept="image/png,image/jpeg,image/webp" onchange="loadBrandLogo(event)"><small>PNG, JPG o WebP. Máximo 5 MB; se optimiza al guardar.</small><div style="display:flex;align-items:center;gap:12px;margin-top:8px"><img id="brandLogoPreview" src="${esc(branding.logo||'')}" alt="Vista previa del logo" style="${branding.logo?'display:block':'display:none'};width:80px;height:80px;object-fit:contain;border:1px solid var(--line);border-radius:14px;padding:5px;background:#fff"><button type="button" class="btn danger" onclick="removeBrandLogo()">Quitar logo</button></div></div><div class="field full"><div class="checkrow"><input type="checkbox" id="pquick" ${l.quickAccess?'checked':''}><label for="pquick">Recordar mi acceso en este dispositivo y pedir solo el PIN al ingresar</label></div><small>Desmarca esta opción y guarda para volver a pedir correo y contraseña.</small></div><div class="full"><button class="btn primary" onclick="saveLeaderProfile()">Guardar mis cambios</button></div></div><hr><div class="pagehead"><h3>Usuarios con acceso</h3><button class="btn primary" onclick="openRegistration(true)">+ Registrar usuario</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Usuario</th><th>Acciones</th></tr></thead><tbody>${userRows()}</tbody></table></div>`) }
+function openLeaderProfile(){const l=leader();branding=getBranding();window._pendingBrandLogo=branding.logo||'';modal(`<div class="modalhead"><h2>Mi perfil de líder</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid"><div class="field"><label>Nombre</label><input id="pf" value="${esc(l.first)}"></div><div class="field"><label>Apellido</label><input id="pl" value="${esc(l.last)}"></div><div class="field"><label>Edad</label><input id="pa" type="number" min="1" max="120" value="${esc(l.age)}"></div><div class="field"><label>Correo electrónico</label><input id="pe" type="email" value="${esc(l.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="pp" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="ppi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="full"><hr><h3><i data-lucide="church" class="icon"></i> Identidad de la iglesia</h3><p style="color:var(--muted)">Estos datos se muestran en el encabezado y pueden cambiarse si la aplicación se utiliza en otra iglesia o ministerio.</p></div><div class="field"><label>Nombre de la iglesia</label><input id="churchNameInput" value="${esc(branding.churchName)}" placeholder="Nombre de la iglesia"></div><div class="field"><label>Nombre del ministerio</label><input id="ministryNameInput" value="${esc(branding.ministryName)}" placeholder="Nombre del ministerio"></div><div class="field full"><label>Logo de la iglesia (opcional)</label><input type="file" id="brandLogoFile" accept="image/png,image/jpeg,image/webp" onchange="loadBrandLogo(event)"><small>PNG, JPG o WebP. Máximo 5 MB; se optimiza al guardar.</small><div style="display:flex;align-items:center;gap:12px;margin-top:8px"><img id="brandLogoPreview" src="${esc(branding.logo||'')}" alt="Vista previa del logo" style="${branding.logo?'display:block':'display:none'};width:80px;height:80px;object-fit:contain;border:1px solid var(--line);border-radius:14px;padding:5px;background:#fff"><button type="button" class="btn danger" onclick="removeBrandLogo()">Quitar logo</button></div></div><div class="field full"><div class="checkrow"><input type="checkbox" id="pquick" ${l.quickAccess?'checked':''}><label for="pquick">Recordar mi acceso en este dispositivo y pedir solo el PIN al ingresar</label></div><small>Desmarca esta opción y guarda para volver a pedir correo y contraseña.</small></div><div class="full"><button class="btn primary" onclick="saveLeaderProfile()">Guardar mis cambios</button></div></div><hr><div class="pagehead"><h3>Usuarios con acceso</h3><button class="btn primary" onclick="openRegistration(true)">+ Registrar usuario</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Usuario</th><th>Acciones</th></tr></thead><tbody>${userRows()}</tbody></table></div>`) }
 function saveLeaderProfile(){const l=leader(),first=document.getElementById('pf').value.trim(),last=document.getElementById('pl').value.trim(),age=+document.getElementById('pa').value,email=document.getElementById('pe').value.trim().toLowerCase(),password=document.getElementById('pp').value,pin=document.getElementById('ppi').value,quick=document.getElementById('pquick').checked,churchName=document.getElementById('churchNameInput').value.trim(),ministryName=document.getElementById('ministryNameInput').value.trim(),list=users();if(!first||!last||!age||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return alert('Completa nombre, apellido, edad y un correo válido.');if(!churchName||!ministryName)return alert('Completa el nombre de la iglesia y el nombre del ministerio.');if(list.some(u=>u.id!==l.id&&u.email.toLowerCase()===email))return alert('Ya existe un usuario con este correo.');if(password&&password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(pin&&!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');Object.assign(list.find(u=>u.id===l.id),{first,last,age,email,quickAccess:quick},password?{password}:{},pin?{pin}:{});localStorage.setItem(BRAND_KEY,JSON.stringify({churchName,ministryName,logo:window._pendingBrandLogo||''}));branding=getBranding();saveUsers(list);closeModal();applyBranding();alert(quick?'Perfil actualizado. Al ingresar se solicitará solo el PIN.':'Perfil actualizado. Al ingresar se solicitarán correo y contraseña.');}
 function openUserEditor(id){const u=users().find(x=>x.id===id);if(!u)return;modal(`<div class="modalhead"><h2>Editar usuario</h2><button class="close" onclick="openLeaderProfile()">×</button></div><div class="formgrid"><div class="field"><label>Nombre</label><input id="uf" value="${esc(u.first)}"></div><div class="field"><label>Apellido</label><input id="ul" value="${esc(u.last)}"></div><div class="field"><label>Edad</label><input id="ua" type="number" min="1" max="120" value="${esc(u.age)}"></div><div class="field"><label>Correo electrónico</label><input id="ue" type="email" value="${esc(u.email)}"></div><div class="field"><label>Nueva contraseña</label><input id="up" type="password" placeholder="Déjala vacía para conservarla"></div><div class="field"><label>Nuevo PIN</label><input id="upi" type="password" inputmode="numeric" maxlength="4" placeholder="Déjalo vacío para conservarlo"></div><div class="full"><button class="btn primary" onclick="saveUser('${u.id}')">Guardar cambios</button> <button class="btn" onclick="openLeaderProfile()">Cancelar</button></div></div>`) }
 function saveUser(id){const list=users(),u=list.find(x=>x.id===id),first=document.getElementById('uf').value.trim(),last=document.getElementById('ul').value.trim(),age=+document.getElementById('ua').value,email=document.getElementById('ue').value.trim().toLowerCase(),password=document.getElementById('up').value,pin=document.getElementById('upi').value;if(!u||!first||!last||!age||!/^\S+@\S+\.\S+$/.test(email))return alert('Completa nombre, apellido, edad y un correo válido.');if(list.some(x=>x.id!==id&&x.email.toLowerCase()===email))return alert('Ya existe un usuario con este correo.');if(password&&password.length<6)return alert('La contraseña debe tener al menos 6 caracteres.');if(pin&&!/^\d{4}$/.test(pin))return alert('El PIN debe tener exactamente 4 números.');Object.assign(u,{first,last,age,email},password?{password}:{},pin?{pin}:{});saveUsers(list);openLeaderProfile()}
@@ -941,7 +946,7 @@ if(window.lucide)lucide.createIcons();
      '<span class="zoom-level">100%</span>'+
      '<button type="button" data-zplus title="Acercar">+</button>'+
      '<button type="button" data-zreset title="Restablecer">100%</button>'+
-     '<button type="button" data-zfs title="Pantalla completa">⛶ Pantalla completa</button>';
+     '<button type="button" data-zfs title="Pantalla completa"><i data-lucide="maximize-2" class="icon"></i> Pantalla completa</button>';
    root.insertBefore(controls,root.firstChild);
 
    let scale=1;
@@ -960,7 +965,7 @@ if(window.lucide)lucide.createIcons();
    controls.querySelector("[data-zreset]").onclick=()=>{scale=1;apply()};
    controls.querySelector("[data-zfs]").onclick=()=>{
      root.classList.toggle("chart-fs");
-     controls.querySelector("[data-zfs]").textContent=root.classList.contains("chart-fs")?"✕ Salir":"⛶ Pantalla completa";
+     controls.querySelector("[data-zfs]").innerHTML=root.classList.contains("chart-fs")?'<i data-lucide="x" class="icon"></i> Salir':'<i data-lucide="maximize-2" class="icon"></i> Pantalla completa'; if(window.lucide)lucide.createIcons();
      apply();
    };
    apply();
@@ -1082,9 +1087,9 @@ function openAttendanceModal(_,mid='',editId=''){
    <div class="field full"><label>Justificación personalizada / detalle</label><textarea id="an" placeholder="Escribe aquí la justificación.">${esc(editing?.notes||'')}</textarea>
     <small>Una inasistencia con causa o detalle se considera justificada: cuenta en el porcentaje y recibe +9 puntos en vez de -10.</small>
    </div>
-   <div class="full"><button type="button" class="btn warn" onclick="autoStatus()">⏱️ Calcular estado por hora</button>
+   <div class="full"><button type="button" class="btn warn" onclick="autoStatus()"><i data-lucide="timer" class="icon"></i> Calcular estado por hora</button>
    <button type="button" id="attendanceSaveBtn" class="btn primary" onclick="saveAttendance('${editId||''}')">${editing?'Guardar cambios':'Registrar músico'}</button>
-   ${editing?'<button type="button" class="btn" onclick="closeModal()">Cancelar</button>':'<button type="button" class="btn ok" onclick="finishAttendanceSession()">✓ Finalizar asistencia</button>'}
+   ${editing?'<button type="button" class="btn" onclick="closeModal()">Cancelar</button>':'<button type="button" class="btn ok" onclick="finishAttendanceSession()"><i data-lucide="check" class="icon"></i> Finalizar asistencia</button>'}
    <p id="deadlineInfo" style="color:var(--muted)"></p></div>
   </div>`);
   if(editing){
@@ -1312,7 +1317,7 @@ function renderRanking(){
 function renderRankingLegendDelegation(){
   const legend=document.querySelector('#calificacion .scorelegend');
   if(legend&&!document.getElementById('delegationScoreLegend')){
-    legend.insertAdjacentHTML('beforeend',`<div class="scoreitem" id="delegationScoreLegend"><b>🔄 Responsabilidad delegada</b><small>Responsable original: <span class="negative">-2 pts</span> por delegar. Músico que recibe: <span class="positive">+6 pts</span> si la cumple o <span class="negative">-4 pts</span> si no la cumple.</small></div>`);
+    legend.insertAdjacentHTML('beforeend',`<div class="scoreitem" id="delegationScoreLegend"><b>Delegación Responsabilidad delegada</b><small>Responsable original: <span class="negative">-2 pts</span> por delegar. Músico que recibe: <span class="positive">+6 pts</span> si la cumple o <span class="negative">-4 pts</span> si no la cumple.</small></div>`);
   }
 }
 
@@ -1334,7 +1339,7 @@ window.openRankingDetail=function(id,position,order='points'){
     });
     if(rows.length){
       const box=document.querySelector('#modalBox .ranking-detail-impact');
-      if(box)box.insertAdjacentHTML('afterend',`<div class="ranking-detail-impact"><h4>🔄 Delegaciones</h4><div class="ranking-detail-list">${rows.join('')}</div></div>`);
+      if(box)box.insertAdjacentHTML('afterend',`<div class="ranking-detail-impact"><h4><i data-lucide="repeat-2" class="icon"></i> Delegaciones</h4><div class="ranking-detail-list">${rows.join('')}</div></div>`);
     }
   },30);
 };
@@ -1468,7 +1473,7 @@ function periodPerformance(mId,year,month){
   /* 60% cumplimiento + 40% puntos. Así una buena asistencia no oculta
      una caída fuerte en puntualidad, responsabilidades o penalizaciones. */
   const grade=(compliance!==null&&pointGrade!==null)?Math.round((compliance*.6+pointGrade*.4)*100)/100:(compliance!==null?compliance:pointGrade);
-  return {grade,compliance,pointGrade,points,maxPoints,total};
+  return {grade,compliance,pointGrade,points,maxPoints,total,basePoints,arrival,responsibilityPoints:resp,attendanceCount:attendance.length,attendanceOk,ownCount:own.length,ownOk,delegatedInCount:delegatedIn.length,delegatedInOk:delegatedOk,delegatedOutCount:delegatedOut.length,present,justifiedLate,justifiedAbsent,late,absent};
 }
 function rankingTrend(mId){
   /* Tendencia tipo bolsa: compara la CALIFICACIÓN DEL RANKING, que ahora
@@ -1510,21 +1515,21 @@ function rankingTrend(mId){
   }
 
   if(!previous || previous.grade===null){
-    return {type:'flat',delta:null,relative:null,current:cur.grade,previous:null,label:'Primera medición',period:`${String(cm).padStart(2,'0')}/${cy}`,currentPoints:cur.points,currentPointGrade:cur.pointGrade};
+    return {type:'flat',delta:null,relative:null,current:cur.grade,previous:null,currentPerf:cur,previousPerf:null,label:'Primera medición',period:`${String(cm).padStart(2,'0')}/${cy}`,currentPoints:cur.points,currentPointGrade:cur.pointGrade};
   }
   const delta=Math.round((cur.grade-previous.grade)*100)/100;
   const relative=previous.grade===0?(cur.grade===0?0:100):(delta/previous.grade)*100;
-  return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:previous.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(cm).padStart(2,'0')}/${cy}`,previousPeriod:previousKey,currentPoints:cur.points,previousPoints:previous.points,currentPointGrade:cur.pointGrade,previousPointGrade:previous.pointGrade};
+  return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:previous.grade,currentPerf:cur,previousPerf:previous,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(cm).padStart(2,'0')}/${cy}`,previousPeriod:previousKey,currentPoints:cur.points,previousPoints:previous.points,currentPointGrade:cur.pointGrade,previousPointGrade:previous.pointGrade};
 }
 
 function trendHtml(t){
   if(t.relative===null || t.relative===undefined){
-    return `<span class="trend-box trend-flat">— <small>${t.label||'primera medición'}</small></span>`;
+    return `<span class="trend-box trend-flat"><i data-lucide="minus" class="icon"></i> <small>${t.label||'primera medición'}</small></span>`;
   }
   const n=Math.abs(t.relative).toFixed(1);
-  if(t.type==='up')return `<span class="trend-box trend-up">▲ +${n}% <small>Subió</small></span>`;
-  if(t.type==='down')return `<span class="trend-box trend-down">▼ -${n}% <small>Bajó</small></span>`;
-  return '<span class="trend-box trend-flat">● 0.0% <small>Sin cambio</small></span>';
+  if(t.type==='up')return `<span class="trend-box trend-up"><i data-lucide="trending-up" class="icon"></i> +${n}% <small>Subió</small></span>`;
+  if(t.type==='down')return `<span class="trend-box trend-down"><i data-lucide="trending-down" class="icon"></i> -${n}% <small>Bajó</small></span>`;
+  return '<span class="trend-box trend-flat"><i data-lucide="minus" class="icon"></i> 0.0% <small>Sin cambio</small></span>';
 }
 
 function renderResponsibilities(){
@@ -1623,7 +1628,23 @@ window.openRankingDetail=function(id,position,order='points'){
     const box=document.querySelector('#modalBox');if(!box)return;
     const t=rankingTrend(id),p=performance(id);
     const anchor=box.querySelector('.ranking-detail-impact');
-    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación compara la calificación total del ranking frente al período anterior. La calificación combina 60% de cumplimiento de actividades y 40% del puntaje obtenido (incluyendo llegadas, tardanzas, responsabilidades y delegaciones). ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
+    const cur=t.current, prevPerf=t.previousPerf;
+    const fmtDelta=(n)=>{if(n===null||n===undefined||!Number.isFinite(n))return '—';return (n>0?'+':'')+n.toFixed(2)};
+    const impactRows=[];
+    if(cur&&prevPerf){
+      const dc=cur.compliance-prevPerf.compliance, dp=cur.pointGrade-prevPerf.pointGrade, dg=cur.grade-prevPerf.grade, dpts=cur.points-prevPerf.points;
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="check-circle-2" class="icon"></i> Cumplimiento</b><small>${prevPerf.compliance.toFixed(1)}% → ${cur.compliance.toFixed(1)}% · peso 60%</small></div><span class="${dc>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(dc)} pp</span></div>`);
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="star" class="icon"></i> Rendimiento por puntos</b><small>${prevPerf.pointGrade.toFixed(1)}% → ${cur.pointGrade.toFixed(1)}% · peso 40% · ${prevPerf.points.toFixed(2)} → ${cur.points.toFixed(2)} pts</small></div><span class="${dp>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(dp)} pp</span></div>`);
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="trending-up" class="icon"></i> Efecto final</b><small>${prevPerf.grade.toFixed(2)}% → ${cur.grade.toFixed(2)}%</small></div><span class="${dg>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(dg)} pp</span></div>`);
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="calculator" class="icon"></i> Variación de puntos</b><small>La diferencia de puntos ayuda a explicar el cambio del componente de rendimiento.</small></div><span class="${dpts>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(dpts)} pts</span></div>`);
+      const db=cur.basePoints-prevPerf.basePoints, da=cur.arrival-prevPerf.arrival, dr=cur.responsibilityPoints-prevPerf.responsibilityPoints;
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="calendar-check-2" class="icon"></i> Asistencia y estado</b><small>Base de actividades: ${prevPerf.basePoints.toFixed(2)} → ${cur.basePoints.toFixed(2)} pts · ${prevPerf.present} puntuales, ${prevPerf.late} tardanzas y ${prevPerf.absent} inasistencias → ${cur.present}, ${cur.late} y ${cur.absent}</small></div><span class="${db>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(db)} pts</span></div>`);
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="clock-3" class="icon"></i> Puntualidad</b><small>Variación de los puntos por hora de llegada.</small></div><span class="${da>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(da)} pts</span></div>`);
+      impactRows.push(`<div class="ranking-detail-row"><div><b><i data-lucide="clipboard-check" class="icon"></i> Responsabilidades y delegaciones</b><small>${prevPerf.responsibilityPoints.toFixed(2)} → ${cur.responsibilityPoints.toFixed(2)} pts · propias, recibidas y delegadas</small></div><span class="${dr>=0?'ranking-detail-good':'ranking-detail-bad'}">${fmtDelta(dr)} pts</span></div>`);
+    }
+    const impactHtml=impactRows.length?`<div class="ranking-detail-list">${impactRows.join('')}</div>`:'<div class="empty">Aún no existe un período anterior con datos suficientes para explicar la variación.</div>';
+    const trendReason=cur&&prevPerf ? (cur.grade>prevPerf.grade ? 'La calificación subió porque el resultado combinado de cumplimiento y puntos fue mejor que en el período anterior.' : cur.grade<prevPerf.grade ? 'La calificación bajó porque el resultado combinado de cumplimiento y puntos fue menor que en el período anterior.' : 'La calificación se mantuvo porque el resultado combinado prácticamente no cambió.') : 'Cuando exista un período anterior con datos, aquí se mostrará qué componente produjo la subida o la bajada.';
+    const html=`<div class="ranking-detail-impact"><h4><i data-lucide="trending-up" class="icon"></i> Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><p style="margin:8px 0"><b>¿Qué produjo el cambio?</b> ${trendReason}</p>${impactHtml}<small style="color:var(--muted)">La calificación combina 60% de cumplimiento de actividades y 40% del rendimiento por puntos. La comparación utiliza el período anterior disponible con datos.</small></div>`;
     if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else box.insertAdjacentHTML('beforeend',html);
     if(window.lucide)lucide.createIcons();
   },50);
@@ -1684,13 +1705,13 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
     const years=knownYears();
     el.innerHTML=`
       <div class="year-switcher">
-        <strong>📅 Año de trabajo:</strong>
+        <strong> Año de trabajo:</strong>
         <select id="activeYearSelect" onchange="switchRuahYear(this.value)">${years.map(y=>`<option value="${y}" ${y===activeYear()?'selected':''}>${y}</option>`).join('')}</select>
         <span class="year-badge">${activeYear()===CAL_YEAR?'Año actual':'Consultando '+activeYear()}</span>
       </div>
       <div class="grid2">
         <div class="year-card">
-          <h3>🌱 Comenzar un nuevo año</h3>
+          <h3> Comenzar un nuevo año</h3>
           <p>Elige el año que quieres iniciar. <b>No se borrarán los músicos</b> ni las actividades. El historial de los años anteriores seguirá guardado.</p>
           <div class="formgrid">
             <div class="field"><label>Nuevo año</label><input id="newRuahYear" type="number" min="2000" max="2100" value="${CAL_YEAR+1}"></div>
@@ -1699,7 +1720,7 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
           <small style="color:var(--muted)">Los mismos músicos estarán disponibles automáticamente para registrar asistencia y responsabilidades durante el nuevo año.</small>
         </div>
         <div class="year-card">
-          <h3>📊 Año seleccionado</h3>
+          <h3>Estadística Año seleccionado</h3>
           <p><b>${activeYear()}</b> · ${db.musicians.length} músicos disponibles · ${yearStats(activeYear()).attendance} asistencias · ${yearStats(activeYear()).responsibilities} responsabilidades.</p>
           <button class="btn" onclick="switchRuahYear('${CAL_YEAR}')">Volver al año actual</button>
         </div>
@@ -1813,26 +1834,26 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
     const d=dashboardStats(), host=document.getElementById('ruahUpgradeDashboard');if(!host)return;
     const ranked=[...d.all].sort((a,b)=>b.p.grade-a.p.grade||b.p.points-a.p.points), best=ranked[0], growth=[...d.all].filter(x=>x.t.relative!==null).sort((a,b)=>b.t.relative-a.t.relative)[0], worst=[...d.all].filter(x=>x.t.relative!==null).sort((a,b)=>a.t.relative-b.t.relative)[0];
     const alerts=[];
-    d.all.forEach(x=>{if(x.p.late>=3)alerts.push({i:'⏰',t:`${musicianName(x.m.id)} tiene ${x.p.late} tardanzas sin justificar.`});if(x.p.grade<60&&x.p.total)alerts.push({i:'⚠️',t:`${musicianName(x.m.id)} está en ${x.p.grade}% y requiere atención.`})});
-    d.resp.filter(x=>!x.done&&!x.delegatedTo).slice(0,5).forEach(x=>alerts.push({i:'📋',t:`Responsabilidad pendiente: ${x.title} · ${musicianName(x.musicianId)}.`}));
-    d.resp.filter(x=>x.delegatedTo&&!x.delegatedFrom).slice(0,4).forEach(x=>alerts.push({i:'🔄',t:`${musicianName(x.musicianId)} delegó “${x.title}” a ${musicianName(x.delegatedTo)}.`}));
+    d.all.forEach(x=>{if(x.p.late>=3)alerts.push({i:'<i data-lucide=\"clock-3\" class=\"icon\"></i>',t:`${musicianName(x.m.id)} tiene ${x.p.late} tardanzas sin justificar.`});if(x.p.grade<60&&x.p.total)alerts.push({i:'<i data-lucide=\"alert-triangle\" class=\"icon\"></i>',t:`${musicianName(x.m.id)} está en ${x.p.grade}% y requiere atención.`})});
+    d.resp.filter(x=>!x.done&&!x.delegatedTo).slice(0,5).forEach(x=>alerts.push({i:'<i data-lucide=\"clipboard-list\" class=\"icon\"></i>',t:`Responsabilidad pendiente: ${x.title} · ${musicianName(x.musicianId)}.`}));
+    d.resp.filter(x=>x.delegatedTo&&!x.delegatedFrom).slice(0,4).forEach(x=>alerts.push({i:'<i data-lucide=\"repeat-2\" class=\"icon\"></i>',t:`${musicianName(x.musicianId)} delegó “${x.title}” a ${musicianName(x.delegatedTo)}.`}));
     const recs=[
-      ['🏆','Líder actual',best?musicianName(best.m.id):'—',best?`${best.p.grade}% · ${formatArrivalScore(best.p.points)} pts`:'' ],
-      ['📈','Mayor crecimiento',growth?musicianName(growth.m.id):'—',growth?`+${Math.abs(growth.t.relative).toFixed(1)}%`:'' ],
-      ['⏰','Mejor puntualidad',ranked.length?[...ranked].sort((a,b)=>{const aa=a.p.attendance.length?a.p.attendance.filter(x=>x.arrival).length? a.p.arrival/a.p.attendance.filter(x=>x.arrival).length:0:0;const bb=b.p.attendance.length?b.p.arrival/b.p.attendance.filter(x=>x.arrival).length:0;return bb-aa})[0]?musicianName([...ranked].sort((a,b)=>b.p.arrival-a.p.arrival)[0].m.id):'—':'',ranked.length?`${formatArrivalScore(ranked[0].p.arrival)} pts de llegada`:'' ],
-      ['📉','Mayor caída',worst?musicianName(worst.m.id):'—',worst?`-${Math.abs(worst.t.relative).toFixed(1)}%`:'' ]
+      ['<i data-lucide=\"trophy\" class=\"icon\"></i>','Líder actual',best?musicianName(best.m.id):'—',best?`${best.p.grade}% · ${formatArrivalScore(best.p.points)} pts`:'' ],
+      ['<i data-lucide=\"trending-up\" class=\"icon\"></i>','Mayor crecimiento',growth?musicianName(growth.m.id):'—',growth?`+${Math.abs(growth.t.relative).toFixed(1)}%`:'' ],
+      ['<i data-lucide=\"clock-3\" class=\"icon\"></i>','Mejor puntualidad',ranked.length?[...ranked].sort((a,b)=>{const aa=a.p.attendance.length?a.p.attendance.filter(x=>x.arrival).length? a.p.arrival/a.p.attendance.filter(x=>x.arrival).length:0:0;const bb=b.p.attendance.length?b.p.arrival/b.p.attendance.filter(x=>x.arrival).length:0;return bb-aa})[0]?musicianName([...ranked].sort((a,b)=>b.p.arrival-a.p.arrival)[0].m.id):'—':'',ranked.length?`${formatArrivalScore(ranked[0].p.arrival)} pts de llegada`:'' ],
+      ['<i data-lucide=\"trending-down\" class=\"icon\"></i>','Mayor caída',worst?musicianName(worst.m.id):'—',worst?`-${Math.abs(worst.t.relative).toFixed(1)}%`:'' ]
     ];
     host.innerHTML=`<div class="ruah-upgrade-grid">
-      <div class="ruah-upgrade-card"><h3>📊 Ministerio · ${d.y}</h3><div class="ruah-kpi">${pct(d.avg)}</div><div class="ruah-muted">Promedio de calificación</div><div class="ruah-mini-progress"><span style="width:${Math.max(0,Math.min(100,d.avg))}%"></span></div></div>
-      <div class="ruah-upgrade-card"><h3>🏆 Mejor posición</h3><div class="ruah-kpi">${best?esc(musicianName(best.m.id)):'—'}</div><div class="ruah-muted">${best?best.p.grade+'% · '+formatArrivalScore(best.p.points)+' puntos':'Sin datos'}</div></div>
-      <div class="ruah-upgrade-card"><h3>📋 Pendientes</h3><div class="ruah-kpi">${d.pending}</div><div class="ruah-muted">Responsabilidades sin completar</div><div class="ruah-muted">${d.delegated} delegación(es) registrada(s)</div></div>
-      <div class="ruah-upgrade-card"><h3>👥 Registros del año</h3><div class="ruah-kpi">${d.pre.length+d.resp.length}</div><div class="ruah-muted">Asistencias + responsabilidades</div></div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="bar-chart-3" class="icon"></i> Ministerio · ${d.y}</h3><div class="ruah-kpi">${pct(d.avg)}</div><div class="ruah-muted">Promedio de calificación</div><div class="ruah-mini-progress"><span style="width:${Math.max(0,Math.min(100,d.avg))}%"></span></div></div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="trophy" class="icon"></i> Mejor posición</h3><div class="ruah-kpi">${best?esc(musicianName(best.m.id)):'—'}</div><div class="ruah-muted">${best?best.p.grade+'% · '+formatArrivalScore(best.p.points)+' puntos':'Sin datos'}</div></div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="clipboard-list" class="icon"></i> Pendientes</h3><div class="ruah-kpi">${d.pending}</div><div class="ruah-muted">Responsabilidades sin completar</div><div class="ruah-muted">${d.delegated} delegación(es) registrada(s)</div></div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="users" class="icon"></i> Registros del año</h3><div class="ruah-kpi">${d.pre.length+d.resp.length}</div><div class="ruah-muted">Asistencias + responsabilidades</div></div>
     </div>
     <div class="ruah-upgrade-grid">
-      <div class="ruah-upgrade-card"><h3>🚨 Atención</h3>${alerts.length?alerts.slice(0,8).map(a=>`<div class="ruah-alert"><span class="ruah-alert-icon">${a.i}</span><span>${esc(a.t)}</span></div>`).join(''):'<div class="ruah-muted">No hay alertas importantes.</div>'}</div>
-      <div class="ruah-upgrade-card"><h3>🏅 Reconocimientos</h3>${recs.map(r=>`<div class="ruah-recognition"><span>${r[0]} <b>${esc(r[1])}</b><br><small>${esc(r[2])}</small></span><b>${esc(r[3])}</b></div>`).join('')}</div>
-      <div class="ruah-upgrade-card"><h3>📈 Evolución</h3>${d.all.slice(0,8).map(x=>{const t=x.t;return `<div class="ruah-recognition"><span>${esc(musicianName(x.m.id))}</span><span class="${t.type==='up'?'ruah-trend-up':t.type==='down'?'ruah-trend-down':''}">${t.relative==null?'Primera medición':(t.type==='up'?'▲ +':'▼ -')+Math.abs(t.relative).toFixed(1)+'%'}</span></div>`}).join('')}</div>
-      <div class="ruah-upgrade-card"><h3>📌 Resumen</h3><div class="ruah-muted">Puntos acumulados del ministerio</div><div class="ruah-kpi">${formatArrivalScore(d.points)}</div><div class="ruah-muted">Las calificaciones combinan cumplimiento y puntos según las reglas actuales.</div></div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="siren" class="icon"></i> Atención</h3>${alerts.length?alerts.slice(0,8).map(a=>`<div class="ruah-alert"><span class="ruah-alert-icon">${a.i}</span><span>${esc(a.t)}</span></div>`).join(''):'<div class="ruah-muted">No hay alertas importantes.</div>'}</div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="award" class="icon"></i> Reconocimientos</h3>${recs.map(r=>`<div class="ruah-recognition"><span>${r[0]} <b>${esc(r[1])}</b><br><small>${esc(r[2])}</small></span><b>${esc(r[3])}</b></div>`).join('')}</div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="trending-up" class="icon"></i> Evolución</h3>${d.all.slice(0,8).map(x=>{const t=x.t;return `<div class="ruah-recognition"><span>${esc(musicianName(x.m.id))}</span><span class="${t.type==='up'?'ruah-trend-up':t.type==='down'?'ruah-trend-down':''}">${t.relative==null?'Primera medición':(t.type==='up'?'<i data-lucide=\"trending-up\" class=\"icon\"></i> +':'↓ -')+Math.abs(t.relative).toFixed(1)+'%'}</span></div>`}).join('')}</div>
+      <div class="ruah-upgrade-card"><h3><i data-lucide="clipboard" class="icon"></i> Resumen</h3><div class="ruah-muted">Puntos acumulados del ministerio</div><div class="ruah-kpi">${formatArrivalScore(d.points)}</div><div class="ruah-muted">Las calificaciones combinan cumplimiento y puntos según las reglas actuales.</div></div>
     </div>`;
     if(window.lucide)lucide.createIcons();
   }
@@ -1849,8 +1870,30 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
   }
   let calOffset=0;window.ruahCalShift=function(n){calOffset+=n;renderCalendar()};
   function renderCalendar(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();document.getElementById('ruahCalTitle').textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=valid?new Date(y,mo,n):new Date(y,mo,n);const wd=(date.getDay()+6)%7;const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}"><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</div>`}html+='</div>';host.innerHTML=html}
-  function renderConfig(){const h=document.getElementById('ruahRankingConfig');if(!h)return;h.innerHTML=`<div class="ruah-settings"><div class="ruah-setting"><label><b>Componente de cumplimiento</b><span>60%</span></label><p class="ruah-table-note">Asistencias, tardanzas, inasistencias y responsabilidades.</p></div><div class="ruah-setting"><label><b>Componente de puntos</b><span>40%</span></label><p class="ruah-table-note">Puntos por asistencia, llegada, responsabilidades y delegaciones.</p></div><div class="ruah-setting"><label><b>Delegar responsabilidad</b><span>-2 pts</span></label><p class="ruah-table-note">La responsabilidad original queda cerrada y la evaluación pasa al músico delegado.</p></div><div class="ruah-setting"><label><b>Recibir y cumplir delegación</b><span>+6 pts</span></label><p class="ruah-table-note">Si el delegado no cumple, recibe la penalización correspondiente.</p></div></div><div class="ruah-setting" style="margin-top:12px"><b>📈 Tendencia</b><p class="ruah-table-note">La subida o bajada compara la calificación del ranking con el período anterior disponible, utilizando los datos históricos existentes. Si no existe una medición previa, se muestra “Primera medición”.</p></div>`}
+  function renderConfig(){const h=document.getElementById('ruahRankingConfig');if(!h)return;h.innerHTML=`<div class="ruah-settings"><div class="ruah-setting"><label><b>Componente de cumplimiento</b><span>60%</span></label><p class="ruah-table-note">Asistencias, tardanzas, inasistencias y responsabilidades.</p></div><div class="ruah-setting"><label><b>Componente de puntos</b><span>40%</span></label><p class="ruah-table-note">Puntos por asistencia, llegada, responsabilidades y delegaciones.</p></div><div class="ruah-setting"><label><b>Delegar responsabilidad</b><span>-2 pts</span></label><p class="ruah-table-note">La responsabilidad original queda cerrada y la evaluación pasa al músico delegado.</p></div><div class="ruah-setting"><label><b>Recibir y cumplir delegación</b><span>+6 pts</span></label><p class="ruah-table-note">Si el delegado no cumple, recibe la penalización correspondiente.</p></div></div><div class="ruah-setting" style="margin-top:12px"><b><i data-lucide="trending-up" class="icon"></i> Tendencia</b><p class="ruah-table-note">La subida o bajada compara la calificación del ranking con el período anterior disponible, utilizando los datos históricos existentes. Si no existe una medición previa, se muestra “Primera medición”.</p></div>`}
   const oldShow=window.showPage;window.showPage=function(id){oldShow(id);if(id==='calendario')renderCalendar();if(id==='configranking')renderConfig()};
+  /* Calendario interactivo y configuración funcional del ranking */
+  window.ruahRankingSettings=JSON.parse(localStorage.getItem('ruahRankingSettings')||'null')||{cumplimiento:60,puntos:40,delegar:-2,delegadoCumple:6,delegadoNoCumple:-4};
+  window.saveRuahRankingSettings=function(){
+    const g=id=>Number(document.getElementById(id)?.value);
+    const cumplimiento=g('rsCumplimiento'), puntos=g('rsPuntos'), delegar=g('rsDelegar'), delegadoCumple=g('rsDelegadoCumple'), delegadoNoCumple=g('rsDelegadoNoCumple');
+    if(![cumplimiento,puntos,delegar,delegadoCumple,delegadoNoCumple].every(Number.isFinite))return alert('Revisa los valores de configuración.');
+    if(cumplimiento+puntos!==100)return alert('Cumplimiento + puntos debe sumar exactamente 100%.');
+    ruahRankingSettings={cumplimiento,puntos,delegar,delegadoCumple,delegadoNoCumple};localStorage.setItem('ruahRankingSettings',JSON.stringify(ruahRankingSettings));
+    renderConfig();if(typeof renderRanking==='function')renderRanking();if(typeof renderDashboard==='function')renderDashboard();
+  };
+  window.resetRuahRankingSettings=function(){if(!confirm('¿Restaurar los valores originales del ranking?'))return;ruahRankingSettings={cumplimiento:60,puntos:40,delegar:-2,delegadoCumple:6,delegadoNoCumple:-4};localStorage.setItem('ruahRankingSettings',JSON.stringify(ruahRankingSettings));renderConfig()};
+  function renderConfig(){const h=document.getElementById('ruahRankingConfig');if(!h)return;const s=ruahRankingSettings;h.innerHTML=`<div class="ruah-settings">
+    <div class="ruah-setting"><label><b>Componente de cumplimiento</b><input id="rsCumplimiento" type="number" min="0" max="100" value="${s.cumplimiento}" style="width:90px"> <span>%</span></label><p class="ruah-table-note">Peso de asistencias, tardanzas, inasistencias y responsabilidades.</p></div>
+    <div class="ruah-setting"><label><b>Componente de puntos</b><input id="rsPuntos" type="number" min="0" max="100" value="${s.puntos}" style="width:90px"> <span>%</span></label><p class="ruah-table-note">Peso del rendimiento por puntos de llegada, asistencia, responsabilidades y delegaciones.</p></div>
+    <div class="ruah-setting"><label><b>Delegar responsabilidad</b><input id="rsDelegar" type="number" value="${s.delegar}" style="width:90px"> <span>pts</span></label><p class="ruah-table-note">Penalización aplicada al músico que entrega la responsabilidad.</p></div>
+    <div class="ruah-setting"><label><b>Recibir y cumplir delegación</b><input id="rsDelegadoCumple" type="number" value="${s.delegadoCumple}" style="width:90px"> <span>pts</span></label><p class="ruah-table-note">Puntos que recibe quien acepta y cumple una responsabilidad delegada.</p></div>
+    <div class="ruah-setting"><label><b>Recibir y no cumplir delegación</b><input id="rsDelegadoNoCumple" type="number" value="${s.delegadoNoCumple}" style="width:90px"> <span>pts</span></label><p class="ruah-table-note">Penalización si el músico que recibió la delegación no la cumple.</p></div>
+  </div><div class="toolbar" style="margin-top:16px"><button class="btn primary" onclick="saveRuahRankingSettings()"><i data-lucide="save" class="icon"></i> Guardar configuración</button><button class="btn" onclick="resetRuahRankingSettings()"><i data-lucide="rotate-ccw" class="icon"></i> Restaurar valores</button></div>
+  <div class="ruah-setting" style="margin-top:12px"><b><i data-lucide="info" class="icon"></i> ¿Qué cambia?</b><p class="ruah-table-note">Los valores se guardan en este dispositivo y se aplican al cálculo del ranking cuando se vuelva a evaluar.</p></div>`;if(window.lucide)lucide.createIcons()}
+  function openCalendarDay(y,mo,n){const date=new Date(y,mo,n),wd=(date.getDay()+6)%7,ev=db.activities.filter(a=>a.day===wd);modal(`<div class="modalhead"><h2>${date.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</h2><button class="close" onclick="closeModal()">×</button></div>${ev.length?ev.map(a=>`<div class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><b><i data-lucide="calendar-check-2" class="icon"></i> ${esc(a.name)}</b><div class="ruah-muted">${esc(a.type||'Actividad')} · ${esc(a.time||'Sin hora')}</div></div><button class="btn" onclick="closeModal();openActivityModal('${a.id}')"><i data-lucide="pencil" class="icon"></i> Editar</button></div></div>`).join(''):`<div class="empty">No hay actividades programadas para este día.</div>`}<div class="toolbar" style="margin-top:14px"><button class="btn primary" onclick="closeModal();showPage('actividades')"><i data-lucide="calendar-plus" class="icon"></i> Ir a actividades</button></div>`);if(window.lucide)lucide.createIcons()}
+  function renderCalendar(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();document.getElementById('ruahCalTitle').textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=new Date(y,mo,n),wd=(date.getDay()+6)%7;const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}" ${valid?`onclick="openCalendarDay(${y},${mo},${n})"`:''}><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</div>`}html+='</div><div class="ruah-table-note" style="margin-top:12px"><i data-lucide="mouse-pointer-click" class="icon"></i> Haz clic en un día para ver y editar sus actividades.</div>';host.innerHTML=html;if(window.lucide)lucide.createIcons()}
+
   installPages();setTimeout(()=>{installDashboard();renderUpgradeDashboard();renderCalendar();renderConfig()},80);
   const observer=new MutationObserver(()=>{installDashboard();});observer.observe(document.body,{childList:true,subtree:true});
 })();
