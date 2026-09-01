@@ -458,9 +458,13 @@ function renderDashboard(){
  document.getElementById('sLate').textContent=db.attendance.filter(x=>x.status==='late').length;
  document.getElementById('sAbsent').textContent=db.attendance.filter(x=>x.status==='absent').length;
  document.getElementById('sBirth').textContent=db.musicians.filter(m=>birthdayDays(m)<=30).length;
- const essayAct=(db.activities||[]).find(a=>(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');
- const suspendedEssays=Object.values(db.essayStatus||{}).filter(v=>v==='suspended').length;
- const dashSusp=document.getElementById('sSuspendedEssays'); if(dashSusp)dashSusp.textContent=suspendedEssays;
+ const suspendedEssays=(db.suspensions||[]).filter(x=>{
+   if(x.status && x.status!=='suspended') return false;
+   const a=(db.activities||[]).find(z=>z.id===x.activityId);
+   return !!a && (((a.type||'').toLowerCase()==='ensayo') || ((a.name||'').toLowerCase()==='ensayo'));
+ }).length;
+ const dashSusp=document.getElementById('sSuspendedEssays');
+ if(dashSusp) dashSusp.textContent=suspendedEssays;
  const dm=document.getElementById('dashMusicians');
  dm.innerHTML=db.musicians.length?db.musicians.slice(0,12).map(m=>{let c=counts(m.id);return `<div class="person" style="padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="openProfile('${m.id}')"><div class="avatar">${avatar(m)}</div><div style="flex:1"><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div><span class="badge present">${c.present}</span><span class="badge late">${c.late}</span><span class="badge absent">${c.absent}</span></div>`}).join(''):'<div class="empty">Aún no hay músicos.</div>';
  const upcoming=[...db.musicians].sort((a,b)=>birthdayDays(a)-birthdayDays(b)).filter(m=>birthdayDays(m)<=60).slice(0,8);
@@ -1936,7 +1940,7 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
     db.suspensions=db.suspensions||[]; if(db.suspensions.some(x=>x.activityId===activityId&&x.date===date&&x.status!=='rescheduled'))return alert('Esa actividad ya está suspendida en esa fecha.');
     const activity=getActivity(activityId),isEssay=activity&&((activity.type||'').toLowerCase()==='ensayo'||(activity.name||'').toLowerCase()==='ensayo');
     db.suspensions.push({id:uid('s'),activityId,date,reason,createdAt:new Date().toISOString(),status:'suspended'}); if(isEssay){db.essayStatus=db.essayStatus||{};db.essayStatus[date]='suspended';}
-    closeModal();save();renderSuspensiones();
+    closeModal();save();renderSuspensiones();renderDashboard();
   };
   window.openReprogramModal=function(){
     modal(`<div class="modalhead"><h2><i data-lucide="calendar-clock" class="icon"></i> Reprogramar actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
@@ -1954,9 +1958,9 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
     const a=getActivity(activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');
     db.reschedules.push({id:uid('r'),activityId,originalDate,newDate,reason,createdAt:new Date().toISOString()});
     if(isEssay){db.essayStatus=db.essayStatus||{};db.essayStatus[originalDate]={status:'rescheduled',newDate};db.essayStatus[newDate]={status:'rescheduledTo',originalDate};}
-    closeModal();save();renderSuspensiones();
+    closeModal();save();renderSuspensiones();renderDashboard();
   };
-  window.removeSuspension=function(id){const x=(db.suspensions||[]).find(z=>z.id===id);if(!x)return;if(!confirm('¿Quitar esta suspensión?'))return;db.suspensions=db.suspensions.filter(z=>z.id!==id);const a=getActivity(x.activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');if(isEssay&&db.essayStatus&&db.essayStatus[x.date]==='suspended')delete db.essayStatus[x.date];save();renderSuspensiones();};
+  window.removeSuspension=function(id){const x=(db.suspensions||[]).find(z=>z.id===id);if(!x)return;if(!confirm('¿Quitar esta suspensión?'))return;db.suspensions=db.suspensions.filter(z=>z.id!==id);const a=getActivity(x.activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');if(isEssay&&db.essayStatus&&db.essayStatus[x.date]==='suspended')delete db.essayStatus[x.date];save();renderSuspensiones();renderDashboard();};
   window.removeReschedule=function(id){const x=(db.reschedules||[]).find(z=>z.id===id);if(!x)return;if(!confirm('¿Quitar esta reprogramación?'))return;db.reschedules=db.reschedules.filter(z=>z.id!==id);const a=getActivity(x.activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');if(isEssay&&db.essayStatus){if(db.essayStatus[x.originalDate]?.status==='rescheduled')delete db.essayStatus[x.originalDate];if(db.essayStatus[x.newDate]?.status==='rescheduledTo')delete db.essayStatus[x.newDate];}save();renderSuspensiones();};
   installPages();setTimeout(()=>{installDashboard();renderUpgradeDashboard();renderConfig();renderSuspensiones()},80);
   const observer=new MutationObserver(()=>{installDashboard();});observer.observe(document.body,{childList:true,subtree:true});
