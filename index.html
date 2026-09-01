@@ -337,7 +337,7 @@ Ej.: 30 min antes = <span class="positive">+2.50</span> · 3 min antes = <span c
     </div>
   </div>
   <div class="toolbar"><select id="rankingOrder" onchange="renderRanking()"><option value="points">Ordenar por puntos</option><option value="grade">Ordenar por porcentaje</option><option value="none">Sin orden seleccionado</option></select></div>
-  <div class="card tablewrap"><table class="table"><thead><tr><th>Puesto</th><th>Músico</th><th>Asistencia</th><th>Llegadas</th><th>Responsabilidades</th><th>Puntos</th><th>Calificación</th><th>Detalle</th></tr></thead><tbody id="rankingTable"></tbody></table></div>
+  <div class="card tablewrap"><table class="table"><thead><tr><th>Puesto</th><th>Músico</th><th>Asistencia</th><th>Llegadas</th><th>Responsabilidades</th><th>Puntos</th><th>Calificación</th><th>Tendencia</th><th>Detalle</th></tr></thead><tbody id="rankingTable"></tbody></table></div>
 </section>
 
 <section id="exportar" class="page">
@@ -489,9 +489,10 @@ function renderRanking(){
     <td>${p.responsibilitiesOk}/${p.responsibilities.length} cumplidas</td>
     <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${p.responsibilityPoints}</small></td>
     <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span></td>
+    <td>${trendHtml(rankingTrend(m.id))}<br><small style="color:var(--muted)">vs. período anterior</small></td>
     <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td>
    </tr>`
- }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>'
+ }).join(''):'<tr><td colspan="9" class="empty">Aún no hay músicos para calificar.</td></tr>'
 }
 function openRankingDetail(id,position,order='points'){
  const m=db.musicians.find(x=>x.id===id); if(!m)return;
@@ -1456,29 +1457,40 @@ function periodPerformance(mId,year,month){
   return {grade:total?Math.round(compliance/total*100):null,points:basePoints+arrival+resp,total};
 }
 function rankingTrend(mId){
+  /* Tendencia tipo bolsa: compara el % de cumplimiento actual
+     contra el período anterior y calcula variación relativa real. */
+  const activeYear=Number(db.activeYear)||new Date().getFullYear();
   const now=new Date();
-  const y=now.getFullYear(),m=now.getMonth()+1;
-  let cy=y,cm=m, prevY=cm===1?y-1:y,prevM=cm===1?12:cm-1;
-  let cur=periodPerformance(mId,cy,cm),prev=periodPerformance(mId,prevY,prevM);
-  /* Si este mes todavía no tiene registros, usa los dos últimos meses
-     registrados para que la tendencia siga siendo útil. */
-  if(!cur.total){
-    const keys=new Set();
-    db.attendance.forEach(x=>{if(x.musicianId===mId&&x.date)keys.add(x.date.slice(0,7))});
-    db.responsibilities.forEach(x=>{if((x.musicianId===mId||x.delegatedFrom)&&x.date)keys.add(x.date.slice(0,7))});
-    const sorted=[...keys].sort().reverse();
-    if(sorted[0]){const [yy,mm]=sorted[0].split('-').map(Number);cy=yy;cm=mm;cur=periodPerformance(mId,cy,cm);const d=new Date(yy,mm-2,1);prevY=d.getFullYear();prevM=d.getMonth()+1;prev=periodPerformance(mId,prevY,prevM)}
+  let curYear=activeYear, curMonth=(activeYear===now.getFullYear()?now.getMonth()+1:0);
+  const months=new Set();
+  (db.attendance||[]).forEach(x=>{if(x.musicianId===mId&&String(x.date||'').startsWith(String(activeYear)+'-'))months.add(String(x.date).slice(0,7))});
+  (db.responsibilities||[]).forEach(x=>{if(x.musicianId===mId&&String(x.date||'').startsWith(String(activeYear)+'-'))months.add(String(x.date).slice(0,7))});
+  const sorted=[...months].sort().reverse();
+  if(!curMonth || !periodPerformance(mId,curYear,curMonth).total){
+    if(sorted.length){const [yy,mm]=sorted[0].split('-').map(Number);curYear=yy;curMonth=mm;}
+    else return {type:'flat',delta:null,relative:null,current:null,previous:null,label:'Sin datos'};
   }
-  if(!cur.total||prev.grade===null)return {type:'flat',delta:null,current:cur.grade,previous:prev.grade,label:'Sin comparación'};
+  const cur=periodPerformance(mId,curYear,curMonth);
+  let d=new Date(curYear,curMonth-2,1);
+  let prevYear=d.getFullYear(),prevMonth=d.getMonth()+1;
+  let prev=periodPerformance(mId,prevYear,prevMonth);
+  if(!prev.total && sorted.length>1){
+    const [py,pm]=sorted[1].split('-').map(Number);
+    prevYear=py;prevMonth=pm;prev=periodPerformance(mId,prevYear,prevMonth);
+  }
+  if(!cur.total || prev.grade===null || prev.grade===undefined) return {type:'flat',delta:null,relative:null,current:cur.grade,previous:prev.grade,label:'Sin comparación'};
   const delta=cur.grade-prev.grade;
-  return {type:delta>0?'up':delta<0?'down':'flat',delta,current:cur.grade,previous:prev.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio'};
+  const relative=prev.grade===0?(cur.grade===0?0:null):(delta/prev.grade)*100;
+  return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:prev.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(curMonth).padStart(2,'0')}/${curYear}`};
 }
 function trendHtml(t){
-  if(t.delta===null)return '<span class="trend-box trend-flat">— <small>sin mes anterior</small></span>';
-  const n=Math.abs(t.delta).toFixed(1);
-  if(t.type==='up')return `<span class="trend-box trend-up">▲ +${n}% <small>${t.label}</small></span>`;
-  if(t.type==='down')return `<span class="trend-box trend-down">▼ -${n}% <small>${t.label}</small></span>`;
-  return '<span class="trend-box trend-flat">● 0.0% <small>sin cambio</small></span>';
+  if(t.relative===null || t.relative===undefined){
+    return `<span class="trend-box trend-flat">— <small>${t.label||'sin comparación'}</small></span>`;
+  }
+  const n=Math.abs(t.relative).toFixed(1);
+  if(t.type==='up')return `<span class="trend-box trend-up">▲ +${n}% <small>Subió</small></span>`;
+  if(t.type==='down')return `<span class="trend-box trend-down">▼ -${n}% <small>Bajó</small></span>`;
+  return '<span class="trend-box trend-flat">● 0.0% <small>Sin cambio</small></span>';
 }
 
 function renderResponsibilities(){
@@ -1577,7 +1589,7 @@ window.openRankingDetail=function(id,position,order='points'){
     const box=document.querySelector('#modalBox');if(!box)return;
     const t=rankingTrend(id),p=performance(id);
     const anchor=box.querySelector('.ranking-detail-impact');
-    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación compara el porcentaje de cumplimiento con el mes anterior. ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
+    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación muestra el cambio porcentual real del cumplimiento frente al período anterior: (actual − anterior) ÷ anterior × 100. Es independiente de los puntos del ranking. ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
     if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else box.insertAdjacentHTML('beforeend',html);
     if(window.lucide)lucide.createIcons();
   },50);
@@ -1586,6 +1598,161 @@ window.openRankingDetail=function(id,position,order='points'){
 ensureDelegationChildren();
 try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
 setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRankingLegendDelegation==='function')renderRankingLegendDelegation();},80);
+</script>
+
+<style id="annual-management-style">
+.year-switcher{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px;padding:12px 14px;border:1px solid #dbe3ec;border-radius:12px;background:#f8fafc}
+.year-switcher strong{font-size:13px;color:#334155}
+.year-switcher select{min-width:110px;padding:9px 12px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font-weight:700}
+.year-card{border:1px solid #dbe3ec;border-radius:14px;padding:16px;background:#fff}
+.year-card h3{margin-top:0}
+.year-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#eef6ff;color:#174ea6;font-size:12px;font-weight:800}
+.year-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+.year-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 12px;border:1px solid #e2e8f0;border-radius:11px;background:#f8fafc}
+.year-item.active{border-color:#93c5fd;background:#eff6ff}
+@media(max-width:600px){.year-switcher{align-items:stretch}.year-switcher select,.year-switcher .btn{width:100%;min-width:0}}
+</style>
+<script id="annual-management-logic">
+/* =========================================================
+   GESTIÓN DE AÑOS
+   Los músicos y actividades son permanentes. Asistencias y
+   responsabilidades quedan separadas por el año de su fecha.
+   Así se puede comenzar un año nuevo con los mismos músicos
+   sin borrar el historial de años anteriores.
+   ========================================================= */
+(function(){
+  const CAL_YEAR=new Date().getFullYear();
+  function defaultYearDate(){const now=new Date();const y=Number(db.activeYear)||CAL_YEAR;return y===now.getFullYear()?now.toISOString().slice(0,10):String(y)+'-01-01'}
+  db.activeYear=Number(db.activeYear)||CAL_YEAR;
+  db.yearMeta=db.yearMeta&&typeof db.yearMeta==='object'?db.yearMeta:{};
+
+  function recordYear(x){return Number(String(x?.date||'').slice(0,4))||null}
+  function knownYears(){
+    const set=new Set([CAL_YEAR,Number(db.activeYear)]);
+    (db.attendance||[]).forEach(x=>{const y=recordYear(x);if(y)set.add(y)});
+    (db.responsibilities||[]).forEach(x=>{const y=recordYear(x);if(y)set.add(y)});
+    Object.keys(db.yearMeta||{}).forEach(y=>{if(/^\d{4}$/.test(y))set.add(Number(y))});
+    return [...set].filter(Boolean).sort((a,b)=>b-a);
+  }
+  function activeYear(){return Number(db.activeYear)||CAL_YEAR}
+  function inYear(x,y=activeYear()){return recordYear(x)===Number(y)}
+  window.ruahYear={knownYears,activeYear,inYear,recordYear,defaultYearDate};
+  window.ruahDefaultDate=defaultYearDate;
+
+  function yearStats(y){
+    const a=(db.attendance||[]).filter(x=>inYear(x,y));
+    const r=(db.responsibilities||[]).filter(x=>inYear(x,y));
+    return {attendance:a.length,responsibilities:r.length};
+  }
+
+  window.renderYearManager=function(){
+    const el=document.getElementById('yearManagerContent');if(!el)return;
+    const years=knownYears();
+    el.innerHTML=`
+      <div class="year-switcher">
+        <strong>📅 Año de trabajo:</strong>
+        <select id="activeYearSelect" onchange="switchRuahYear(this.value)">${years.map(y=>`<option value="${y}" ${y===activeYear()?'selected':''}>${y}</option>`).join('')}</select>
+        <span class="year-badge">${activeYear()===CAL_YEAR?'Año actual':'Consultando '+activeYear()}</span>
+      </div>
+      <div class="grid2">
+        <div class="year-card">
+          <h3>🌱 Comenzar un nuevo año</h3>
+          <p>Elige el año que quieres iniciar. <b>No se borrarán los músicos</b> ni las actividades. El historial de los años anteriores seguirá guardado.</p>
+          <div class="formgrid">
+            <div class="field"><label>Nuevo año</label><input id="newRuahYear" type="number" min="2000" max="2100" value="${CAL_YEAR+1}"></div>
+            <div class="field" style="display:flex;align-items:end"><button class="btn primary" onclick="startRuahYear()">+ Iniciar año</button></div>
+          </div>
+          <small style="color:var(--muted)">Los mismos músicos estarán disponibles automáticamente para registrar asistencia y responsabilidades durante el nuevo año.</small>
+        </div>
+        <div class="year-card">
+          <h3>📊 Año seleccionado</h3>
+          <p><b>${activeYear()}</b> · ${db.musicians.length} músicos disponibles · ${yearStats(activeYear()).attendance} asistencias · ${yearStats(activeYear()).responsibilities} responsabilidades.</p>
+          <button class="btn" onclick="switchRuahYear('${CAL_YEAR}')">Volver al año actual</button>
+        </div>
+      </div>
+      <div class="year-card" style="margin-top:14px">
+        <h3>Historial de años</h3>
+        <div class="year-list">${years.map(y=>{const st=yearStats(y);return `<div class="year-item ${y===activeYear()?'active':''}"><div><b>${y}</b><small style="display:block;color:var(--muted)">${st.attendance} asistencias · ${st.responsibilities} responsabilidades</small></div><button class="btn" onclick="switchRuahYear('${y}')">${y===activeYear()?'Activo':'Ver'}</button></div>`}).join('')}</div>
+      </div>`;
+  };
+
+  window.switchRuahYear=function(y){
+    y=Number(y);if(!/^\d{4}$/.test(String(y)))return;
+    db.activeYear=y;db.yearMeta[y]=db.yearMeta[y]||{createdAt:new Date().toISOString()};
+    localStorage.setItem(KEY,JSON.stringify(db));
+    renderAll();renderYearManager();
+    const s=document.getElementById('activeYearSelect');if(s)s.value=String(y);
+  };
+
+  window.startRuahYear=function(){
+    const input=document.getElementById('newRuahYear'),y=Number(input?.value);
+    if(!Number.isInteger(y)||y<2000||y>2100)return alert('Escribe un año válido.');
+    const exists=knownYears().includes(y);
+    const msg=exists
+      ? `El año ${y} ya existe. ¿Quieres comenzar a trabajar en ese año con los músicos actuales?`
+      : `¿Quieres iniciar el año ${y}?\\n\\nSe conservarán todos los músicos y actividades. Las asistencias y responsabilidades del año anterior NO se borrarán; quedarán disponibles al consultar ese año.`;
+    if(!confirm(msg))return;
+    db.activeYear=y;db.yearMeta[y]=db.yearMeta[y]||{createdAt:new Date().toISOString(),startedWithMusicians:db.musicians.map(m=>m.id)};
+    localStorage.setItem(KEY,JSON.stringify(db));
+    renderAll();renderYearManager();
+    alert(`Año ${y} iniciado. Los ${db.musicians.length} músicos actuales están disponibles para este nuevo año.`);
+  };
+
+  /* Conteos y evaluaciones se calculan únicamente para el año activo. */
+  const baseCounts=window.counts;
+  window.counts=function(mId){
+    const old=db.attendance;db.attendance=old.filter(x=>inYear(x));
+    try{return baseCounts(mId)}finally{db.attendance=old}
+  };
+
+  const basePerformance=window.performance;
+  window.performance=function(mId){
+    const oldA=db.attendance,oldR=db.responsibilities;
+    db.attendance=oldA.filter(x=>inYear(x));
+    db.responsibilities=oldR.filter(x=>inYear(x));
+    try{return basePerformance(mId)}finally{db.attendance=oldA;db.responsibilities=oldR}
+  };
+
+  /* El filtro anual también se aplica a las vistas operativas. */
+  ['renderDashboard','renderMusicians','renderAttendance','renderResponsibilities'].forEach(name=>{
+    const base=window[name];if(typeof base!=='function')return;
+    window[name]=function(){
+      const oldA=db.attendance,oldR=db.responsibilities;
+      db.attendance=oldA.filter(x=>inYear(x));
+      db.responsibilities=oldR.filter(x=>inYear(x));
+      try{return base.apply(this,arguments)}finally{db.attendance=oldA;db.responsibilities=oldR}
+    };
+  });
+
+  const baseToday=window.today;
+  window.today=function(){return defaultYearDate()};
+
+  const baseRenderAll=window.renderAll;
+  window.renderAll=function(){
+    baseRenderAll.apply(this,arguments);
+    if(typeof renderYearManager==='function')renderYearManager();
+    const label=document.getElementById('activeYearLabel');if(label)label.textContent=activeYear();
+  };
+
+  /* Inserta navegación y sección sin alterar el resto del HTML. */
+  function installYearUI(){
+    const nav=document.querySelector('.nav');
+    if(nav&&!nav.querySelector('[data-page="anos"]')){
+      const b=document.createElement('button');b.dataset.page='anos';b.innerHTML='<i data-lucide="calendar-range" class="icon"></i> Años';nav.appendChild(b);
+    }
+    const main=document.querySelector('main.content');
+    if(main&&!document.getElementById('anos')){
+      const sec=document.createElement('section');sec.id='anos';sec.className='page';
+      sec.innerHTML='<div class="pagehead"><div><h2>Gestión de años</h2><span>Comienza cada año con los mismos músicos sin perder el historial.</span></div></div><div id="yearManagerContent"></div>';
+      main.appendChild(sec);
+    }
+    if(window.lucide)lucide.createIcons();
+  }
+  installYearUI();
+  const oldShowPage=window.showPage;
+  window.showPage=function(id){oldShowPage(id);if(id==='anos')renderYearManager()};
+  setTimeout(()=>{installYearUI();renderYearManager();},50);
+})();
 </script>
 </body>
 </html>
