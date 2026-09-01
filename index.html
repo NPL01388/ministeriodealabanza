@@ -265,6 +265,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
     <button data-page="asistencia"><i data-lucide="check-circle-2" class="icon"></i> Asistencia</button>
     <button data-page="actividades"><i data-lucide="calendar-days" class="icon"></i> Actividades</button>
     <button data-page="responsabilidades"><i data-lucide="clipboard-list" class="icon"></i> Responsabilidades</button>
+    <button data-page="disciplina"><i data-lucide="shield-alert" class="icon"></i> Disciplina</button>
     <button data-page="calificacion"><i data-lucide="trophy" class="icon"></i> Calificación</button>
     <button data-page="cumpleanos"><i data-lucide="cake" class="icon"></i> Cumpleaños</button>
     <button data-page="exportar"><i data-lucide="download" class="icon"></i> Excel / Respaldo</button>
@@ -279,6 +280,7 @@ img,svg,video,canvas{max-width:100%;height:auto}
     <div class="stat" onclick="showFiltered('late')"><small><span class="status-dot late"></span> Tardanzas</small><div class="num" id="sLate">0</div></div>
     <div class="stat" onclick="showFiltered('absent')"><small><span class="status-dot absent"></span> Inasistencias</small><div class="num" id="sAbsent">0</div></div>
     <div class="stat" onclick="showPage('cumpleanos')"><small><i data-lucide="cake" class="icon"></i> Próximos cumpleaños</small><div class="num" id="sBirth">0</div></div>
+    <div class="stat" onclick="showPage('suspensiones')"><small><i data-lucide="ban" class="icon"></i> Ensayos suspendidos</small><div class="num" id="sSuspendedEssays">0</div></div>
   </div>
   <div class="grid2">
     <div class="card"><h3>Resumen por músico</h3><div id="dashMusicians"></div></div>
@@ -312,6 +314,15 @@ img,svg,video,canvas{max-width:100%;height:auto}
   <div class="pagehead"><h2>Responsabilidades</h2><button class="btn primary" onclick="openResponsibilityModal()">+ Asignar</button></div>
   <div class="toolbar"><select id="respMusician" onchange="renderResponsibilities()"><option value="">Todos los músicos</option></select><select id="respStatus" onchange="renderResponsibilities()"><option value="">Todas</option><option value="done">Cumplidas</option><option value="pending">No cumplidas</option></select></div>
   <div class="card tablewrap"><table class="table"><thead><tr><th>Fecha</th><th>Responsabilidad</th><th>Músico</th><th>Actividad</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="respTable"></tbody></table></div>
+</section>
+
+<section id="disciplina" class="page">
+  <div class="pagehead"><div><h2><i data-lucide="shield-alert" class="icon"></i> Disciplina</h2><span>El músico permanece activo y continúa obligado a asistir a las actividades generales.</span></div><button class="btn primary" onclick="openDisciplineModal()"><i data-lucide="plus" class="icon"></i> Poner en disciplina</button></div>
+  <div class="grid2">
+    <div class="card"><h3><i data-lucide="circle-alert" class="icon"></i> Disciplinas activas</h3><div id="activeDisciplineList"></div></div>
+    <div class="card"><h3><i data-lucide="history" class="icon"></i> Historial de disciplina</h3><div id="disciplineSummary"></div></div>
+  </div>
+  <div class="card tablewrap" style="margin-top:18px"><table class="table"><thead><tr><th>Músico</th><th>Inicio</th><th>Finalización</th><th>Duración</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="disciplineTable"></tbody></table></div>
 </section>
 
 <section id="cumpleanos" class="page">
@@ -373,7 +384,7 @@ function getActivity(id){return db.activities.find(a=>a.id===id)||db.archivedAct
 function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll();applyBranding()}
 function uid(p='id'){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function today(){return new Date().toISOString().slice(0,10)}
+function appNow(){return new Date()} function localDateISO(d=appNow()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`} function localDateTimeValue(d=appNow()){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0'),h=String(d.getHours()).padStart(2,'0'),min=String(d.getMinutes()).padStart(2,'0');return `${y}-${m}-${day}T${h}:${min}`} function today(){return localDateISO()}
 function ageExact(birth){
  if(!birth)return '';
  const b=new Date(birth+'T00:00:00'),n=new Date();
@@ -447,6 +458,9 @@ function renderDashboard(){
  document.getElementById('sLate').textContent=db.attendance.filter(x=>x.status==='late').length;
  document.getElementById('sAbsent').textContent=db.attendance.filter(x=>x.status==='absent').length;
  document.getElementById('sBirth').textContent=db.musicians.filter(m=>birthdayDays(m)<=30).length;
+ const essayAct=(db.activities||[]).find(a=>(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');
+ const suspendedEssays=Object.values(db.essayStatus||{}).filter(v=>v==='suspended').length;
+ const dashSusp=document.getElementById('sSuspendedEssays'); if(dashSusp)dashSusp.textContent=suspendedEssays;
  const dm=document.getElementById('dashMusicians');
  dm.innerHTML=db.musicians.length?db.musicians.slice(0,12).map(m=>{let c=counts(m.id);return `<div class="person" style="padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="openProfile('${m.id}')"><div class="avatar">${avatar(m)}</div><div style="flex:1"><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.role||'Sin rol')}</small></div><span class="badge present">${c.present}</span><span class="badge late">${c.late}</span><span class="badge absent">${c.absent}</span></div>`}).join(''):'<div class="empty">Aún no hay músicos.</div>';
  const upcoming=[...db.musicians].sort((a,b)=>birthdayDays(a)-birthdayDays(b)).filter(m=>birthdayDays(m)<=60).slice(0,8);
@@ -455,7 +469,7 @@ function renderDashboard(){
 function renderMusicians(){
  const q=(document.getElementById('musicSearch')?.value||'').toLowerCase();
  const arr=db.musicians.filter(m=>(m.first+' '+m.last+' '+(m.role||'')).toLowerCase().includes(q));
- document.getElementById('musicianTable').innerHTML=arr.length?arr.map(m=>{let c=counts(m.id);return `<tr><td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.phone||'')}</small></div></div></td><td>${esc(m.role||'—')}</td><td>${fmtDate(m.birth)}<br><b>${ageExact(m.birth)}</b></td><td>${Object.values(m.special||{}).some(x=>x.enabled)?'<i data-lucide="clock-3" class="icon"></i> Configurado':'—'}</td><td><span class="status-dot present"></span> ${c.present} · <span class="status-dot late"></span> ${c.late} · <span class="status-dot absent"></span> ${c.absent}</td><td><button class="btn" onclick="openProfile('${m.id}')">Ver</button> <button class="btn" onclick="openMusicianModal('${m.id}')">Editar</button> <button class="btn danger" onclick="deleteMusician('${m.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay músicos.</td></tr>';
+ document.getElementById('musicianTable').innerHTML=arr.length?arr.map(m=>{let c=counts(m.id);return `<tr><td><div class="person"><div class="avatar">${avatar(m)}</div><div><b>${esc(m.first)} ${esc(m.last)}</b><small style="display:block;color:var(--muted)">${esc(m.phone||'')}</small></div></div></td><td>${esc(m.role||'—')} ${disciplineBadge(m.id)}</td><td>${fmtDate(m.birth)}<br><b>${ageExact(m.birth)}</b></td><td>${Object.values(m.special||{}).some(x=>x.enabled)?'<i data-lucide="clock-3" class="icon"></i> Configurado':'—'}</td><td><span class="status-dot present"></span> ${c.present} · <span class="status-dot late"></span> ${c.late} · <span class="status-dot absent"></span> ${c.absent}</td><td><button class="btn" onclick="openProfile('${m.id}')">Ver</button> <button class="btn" onclick="openMusicianModal('${m.id}')">Editar</button> <button class="btn danger" onclick="deleteMusician('${m.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">No hay músicos.</td></tr>';
 }
 function populateSelects(){
  const opts=db.musicians.map(m=>`<option value="${m.id}">${esc(m.first)} ${esc(m.last)}</option>`).join('');
@@ -466,8 +480,9 @@ function renderAttendance(){
  const date=document.getElementById('histDate').value,status=document.getElementById('histStatus').value,act=document.getElementById('histActivity').value,q=(document.getElementById('histSearch').value||'').toLowerCase();
  let arr=db.attendance.filter(x=>(!date||x.date===date)&&(!status||x.status===status)&&(!act||x.activityId===act));
  arr=arr.filter(x=>{let m=db.musicians.find(z=>z.id===x.musicianId);return m&&(m.first+' '+m.last).toLowerCase().includes(q)});
- document.getElementById('attendanceTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);return `<tr><td>${fmtDate(x.date)}</td><td>${esc(a?.name||'—')}</td><td><b>${esc(m?.first+' '+m?.last||'Eliminado')}</b></td><td>${esc(x.arrival||'—')}</td><td>${statusBadge(x)}</td><td>${esc(justificationText(x))}</td><td><button class="btn danger" onclick="deleteAttendance('${x.id}')">Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No hay registros con estos filtros.</td></tr>';
+ document.getElementById('attendanceTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{let m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);return `<tr><td>${fmtDate(x.date)}</td><td>${esc(a?.name||'—')}</td><td><b>${esc(m?.first+' '+m?.last||'Eliminado')}</b></td><td>${esc(x.arrival||'—')}</td><td>${statusBadge(x)}</td><td>${esc(justificationText(x))}</td><td><button class="btn" onclick="editAttendance('${x.id}')"><i data-lucide="pencil" class="icon"></i> Editar</button> <button class="btn danger" onclick="deleteAttendance('${x.id}')"><i data-lucide="trash-2" class="icon"></i> Eliminar</button></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No hay registros con estos filtros.</td></tr>';
 }
+if(window.lucide)lucide.createIcons();
 function renderActivities(){document.getElementById('activityTable').innerHTML=db.activities.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${days[a.day]}</td><td>${a.time}</td><td>${esc(a.type||'Personalizada')}</td><td><button class="btn" onclick="openActivityModal('${a.id}')">Editar</button> ${a.custom?`<button class="btn danger" onclick="deleteActivity('${a.id}')">Eliminar</button>`:''}</td></tr>`).join('')}
 function renderResponsibilities(){
  const mid=document.getElementById('respMusician').value,st=document.getElementById('respStatus').value;
@@ -817,6 +832,8 @@ function saveAttendance(){
  db.attendance.push({id:uid('att'),musicianId,activityId,date,arrival,deadline,status,reason,notes});closeModal();save()
 }
 function deleteAttendance(id){if(confirm('¿Eliminar este registro?')){db.attendance=db.attendance.filter(x=>x.id!==id);save()}}
+function editAttendance(id){const x=db.attendance.find(a=>a.id===id);if(!x)return;const m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);modal(`<div class="modalhead"><h2><i data-lucide="pencil" class="icon"></i> Editar asistencia</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid"><div class="field"><label>Músico</label><input value="${esc(m?m.first+' '+m.last:'')}" disabled></div><div class="field"><label>Actividad</label><input value="${esc(a?.name||'')}" disabled></div><div class="field"><label>Fecha *</label><input type="date" id="eaDate" value="${esc(x.date||today())}"></div><div class="field"><label>Hora real de llegada</label><input type="time" id="eaTime" value="${esc(x.arrival||'')}"></div><div class="field"><label>Estado</label><select id="eaStatus"><option value="present">Asistencia</option><option value="late">Tardanza</option><option value="absent">Inasistencia</option></select></div><div class="field"><label>Justificación / causa</label><select id="eaReason"><option value="">Sin justificación</option><option>Enfermedad</option><option>Trabajo</option><option>Estudio</option><option>Familia</option><option>Transporte</option><option>Otro</option></select></div><div class="field full"><label>Detalle</label><textarea id="eaNotes">${esc(x.notes||'')}</textarea></div><div class="full"><button class="btn primary" onclick="saveAttendanceEdit('${id}')"><i data-lucide="save" class="icon"></i> Guardar cambios</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);document.getElementById('eaStatus').value=x.status||'present';document.getElementById('eaReason').value=x.reason||'';if(window.lucide)lucide.createIcons()}
+function saveAttendanceEdit(id){const x=db.attendance.find(a=>a.id===id);if(!x)return;const date=document.getElementById('eaDate')?.value,time=document.getElementById('eaTime')?.value,status=document.getElementById('eaStatus')?.value,reason=document.getElementById('eaReason')?.value||'',notes=document.getElementById('eaNotes')?.value.trim()||'';if(!date)return alert('Selecciona una fecha.');x.date=date;x.arrival=time;x.status=status;x.reason=reason;x.notes=notes;closeModal();save();renderAttendance();}
 function openActivityModal(id){
  const a=getActivity(id)||{name:'',day:0,time:'08:00',type:'Actividad personalizada',custom:true};
  modal(`<div class="modalhead"><h2>${id?'Editar':'Crear'} actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
@@ -1175,7 +1192,7 @@ function renderAttendance(){
   document.getElementById('attendanceTable').innerHTML=arr.length?arr.sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{
     const m=db.musicians.find(z=>z.id===x.musicianId),a=getActivity(x.activityId);
     return `<tr><td>${fmtDate(x.date)}</td><td>${esc(a?.name||'—')}</td><td><b>${esc(m?.first+' '+m?.last||'Eliminado')}</b></td><td>${esc(x.arrival||'—')}</td><td>${statusBadge(x)}</td><td>${esc(justificationText(x))}</td>
-    <td><button class="btn" onclick="openAttendanceEdit('${x.id}')">Editar</button> <button class="btn danger" onclick="deleteAttendance('${x.id}')">Eliminar</button></td></tr>`;
+    <td><button class="btn" onclick="openAttendanceEdit('${x.id}')">Editar</button> <button class="btn" onclick="editAttendance('${x.id}')"><i data-lucide="pencil" class="icon"></i> Editar</button> <button class="btn danger" onclick="deleteAttendance('${x.id}')"><i data-lucide="trash-2" class="icon"></i> Eliminar</button></td></tr>`;
   }).join(''):'<tr><td colspan="7" class="empty">No hay registros con estos filtros.</td></tr>';
 }
 function filterProfileHist(id){
@@ -1862,16 +1879,16 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
 
   function installPages(){
     const nav=document.querySelector('.nav'),main=document.querySelector('main.content');if(!nav||!main)return;
-    if(!nav.querySelector('[data-page="calendario"]')){const b=document.createElement('button');b.dataset.page='calendario';b.innerHTML='<i data-lucide="calendar" class="icon"></i> Calendario';nav.insertBefore(b,nav.querySelector('[data-page="cumpleanos"]')||null)}
-    if(!nav.querySelector('[data-page="configranking"]')){const b=document.createElement('button');b.dataset.page='configranking';b.innerHTML='<i data-lucide="settings-2" class="icon"></i> Configuración';nav.appendChild(b)}
-    if(!document.getElementById('calendario')){const s=document.createElement('section');s.id='calendario';s.className='page';s.innerHTML='<div class="pagehead"><div><h2>Calendario del ministerio</h2><span>Vista mensual de las actividades programadas.</span></div><div class="toolbar"><button class="btn" onclick="ruahCalShift(-1)">‹</button><b id="ruahCalTitle"></b><button class="btn" onclick="ruahCalShift(1)">›</button></div></div><div class="card"><div id="ruahCalendar"></div></div>';main.appendChild(s)}
+     if(!nav.querySelector('[data-page="suspensiones"]')){const b=document.createElement('button');b.dataset.page='suspensiones';b.type='button';b.innerHTML='<i data-lucide="ban" class="icon"></i> Suspensiones';b.onclick=function(){showPage('suspensiones')};nav.insertBefore(b,nav.querySelector('[data-page="cumpleanos"]')||null)} else {nav.querySelector('[data-page="suspensiones"]').onclick=function(){showPage('suspensiones')}}
+     if(!nav.querySelector('[data-page="configranking"]')){const b=document.createElement('button');b.dataset.page='configranking';b.type='button';b.innerHTML='<i data-lucide="settings-2" class="icon"></i> Configuración';b.onclick=function(){showPage('configranking')};nav.appendChild(b)} else {nav.querySelector('[data-page="configranking"]').onclick=function(){showPage('configranking')}}
     if(!document.getElementById('configranking')){const s=document.createElement('section');s.id='configranking';s.className='page';s.innerHTML='<div class="pagehead"><div><h2>Configuración del ranking</h2><span>Consulta las reglas activas sin modificar el funcionamiento actual.</span></div></div><div class="card" id="ruahRankingConfig"></div>';main.appendChild(s)}
+    if(!document.getElementById('suspensiones')){const s=document.createElement('section');s.id='suspensiones';s.className='page';s.innerHTML='<div class="pagehead"><div><h2>Suspensiones y reprogramaciones</h2><span>Son dos acciones independientes: puedes suspender una actividad o moverla a otra fecha sin tener que suspenderla primero.</span></div><div class="actions"><button class="btn danger" onclick="openSuspensionModal()"><i data-lucide="ban" class="icon"></i> Suspender</button><button class="btn primary" onclick="openReprogramModal()"><i data-lucide="calendar-clock" class="icon"></i> Reprogramar</button></div></div><div class="card"><div class="ruah-suspension-summary"><div><span>Ensayos suspendidos</span><b id="suspEssayCount">0</b></div><div><span>Otras actividades suspendidas</span><b id="suspOtherCount">0</b></div></div><h3 style="margin-top:18px"><i data-lucide="ban" class="icon"></i> Suspensiones</h3><div class="tablewrap"><table class="table"><thead><tr><th>Fecha</th><th>Actividad</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="suspensionTable"></tbody></table></div><h3 style="margin-top:24px"><i data-lucide="calendar-clock" class="icon"></i> Reprogramaciones</h3><div class="tablewrap"><table class="table"><thead><tr><th>Fecha original</th><th>Actividad</th><th>Tipo</th><th>Nueva fecha</th><th>Acciones</th></tr></thead><tbody id="rescheduleTable"></tbody></table></div></div>';main.appendChild(s)}
     if(window.lucide)lucide.createIcons();
   }
   let calOffset=0;window.ruahCalShift=function(n){calOffset+=n;renderCalendar()};
   function renderCalendar(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();document.getElementById('ruahCalTitle').textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=valid?new Date(y,mo,n):new Date(y,mo,n);const wd=(date.getDay()+6)%7;const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}"><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</div>`}html+='</div>';host.innerHTML=html}
   function renderConfig(){const h=document.getElementById('ruahRankingConfig');if(!h)return;h.innerHTML=`<div class="ruah-settings"><div class="ruah-setting"><label><b>Componente de cumplimiento</b><span>60%</span></label><p class="ruah-table-note">Asistencias, tardanzas, inasistencias y responsabilidades.</p></div><div class="ruah-setting"><label><b>Componente de puntos</b><span>40%</span></label><p class="ruah-table-note">Puntos por asistencia, llegada, responsabilidades y delegaciones.</p></div><div class="ruah-setting"><label><b>Delegar responsabilidad</b><span>-2 pts</span></label><p class="ruah-table-note">La responsabilidad original queda cerrada y la evaluación pasa al músico delegado.</p></div><div class="ruah-setting"><label><b>Recibir y cumplir delegación</b><span>+6 pts</span></label><p class="ruah-table-note">Si el delegado no cumple, recibe la penalización correspondiente.</p></div></div><div class="ruah-setting" style="margin-top:12px"><b><i data-lucide="trending-up" class="icon"></i> Tendencia</b><p class="ruah-table-note">La subida o bajada compara la calificación del ranking con el período anterior disponible, utilizando los datos históricos existentes. Si no existe una medición previa, se muestra “Primera medición”.</p></div>`}
-  const oldShow=window.showPage;window.showPage=function(id){oldShow(id);if(id==='calendario')renderCalendar();if(id==='configranking')renderConfig()};
+  const oldShow=window.showPage;window.showPage=function(id){if(typeof oldShow==='function')oldShow(id);else{document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(typeof renderAll==='function')renderAll()}if(id==='configranking')renderConfig();if(id==='suspensiones')renderSuspensiones();if(window.lucide)lucide.createIcons()};
   /* Calendario interactivo y configuración funcional del ranking */
   window.ruahRankingSettings=JSON.parse(localStorage.getItem('ruahRankingSettings')||'null')||{cumplimiento:60,puntos:40,delegar:-2,delegadoCumple:6,delegadoNoCumple:-4};
   window.saveRuahRankingSettings=function(){
@@ -1894,9 +1911,369 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
   function openCalendarDay(y,mo,n){const date=new Date(y,mo,n),wd=(date.getDay()+6)%7,ev=db.activities.filter(a=>a.day===wd);modal(`<div class="modalhead"><h2>${date.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</h2><button class="close" onclick="closeModal()">×</button></div>${ev.length?ev.map(a=>`<div class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><b><i data-lucide="calendar-check-2" class="icon"></i> ${esc(a.name)}</b><div class="ruah-muted">${esc(a.type||'Actividad')} · ${esc(a.time||'Sin hora')}</div></div><button class="btn" onclick="closeModal();openActivityModal('${a.id}')"><i data-lucide="pencil" class="icon"></i> Editar</button></div></div>`).join(''):`<div class="empty">No hay actividades programadas para este día.</div>`}<div class="toolbar" style="margin-top:14px"><button class="btn primary" onclick="closeModal();showPage('actividades')"><i data-lucide="calendar-plus" class="icon"></i> Ir a actividades</button></div>`);if(window.lucide)lucide.createIcons()}
   function renderCalendar(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();document.getElementById('ruahCalTitle').textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=new Date(y,mo,n),wd=(date.getDay()+6)%7;const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}" ${valid?`onclick="openCalendarDay(${y},${mo},${n})"`:''}><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</div>`}html+='</div><div class="ruah-table-note" style="margin-top:12px"><i data-lucide="mouse-pointer-click" class="icon"></i> Haz clic en un día para ver y editar sus actividades.</div>';host.innerHTML=html;if(window.lucide)lucide.createIcons()}
 
-  installPages();setTimeout(()=>{installDashboard();renderUpgradeDashboard();renderCalendar();renderConfig()},80);
+  function renderSuspensiones(){
+    const tbody=document.getElementById('suspensionTable'); const rbody=document.getElementById('rescheduleTable'); if(!tbody)return;
+    db.suspensions=db.suspensions||[]; db.reschedules=db.reschedules||[];
+    const arr=[...db.suspensions].filter(x=>x.status!=='rescheduled').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const rr=[...db.reschedules].sort((a,b)=>(b.originalDate||'').localeCompare(a.originalDate||''));
+    const ec=arr.filter(x=>{const a=getActivity(x.activityId);return a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo')}).length;
+    const oc=arr.length-ec; const e=document.getElementById('suspEssayCount');if(e)e.textContent=ec; const o=document.getElementById('suspOtherCount');if(o)o.textContent=oc;
+    tbody.innerHTML=arr.length?arr.map(x=>{const a=getActivity(x.activityId);return `<tr><td>${fmtDate(x.date)}</td><td><b>${esc(a?.name||'Actividad eliminada')}</b></td><td>${esc(a?.type||'Actividad')}</td><td><span class="badge absent">Suspendida</span></td><td><button class="btn" onclick="removeSuspension('${x.id}')"><i data-lucide="undo-2" class="icon"></i> Quitar</button></td></tr>`}).join(''):'<tr><td colspan="5" class="empty">No hay suspensiones registradas.</td></tr>';
+    if(rbody) rbody.innerHTML=rr.length?rr.map(x=>{const a=getActivity(x.activityId);return `<tr><td>${fmtDate(x.originalDate)}</td><td><b>${esc(a?.name||'Actividad eliminada')}</b></td><td>${esc(a?.type||'Actividad')}</td><td><span class="badge late">Reprogramada para ${fmtDate(x.newDate)}</span></td><td><button class="btn" onclick="removeReschedule('${x.id}')"><i data-lucide="undo-2" class="icon"></i> Quitar</button></td></tr>`}).join(''):'<tr><td colspan="5" class="empty">No hay reprogramaciones registradas.</td></tr>';
+    if(window.lucide)lucide.createIcons();
+  }
+  function activityOptions(){return db.activities.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}${(a.type||'').toLowerCase()==='ensayo'?' — Ensayo':''}</option>`).join('')}
+  window.openSuspensionModal=function(){
+    modal(`<div class="modalhead"><h2><i data-lucide="ban" class="icon"></i> Suspender actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+      <div class="field"><label>Actividad *</label><select id="susActivity">${activityOptions()}</select></div>
+      <div class="field"><label>Fecha que se suspende *</label><input type="date" id="susDate" value="${today()}"></div>
+      <div class="field full"><label>Motivo (opcional)</label><textarea id="susReason" rows="3" placeholder="Ej. Se cancela por decisión del líder..."></textarea></div>
+      <div class="full"><button class="btn danger" onclick="saveSuspension()"><i data-lucide="ban" class="icon"></i> Confirmar suspensión</button> <button class="btn" onclick="closeModal()">Cancelar</button></div>
+    </div>`);if(window.lucide)lucide.createIcons();
+  };
+  window.saveSuspension=function(){
+    const activityId=document.getElementById('susActivity')?.value,date=document.getElementById('susDate')?.value,reason=document.getElementById('susReason')?.value.trim()||''; if(!activityId||!date)return alert('Selecciona la actividad y la fecha.');
+    db.suspensions=db.suspensions||[]; if(db.suspensions.some(x=>x.activityId===activityId&&x.date===date&&x.status!=='rescheduled'))return alert('Esa actividad ya está suspendida en esa fecha.');
+    const activity=getActivity(activityId),isEssay=activity&&((activity.type||'').toLowerCase()==='ensayo'||(activity.name||'').toLowerCase()==='ensayo');
+    db.suspensions.push({id:uid('s'),activityId,date,reason,createdAt:new Date().toISOString(),status:'suspended'}); if(isEssay){db.essayStatus=db.essayStatus||{};db.essayStatus[date]='suspended';}
+    closeModal();save();renderSuspensiones();
+  };
+  window.openReprogramModal=function(){
+    modal(`<div class="modalhead"><h2><i data-lucide="calendar-clock" class="icon"></i> Reprogramar actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+      <div class="field"><label>Actividad *</label><select id="repActivity">${activityOptions()}</select></div>
+      <div class="field"><label>Fecha original *</label><input type="date" id="repOriginalDate" value="${today()}"></div>
+      <div class="field"><label>Nueva fecha *</label><input type="date" id="repNewDate" value="${today()}"></div>
+      <div class="field full"><label>Motivo / observación (opcional)</label><textarea id="repReason" rows="3" placeholder="Ej. Se movió por decisión del líder..."></textarea></div>
+      <div class="full"><button class="btn primary" onclick="saveReprogram()"><i data-lucide="calendar-clock" class="icon"></i> Confirmar reprogramación</button> <button class="btn" onclick="closeModal()">Cancelar</button></div>
+    </div>`);if(window.lucide)lucide.createIcons();
+  };
+  window.saveReprogram=function(){
+    const activityId=document.getElementById('repActivity')?.value,originalDate=document.getElementById('repOriginalDate')?.value,newDate=document.getElementById('repNewDate')?.value,reason=document.getElementById('repReason')?.value.trim()||'';
+    if(!activityId||!originalDate||!newDate)return alert('Completa actividad y ambas fechas.'); if(originalDate===newDate)return alert('La nueva fecha debe ser diferente de la fecha original.');
+    db.reschedules=db.reschedules||[]; if(db.reschedules.some(x=>x.activityId===activityId&&x.originalDate===originalDate))return alert('Esa actividad ya tiene una reprogramación registrada para esa fecha.');
+    const a=getActivity(activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');
+    db.reschedules.push({id:uid('r'),activityId,originalDate,newDate,reason,createdAt:new Date().toISOString()});
+    if(isEssay){db.essayStatus=db.essayStatus||{};db.essayStatus[originalDate]={status:'rescheduled',newDate};db.essayStatus[newDate]={status:'rescheduledTo',originalDate};}
+    closeModal();save();renderSuspensiones();
+  };
+  window.removeSuspension=function(id){const x=(db.suspensions||[]).find(z=>z.id===id);if(!x)return;if(!confirm('¿Quitar esta suspensión?'))return;db.suspensions=db.suspensions.filter(z=>z.id!==id);const a=getActivity(x.activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');if(isEssay&&db.essayStatus&&db.essayStatus[x.date]==='suspended')delete db.essayStatus[x.date];save();renderSuspensiones();};
+  window.removeReschedule=function(id){const x=(db.reschedules||[]).find(z=>z.id===id);if(!x)return;if(!confirm('¿Quitar esta reprogramación?'))return;db.reschedules=db.reschedules.filter(z=>z.id!==id);const a=getActivity(x.activityId),isEssay=a&&((a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo');if(isEssay&&db.essayStatus){if(db.essayStatus[x.originalDate]?.status==='rescheduled')delete db.essayStatus[x.originalDate];if(db.essayStatus[x.newDate]?.status==='rescheduledTo')delete db.essayStatus[x.newDate];}save();renderSuspensiones();};
+  installPages();setTimeout(()=>{installDashboard();renderUpgradeDashboard();renderConfig();renderSuspensiones()},80);
   const observer=new MutationObserver(()=>{installDashboard();});observer.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="ruah-final-updates">
+.ruah-cal-day-btn{cursor:pointer;width:100%;height:100%;text-align:left;background:transparent;border:0;padding:8px;color:inherit}.ruah-cal-day-btn:hover{background:rgba(37,99,235,.06)}
+.ruah-cal-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}.ruah-cal-kpi{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card)}.ruah-cal-kpi b{font-size:22px;display:block}.ruah-improve{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:14px;background:var(--card)}.ruah-improve-item{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}.ruah-improve-item:last-child{border-bottom:0}.ruah-improve-good{color:#15803d}.ruah-improve-bad{color:#b91c1c}.ruah-icon-label{display:inline-flex;align-items:center;gap:6px}.ruah-icon-label svg{width:17px;height:17px}.ruah-year-current{font-weight:700}.ruah-calendar-note{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:800px){.ruah-cal-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ruah-improve-item{align-items:flex-start;flex-direction:column}.ruah-improve-item strong{align-self:flex-start}}
+@media(max-width:600px){.ruah-cal-summary{grid-template-columns:1fr 1fr}.ruah-cal-kpi{padding:9px}.ruah-cal-kpi b{font-size:18px}.ruah-cal-day-btn{padding:5px;font-size:12px}}
+
+.ruah-suspension-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}.ruah-suspension-summary>div{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--card)}.ruah-suspension-summary span{display:block;color:var(--muted);font-size:13px}.ruah-suspension-summary b{display:block;font-size:28px;margin-top:4px}@media(max-width:600px){.ruah-suspension-summary{grid-template-columns:1fr}}
+</style>
+<script id="ruah-final-logic">
+(function(){
+  const CURRENT_YEAR=new Date().getFullYear();
+  db.activeYear=CURRENT_YEAR;
+  db.essayStatus=db.essayStatus&&typeof db.essayStatus==='object'?db.essayStatus:{};
+  function essayActivity(){return db.activities.find(a=>(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase()==='ensayo')}
+  function firstDataDate(){const dates=[...(db.attendance||[]).map(x=>x.date),...(db.responsibilities||[]).map(x=>x.date)].filter(Boolean).sort();return dates[0]||null}
+  function wedDates(start,end){const out=[];if(!start)return out;let d=new Date(start+'T00:00:00'),e=new Date(end+'T00:00:00');d.setDate(d.getDate()+((3-d.getDay()+7)%7));while(d<=e){out.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+7)}return out}
+  function essayStats(){const act=essayActivity();const start=firstDataDate();if(!act||!start)return {total:0,done:0,suspended:0,unregistered:0,start:null};const end=today(), dates=wedDates(start,end);let done=0,suspended=0,unregistered=0;dates.forEach(date=>{if(db.essayStatus[date]==='suspended')suspended++;else if((db.attendance||[]).some(x=>x.date===date&&x.activityId===act.id))done++;else unregistered++});return {total:dates.length,done,suspended,unregistered,start,end}}
+  window.ruahEssayStats=essayStats;
+  window.ruahToggleEssayStatus=function(date){const cur=db.essayStatus[date];const next=cur==='suspended'?null:'suspended';if(next)db.essayStatus[date]=next;else delete db.essayStatus[date];localStorage.setItem(KEY,JSON.stringify(db));renderCalendar();if(typeof renderDashboard==='function')renderDashboard()};
+  window.ruahShowCalendarDay=function(date){const act=essayActivity();const ev=(db.activities||[]).filter(a=>a.day===new Date(date+'T00:00:00').getDay());const att=(db.attendance||[]).filter(x=>x.date===date);const status=db.essayStatus[date];const html=`<div class="modalhead"><h2><i data-lucide="calendar-days" class="icon"></i> ${fmtDate(date)}</h2><button class="close" onclick="closeModal()">×</button></div><div class="card" style="margin-top:10px"><h3>Actividades</h3>${ev.length?ev.map(a=>`<div class="item" style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(a.name)}</b><br><small>${esc(a.time||'')} · ${esc(a.type||'')}</small></div>`).join(''):'<div class="empty">No hay actividades programadas.</div>'}${act&&ev.some(a=>a.id===act.id)?`<div style="margin-top:12px"><b>Ensayo:</b> ${status==='suspended'?'<span class="badge absent">Suspendido</span>':att.some(x=>x.activityId===act.id)?'<span class="badge present">Con registros</span>':'<span class="badge late">Sin registro</span>'}<div class="toolbar" style="margin-top:10px"><button class="btn danger" onclick="ruahToggleEssayStatus('${date}')"><i data-lucide="ban" class="icon"></i> ${status==='suspended'?'Quitar suspensión':'Marcar ensayo suspendido'}</button></div></div>`:''}</div><div style="margin-top:12px"><h3>Asistencias registradas</h3>${att.length?att.map(x=>{const m=db.musicians.find(z=>z.id===x.musicianId);return `<div class="item" style="padding:7px 0"><b>${esc(m?m.first+' '+m.last:'Músico eliminado')}</b> · ${statusBadge(x)} · ${esc(x.arrival||'Sin hora')}</div>`}).join(''):'<div class="empty">No hay asistencias registradas ese día.</div>'}</div>`;modal(html);if(window.lucide)lucide.createIcons()};
+  window.renderCalendar=function(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date(),d=new Date(CURRENT_YEAR,now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();const title=document.getElementById('ruahCalTitle');if(title)title.textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=new Date(y,mo,n),iso=date.toISOString().slice(0,10),wd=date.getDay();const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}"><button class="ruah-cal-day-btn" onclick="ruahShowCalendarDay('${iso}')"><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</button></div>`}html+='</div>';host.innerHTML=html;const st=essayStats();host.insertAdjacentHTML('beforebegin',`<div class="ruah-cal-summary"><div class="ruah-cal-kpi"><small>Ensayos desde el primer dato</small><b>${st.total}</b></div><div class="ruah-cal-kpi"><small>Ensayos realizados</small><b>${st.done}</b></div><div class="ruah-cal-kpi"><small>Ensayos suspendidos</small><b>${st.suspended}</b></div><div class="ruah-cal-kpi"><small>Sin registro</small><b>${st.unregistered}</b></div></div><div class="ruah-calendar-note">Los ensayos realizados se identifican por registros existentes. Un miércoles sin registro no se considera automáticamente suspendido; puedes marcarlo como suspendido desde el día correspondiente.</div>`)};
+  function improvementHtml(p,t){const items=[];if(p.compliance<80)items.push(['Cumplimiento',`Su cumplimiento está en ${p.compliance?.toFixed(1)||0}%. Conviene reducir inasistencias y mejorar el cumplimiento de responsabilidades.`,'bad']);if(p.late>0||p.arrival<0)items.push(['Puntualidad',`${p.late} tardanza(s) y ${p.arrival<0?Math.abs(p.arrival).toFixed(2):'0.00'} puntos perdidos/afectados por horario.`,'bad']);if(p.absent>0)items.push(['Asistencia',`${p.absent} inasistencia(s) sin justificar afectan directamente la calificación.`,'bad']);if((p.responsibilities.length-p.responsibilitiesOk)>0)items.push(['Responsabilidades',`${p.responsibilities.length-p.responsibilitiesOk} responsabilidad(es) no cumplida(s).`,'bad']);if(p.responsibilities.length===0)items.push(['Responsabilidades','Todavía no hay suficientes responsabilidades evaluadas para medir este aspecto.','neutral']);if(p.arrival>0)items.push(['Puntualidad',`Las llegadas anticipadas están aportando ${formatArrivalScore(p.arrival)} puntos.`,'good']);if(p.present>0)items.push(['Asistencia',`${p.present} asistencia(s) puntual(es) están favoreciendo su resultado.`,'good']);if(t&&t.relative!=null){const dir=t.type==='up'?'subió':'bajó';items.push(['Tendencia',`La calificación ${dir} ${Math.abs(t.relative).toFixed(1)}% respecto a ${t.previousKey||'la medición anterior'}.` ,t.type==='up'?'good':'bad'])}return items.length?`<div class="ruah-improve"><h4><i data-lucide="target" class="icon"></i> ¿En qué debe mejorar?</h4>${items.map(x=>`<div class="ruah-improve-item"><div><b>${esc(x[0])}</b><br><small>${esc(x[1])}</small></div><strong class="${x[2]==='good'?'ruah-improve-good':x[2]==='bad'?'ruah-improve-bad':''}">${x[2]==='good'?'<i data-lucide="arrow-up-right" class="icon"></i> Beneficia':x[2]==='bad'?'<i data-lucide="arrow-down-right" class="icon"></i> Afecta':'Información'}</strong></div>`).join('')}</div>`:''}
+  window.ruahImprovementHtml=improvementHtml;
+  const oldDetail=window.openRankingDetail;window.openRankingDetail=function(id,position,order){oldDetail(id,position,order);setTimeout(()=>{const m=db.musicians.find(x=>x.id===id);if(!m)return;const p=performance(id),t=rankingTrend(id),box=document.querySelector('.ranking-detail-formula');if(box){box.insertAdjacentHTML('afterend',improvementHtml(p,t));if(window.lucide)lucide.createIcons()}},0)};
+  const oldYearRender=window.renderYearManager; if(oldYearRender) window.renderYearManager=function(){oldYearRender();const sel=document.getElementById('activeYearSelect');if(sel){sel.value=CURRENT_YEAR;const badge=sel.parentElement?.querySelector('.year-badge');if(badge)badge.textContent='Año actual · '+CURRENT_YEAR}};
+})();
+</script>
+
+<script id="ruah-essay-management-v2">
+(function(){
+  const essayStore=()=>{db.essayStatus=db.essayStatus&&typeof db.essayStatus==='object'?db.essayStatus:{};return db.essayStatus};
+  const statusObj=(date)=>{const v=essayStore()[date]; return typeof v==='string'?{status:v}:((v&&typeof v==='object')?v:{});};
+  function saveEssay(){localStorage.setItem(KEY,JSON.stringify(db)); if(typeof save==='function')save();}
+  function essayInfo(date){const v=statusObj(date); if(v.status==='rescheduled')return v; return {status:v.status||'active'};}
+  function isSuspended(date){return essayInfo(date).status==='suspended';}
+  function isRescheduled(date){return essayInfo(date).status==='rescheduled';}
+  function essayActivity(){return (db.activities||[]).find(a=>(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase().includes('ensayo'));}
+  function hasEssayRecord(date){const a=essayActivity();return !!a&&(db.attendance||[]).some(x=>x.date===date&&x.activityId===a.id);}
+  window.ruahSetEssayStatus=function(date,action,target){
+    const st=essayStore();
+    if(action==='suspend'){
+      if(hasEssayRecord(date)) return alert('Este ensayo ya tiene registros de asistencia. No puede suspenderse después de registrar asistencia.');
+      st[date]={status:'suspended',updatedAt:new Date().toISOString()};
+    } else if(action==='reschedule'){
+      if(!target)return alert('Selecciona la nueva fecha del ensayo.');
+      if(target===date)return alert('La nueva fecha debe ser diferente a la fecha original.');
+      if(hasEssayRecord(date))return alert('Este ensayo ya tiene registros de asistencia y no puede reprogramarse.');
+      st[date]={status:'rescheduled',newDate:target,updatedAt:new Date().toISOString()};
+      st[target]={status:'rescheduledTo',originalDate:date,updatedAt:new Date().toISOString()};
+    } else if(action==='reactivate'){
+      const old=st[date];
+      if(old&&old.status==='rescheduled'&&old.newDate){delete st[old.newDate];}
+      delete st[date];
+    }
+    saveEssay();
+    if(typeof renderCalendar==='function')renderCalendar();
+    if(typeof renderDashboard==='function')renderDashboard();
+    if(typeof closeModal==='function')closeModal();
+  };
+  window.ruahShowCalendarDay=function(date){
+    const act=essayActivity(), info=essayInfo(date), att=(db.attendance||[]).filter(x=>x.date===date);
+    const p=String(date).split('-').map(Number), localDate=new Date(p[0],p[1]-1,p[2]), wd=localDate.getDay(), isWed=wd===3;
+    const ev=(db.activities||[]).filter(a=>{const isEssay=a.id===act?.id||(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase().includes('ensayo');if(isEssay)return isWed&&!a.date;return(a.date&&a.date===date)||(!a.date&&a.day===wd);});
+    const essayRelevant=!!act&&(isWed||info.status==='rescheduledTo'||info.status==='rescheduled');
+    let essayHtml='';
+    if(essayRelevant){
+      let label='Pendiente de registro', buttons='';
+      if(info.status==='suspended'){label='Suspendido';buttons=`<button class="btn" onclick="ruahSetEssayStatus('${date}','reactivate')"><i data-lucide="rotate-ccw" class="icon"></i> Reactivar ensayo</button>`}
+      else if(info.status==='rescheduled'){label='Reprogramado para '+fmtDate(info.newDate);buttons=`<button class="btn" onclick="ruahSetEssayStatus('${date}','reactivate')"><i data-lucide="rotate-ccw" class="icon"></i> Cancelar reprogramación</button>`}
+      else if(info.status==='rescheduledTo'){label='Ensayo reprogramado desde '+fmtDate(info.originalDate);buttons=''}
+      else if(hasEssayRecord(date)){label='Con registros';buttons=`<button class="btn danger" disabled title="No se puede suspender ni reprogramar después de registrar asistencia"><i data-lucide="lock" class="icon"></i> Registro iniciado</button>`}
+      else {
+        buttons=`<button class="btn danger" onclick="ruahSetEssayStatus('${date}','suspend')"><i data-lucide="ban" class="icon"></i> Suspender ensayo</button>
+        <button class="btn" onclick="ruahOpenReschedule('${date}')"><i data-lucide="calendar-clock" class="icon"></i> Reprogramar</button>`;
+      }
+      essayHtml=`<div class="card" style="margin-top:12px"><h3><i data-lucide="music" class="icon"></i> Ensayo del miércoles</h3><p><b>Estado:</b> ${esc(label)}</p><div class="toolbar" style="margin-top:10px;gap:8px;flex-wrap:wrap">${buttons}</div></div>`;
+    }
+    const html=`<div class="modalhead"><h2><i data-lucide="calendar-days" class="icon"></i> ${fmtDate(date)}</h2><button class="close" onclick="closeModal()">×</button></div>
+      <div class="card" style="margin-top:10px"><h3>Actividades</h3>${ev.length?ev.map(a=>`<div class="item" style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(a.name)}</b><br><small>${esc(a.time||'')} · ${esc(a.type||'')}</small></div>`).join(''):'<div class="empty">No hay actividades programadas.</div>'}${essayHtml}</div>
+      <div style="margin-top:12px"><h3>Asistencias registradas</h3>${att.length?att.map(x=>{const m=db.musicians.find(z=>z.id===x.musicianId);return `<div class="item" style="padding:7px 0"><b>${esc(m?m.first+' '+m.last:'Músico eliminado')}</b> · ${statusBadge(x)} · ${esc(x.arrival||'Sin hora')}</div>`}).join(''):'<div class="empty">No hay asistencias registradas ese día.</div>'}</div>`;
+    modal(html);if(window.lucide)lucide.createIcons();
+  };
+  window.ruahOpenReschedule=function(date){
+    const todayStr=new Date().toISOString().slice(0,10);
+    modal(`<div class="modalhead"><h2><i data-lucide="calendar-clock" class="icon"></i> Reprogramar ensayo</h2><button class="close" onclick="closeModal()">×</button></div><div class="card" style="margin-top:10px"><p>El ensayo del <b>${fmtDate(date)}</b> se moverá a otra fecha. El miércoles original quedará registrado como <b>Reprogramado</b> y no contará como ensayo realizado ni como suspendido.</p><label>Nueva fecha</label><input id="ruahRescheduleDate" type="date" min="${todayStr}" value="${todayStr}"><div class="toolbar" style="margin-top:12px;justify-content:flex-end"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="ruahSetEssayStatus('${date}','reschedule',document.getElementById('ruahRescheduleDate').value)"><i data-lucide="check" class="icon"></i> Confirmar reprogramación</button></div></div>`);if(window.lucide)lucide.createIcons();
+  };
+  window.renderCalendar=function(){
+    const host=document.getElementById('ruahCalendar');if(!host)return;
+    const now=new Date();const base=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=base.getFullYear(),mo=base.getMonth();
+    const title=document.getElementById('ruahCalTitle');if(title)title.textContent=base.toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+    const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate();let html='<div class="ruah-calendar">';
+    ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);
+    for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,cell=new Date(y,mo,n),num=cell.getDate(),iso=ruahLocalISO(cell.getFullYear(),cell.getMonth(),cell.getDate()),wd=cell.getDay(),essay=essayActivity();
+      const ev=(db.activities||[]).filter(a=>{const isEssay=a.id===essay?.id||(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase().includes('ensayo');if(isEssay)return wd===3&&!a.date;return(a.date&&a.date===iso)||(!a.date&&a.day===wd);});
+      const info=essayInfo(iso),isWed=wd===3,isMoved=info.status==='rescheduledTo';if(isWed&&essay&&!ev.some(a=>a.id===essay.id)&&!essay.date)ev.push(essay);if(isMoved)ev.push({name:'Ensayo reprogramado',time:'',type:'ensayo'});
+      let tag='';if(isWed||isMoved){if(info.status==='suspended')tag='<span class="ruah-event essay-suspended">Ensayo · Suspendido</span>';else if(info.status==='rescheduled')tag=`<span class="ruah-event essay-moved">Ensayo · Reprogramado</span>`;else if(isMoved)tag='<span class="ruah-event essay-moved">Ensayo · Reprogramado aquí</span>';else if(hasEssayRecord(iso))tag='<span class="ruah-event essay-done">Ensayo · Registrado</span>';else tag='<span class="ruah-event essay-pending">Ensayo · Pendiente</span>';}
+      html+=`<div class="ruah-day ${valid?'':'muted'}"><button type="button" class="ruah-cal-day-btn" ${valid?`onclick="ruahShowCalendarDay('${iso}')"`:''}><b>${num}</b>${ev.slice(0,3).map(a=>`<span class="ruah-event">${esc(a.name)} ${a.time?'· '+esc(a.time):''}</span>`).join('')}${tag}</button></div>`;
+    }
+    html+='</div>';host.innerHTML=html;const old=host.parentElement.querySelector('.ruah-essay-control');if(old)old.remove();
+    const st=essayStatsV2(),dates=st.total?wedDates(st.start,today()).slice().reverse().slice(0,12):[];const rows=dates.map(date=>{const info=essayInfo(date);let state='',action='';if(info.status==='suspended'){state='<span class="badge absent">Suspendido</span>';action=`<button class="btn" onclick="ruahShowCalendarDay('${date}')"><i data-lucide="edit-3" class="icon"></i> Gestionar</button>`;}else if(info.status==='rescheduled'){state=`<span class="badge late">Reprogramado para ${fmtDate(info.newDate)}</span>`;action=`<button class="btn" onclick="ruahShowCalendarDay('${date}')"><i data-lucide="edit-3" class="icon"></i> Gestionar</button>`;}else if(hasEssayRecord(date)){state='<span class="badge present">Realizado</span>';action=`<button class="btn" onclick="ruahShowCalendarDay('${date}')"><i data-lucide="eye" class="icon"></i> Ver</button>`;}else{state='<span class="badge late">Pendiente</span>';action=`<button class="btn danger" onclick="ruahShowCalendarDay('${date}')"><i data-lucide="calendar-check" class="icon"></i> Decidir</button>`;}return `<div class="ruah-essay-row"><div><b>${fmtDate(date)}</b><small>Miércoles · Ensayo</small></div><div>${state}</div><div>${action}</div></div>`}).join('');
+    host.insertAdjacentHTML('beforebegin',`<div class="ruah-essay-control"><div class="ruah-cal-summary"><div class="ruah-cal-kpi"><small>Miércoles evaluados</small><b>${st.total}</b></div><div class="ruah-cal-kpi"><small>Ensayos realizados</small><b>${st.done}</b></div><div class="ruah-cal-kpi"><small>Ensayos suspendidos</small><b>${st.suspended}</b></div><div class="ruah-cal-kpi"><small>Reprogramados</small><b>${st.rescheduled}</b></div><div class="ruah-cal-kpi"><small>Sin registro</small><b>${st.unregistered}</b></div></div><div class="ruah-calendar-note"><i data-lucide="info" class="icon"></i> Un miércoles sin registro queda pendiente. Solo el líder puede marcarlo como suspendido o reprogramarlo.</div><div class="card"><h3><i data-lucide="music-2" class="icon"></i> Control de ensayos</h3>${rows||'<div class="empty">Todavía no hay miércoles desde el primer dato registrado.</div>'}</div></div>`);if(window.lucide)lucide.createIcons();
+  };
+  function essayStatsV2(){const start=typeof firstDataDate==='function'?firstDataDate():null;if(!start)return {total:0,done:0,suspended:0,rescheduled:0,unregistered:0};const dates=wedDates(start,today());let done=0,suspended=0,rescheduled=0,unregistered=0;dates.forEach(x=>{const st=statusObj(x);if(st.status==='suspended')suspended++;else if(st.status==='rescheduled')rescheduled++;else if(hasEssayRecord(x))done++;else unregistered++;});return {total:dates.length,done,suspended,rescheduled,unregistered};}
+  window.ruahEssayStats=essayStatsV2;
+  const oldSaveAttendance=window.saveAttendance;
+  if(oldSaveAttendance){window.saveAttendance=function(editId=''){const date=document.getElementById('ad')?.value||'';const activityText=document.getElementById('aaSearch')?.value.trim().toLowerCase()||'';const act=essayActivity();if(!editId&&act&&activityText===String(act.name||'').toLowerCase()&&isSuspended(date))return alert('Este ensayo fue suspendido por el líder. No se pueden registrar asistencias.');return oldSaveAttendance.apply(this,arguments);};}
+  const oldEssayToggle=window.ruahToggleEssayStatus;window.ruahToggleEssayStatus=function(date){return ruahSetEssayStatus(date,statusObj(date).status==='suspended'?'reactivate':'suspend');};
+  const style=document.createElement('style');style.textContent='.essay-suspended{opacity:.85}.essay-moved{opacity:.9}.essay-done{opacity:.9}.essay-pending{opacity:.8}.ruah-cal-summary{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))!important}.ruah-calendar-note{margin-bottom:10px}.toolbar .btn{white-space:nowrap;flex:0 0 auto}@media(max-width:600px){.toolbar .btn{width:auto!important;min-width:0!important;max-width:100%;padding:8px 11px;font-size:12px}.ruah-cal-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important}}';document.head.appendChild(style);
+  setTimeout(()=>{if(typeof renderCalendar==='function')renderCalendar()},0);
+})();
+</script>
+<style id="ruah-discipline-style">
+.discipline-active-badge{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 8px;border-radius:999px;background:#fff3df;color:#9a5a00;font-size:11px;font-weight:800}
+.discipline-note{background:#f7f8fb;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;color:var(--muted);font-size:13px}
+.discipline-status{display:inline-flex;align-items:center;gap:5px}
+</style>
+<script id="ruah-discipline-logic">
+(function(){
+  db.disciplines=Array.isArray(db.disciplines)?db.disciplines:[];
+  function activeDiscipline(mId){return db.disciplines.find(d=>d.musicianId===mId&&!d.endDate)||null}
+  window.activeDiscipline=activeDiscipline;
+  window.disciplineBadge=function(mId){const d=activeDiscipline(mId);return d?`<span class="discipline-active-badge"><i data-lucide="shield-alert" class="icon"></i> Disciplina activa</span>`:''};
+  function durationParts(start,end){
+    if(!start)return {days:0,hours:0,minutes:0,totalMinutes:0};
+    const a=new Date(start);
+    let b=end?new Date(end):appNow();
+    if(Number.isNaN(a.getTime()))return {days:0,hours:0,minutes:0,totalMinutes:0};
+    if(Number.isNaN(b.getTime()))b=appNow();
+    let totalMinutes=Math.max(0,Math.floor((b.getTime()-a.getTime())/60000));
+    const days=Math.floor(totalMinutes/1440); totalMinutes%=1440;
+    const hours=Math.floor(totalMinutes/60); const minutes=totalMinutes%60;
+    return {days,hours,minutes,totalMinutes:days*1440+hours*60+minutes};
+  }
+  function durationText(start,end){
+    const d=durationParts(start,end);
+    const parts=[];
+    if(d.days)parts.push(`${d.days} día${d.days===1?'':'s'}`);
+    if(d.hours)parts.push(`${d.hours} hora${d.hours===1?'':'s'}`);
+    if(d.minutes || !parts.length)parts.push(`${d.minutes} minuto${d.minutes===1?'':'s'}`);
+    return parts.join(', ');
+  }
+  function musicianName(id){const m=db.musicians.find(x=>x.id===id);return m?`${m.first} ${m.last}`:'Músico eliminado'}
+  window.openDisciplineModal=function(mId){
+    const opts=db.musicians.map(m=>`<option value="${m.id}" ${m.id===mId?'selected':''}>${esc(m.first)} ${esc(m.last)}</option>`).join('');
+    modal(`<div class="modalhead"><h2><i data-lucide="shield-alert" class="icon"></i> Poner en disciplina</h2><button class="close" onclick="closeModal()">×</button></div>
+      <div class="formgrid"><div class="field"><label>Músico *</label><select id="discMusician">${opts}</select></div>
+      <div class="field"><label>Fecha y hora de inicio *</label><input type="datetime-local" id="discStart" value="${localDateTimeValue()}"></div>
+      <div class="field full"><label>Motivo *</label><textarea id="discReason" placeholder="Indica el motivo de la disciplina..."></textarea></div>
+      <div class="field full"><label>Observación (opcional)</label><textarea id="discNotes" placeholder="Información adicional..."></textarea></div>
+      <div class="full discipline-note"><i data-lucide="info" class="icon"></i> El músico seguirá <b>activo</b> y continuará apareciendo para ensayos, ayunos y demás actividades generales. Esta disciplina solo registra que su participación musical está temporalmente suspendida.</div>
+      <div class="full"><button class="btn danger" onclick="saveDiscipline()"><i data-lucide="shield-alert" class="icon"></i> Activar disciplina</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+    if(window.lucide)lucide.createIcons();
+  };
+  window.saveDiscipline=function(){
+    const musicianId=document.getElementById('discMusician')?.value,start=document.getElementById('discStart')?.value,reason=document.getElementById('discReason')?.value.trim(),notes=document.getElementById('discNotes')?.value.trim()||'';
+    if(!musicianId||!start||!reason)return alert('Completa músico, fecha de inicio y motivo.');
+    if(activeDiscipline(musicianId))return alert('Este músico ya tiene una disciplina activa.');
+    db.disciplines.push({id:uid('dsc'),musicianId,startDate:start.slice(0,10),startDateTime:start,reason,notes,endDate:null,endDateTime:null,createdAt:new Date().toISOString()});
+    closeModal();save();renderDiscipline();
+  };
+  window.finishDiscipline=function(id){
+    const d=db.disciplines.find(x=>x.id===id);if(!d)return;
+    const now=appNow(), date=localDateISO(now);
+    if(!confirm(`¿Finalizar la disciplina de ${musicianName(d.musicianId)}?`))return;
+    d.endDate=date;d.endDateTime=now.toISOString();d.finishedAt=now.toISOString();save();renderDiscipline();
+  };
+  window.editDiscipline=function(id){
+    const d=db.disciplines.find(x=>x.id===id);if(!d)return;
+    modal(`<div class="modalhead"><h2><i data-lucide="pencil" class="icon"></i> Editar disciplina</h2><button class="close" onclick="closeModal()">×</button></div>
+      <div class="formgrid"><div class="field"><label>Inicio (fecha y hora) *</label><input type="datetime-local" id="edDiscStart" value="${esc(d.startDateTime||((d.startDate||today())+'T00:00'))}"></div><div class="field"><label>Finalización (fecha y hora)</label><input type="datetime-local" id="edDiscEnd" value="${esc(d.endDateTime||'')}"></div></div><div class="field"><label>Motivo *</label><textarea id="edDiscReason">${esc(d.reason||'')}</textarea></div><div class="field"><label>Observación</label><textarea id="edDiscNotes">${esc(d.notes||'')}</textarea></div>
+      <div class="toolbar"><button class="btn primary" onclick="saveDisciplineEdit('${id}')"><i data-lucide="save" class="icon"></i> Guardar</button><button class="btn" onclick="closeModal()">Cancelar</button></div>`);if(window.lucide)lucide.createIcons();
+  };
+  window.saveDisciplineEdit=function(id){const d=db.disciplines.find(x=>x.id===id);if(!d)return;const reason=document.getElementById('edDiscReason')?.value.trim(),start=document.getElementById('edDiscStart')?.value,end=document.getElementById('edDiscEnd')?.value||'';if(!reason||!start)return alert('Completa motivo y fecha de inicio.');if(end&&end<start)return alert('La finalización no puede ser anterior al inicio.');d.reason=reason;d.notes=document.getElementById('edDiscNotes')?.value.trim()||'';d.startDateTime=start;d.startDate=start.slice(0,10);d.endDateTime=end||null;d.endDate=end?end.slice(0,10):null;d.finishedAt=end||null;closeModal();save();renderDiscipline();};
+  window.deleteDiscipline=function(id){if(!confirm('¿Eliminar este registro de disciplina? El historial se perderá.'))return;db.disciplines=db.disciplines.filter(x=>x.id!==id);save();renderDiscipline();};
+  window.renderDiscipline=function(){
+    const tbody=document.getElementById('disciplineTable'),active=document.getElementById('activeDisciplineList'),sum=document.getElementById('disciplineSummary');if(!tbody)return;
+    const arr=[...db.disciplines].sort((a,b)=>(b.startDateTime||b.startDate||'').localeCompare(a.startDateTime||a.startDate||''));
+    const act=arr.filter(d=>!d.endDate),finished=arr.filter(d=>d.endDate);
+    active.innerHTML=act.length?act.map(d=>`<div class="person" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="avatar">${avatar(db.musicians.find(m=>m.id===d.musicianId)||{first:'?',last:'?'})}</div><div style="flex:1"><b>${esc(musicianName(d.musicianId))}</b><div class="discipline-status"><span class="badge late">Disciplina activa</span></div><small style="display:block;color:var(--muted)">Desde ${fmtDate(d.startDate)} · ${esc(d.reason)}</small><small style="display:block;color:var(--muted);margin-top:3px"><b>Duración:</b> ${durationText(d.startDateTime || d.startDate, null)}</small></div><button class="btn ok" onclick="finishDiscipline('${d.id}')"><i data-lucide="shield-check" class="icon"></i> Quitar disciplina</button></div>`).join(''):'<div class="empty">No hay disciplinas activas.</div>';
+    sum.innerHTML=`<div class="kpis"><div class="mini"><b>${act.length}</b><span>Activas</span></div><div class="mini"><b>${finished.length}</b><span>Finalizadas</span></div><div class="mini"><b>${arr.length}</b><span>Total histórico</span></div><div class="mini"><b>${db.musicians.length}</b><span>Músicos activos</span></div></div><div class="discipline-note">La disciplina no desactiva al músico ni elimina sus obligaciones de asistencia. El registro conserva fecha de inicio, fecha de finalización, duración, motivo y observaciones.</div>`;
+    tbody.innerHTML=arr.length?arr.map(d=>`<tr><td><b>${esc(musicianName(d.musicianId))}</b></td><td>${fmtDate(d.startDate)}</td><td>${d.endDate?fmtDate(d.endDate):'—'}</td><td><b>${durationText(d.startDateTime || d.startDate, d.endDateTime || d.endDate)}</b></td><td>${esc(d.reason||'—')}${d.notes?`<small style="display:block;color:var(--muted)">${esc(d.notes)}</small>`:''}</td><td>${d.endDate?'<span class="badge present">Finalizada</span>':'<span class="badge late">Activa</span>'}</td><td>${!d.endDate?`<button class="btn ok" onclick="finishDiscipline('${d.id}')"><i data-lucide="shield-check" class="icon"></i> Finalizar</button> `:''}<button class="btn" onclick="editDiscipline('${d.id}')"><i data-lucide="pencil" class="icon"></i> Editar</button> <button class="btn danger" onclick="deleteDiscipline('${d.id}')"><i data-lucide="trash-2" class="icon"></i> Eliminar</button></td></tr>`).join(''):'<tr><td colspan="7" class="empty">No hay registros de disciplina.</td></tr>';
+    if(window.lucide)lucide.createIcons();
+  };
+  const oldShowPage=window.showPage;
+  window.showPage=function(id){if(typeof oldShowPage==='function')oldShowPage(id);if(id==='disciplina')renderDiscipline();if(window.lucide)lucide.createIcons();};
+  // Mantener disciplina separada del estado activo del músico: no modifica m.active ni filtros de asistencia.
+  const oldRenderMusicians=window.renderMusicians;
+  window.renderMusicians=function(){if(typeof oldRenderMusicians==='function')oldRenderMusicians();if(window.lucide)lucide.createIcons();};
+  const oldRenderAll=window.renderAll;
+  window.renderAll=function(){if(typeof oldRenderAll==='function')oldRenderAll();if(document.getElementById('disciplina'))renderDiscipline();};
+  setTimeout(()=>{renderDiscipline();if(window.lucide)lucide.createIcons()},120);
 })();
 </script>
 </body>
 </html>
+<script id="ruah-calendar-final-fix">
+(function(){
+  const localISO=(d)=>{const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`};
+  const fromISO=(s)=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
+  const activityMatchesDate=(a,iso)=>{const d=fromISO(iso),wd=d.getDay();const name=(a.name||'').toLowerCase(),type=(a.type||'').toLowerCase();const isEssay=type==='ensayo'||name.includes('ensayo');if(isEssay)return wd===3 && !a.date;return a.date?a.date===iso:a.day===wd};
+
+  window.ruahShowCalendarDay=function(date){
+    const d=fromISO(date), wd=d.getDay();
+    const activities=(db.activities||[]).filter(a=>activityMatchesDate(a,date));
+    const attendance=(db.attendance||[]).filter(x=>x.date===date);
+    const essay=(db.activities||[]).find(a=>(a.type||'').toLowerCase()==='ensayo'||(a.name||'').toLowerCase().includes('ensayo'));
+    const essayInfoFn=window.essayInfo||function(){return {status:'active'}};
+    const status=(db.essayStatus&&db.essayStatus[date])||{};
+    const essayRelevant=!!essay && (wd===3 || status.status==='rescheduled' || status.status==='rescheduledTo');
+    let essayBlock='';
+    if(essayRelevant){
+      const has=essay && (db.attendance||[]).some(x=>x.date===date&&x.activityId===essay.id);
+      let state='Pendiente de registro',actions='';
+      if(status.status==='suspended'){
+        state='Suspendido';
+        actions=`<button class="btn" onclick="ruahSetEssayStatus('${date}','reactivate')"><i data-lucide="rotate-ccw" class="icon"></i> Reactivar ensayo</button>`;
+      }else if(status.status==='rescheduled'){
+        state='Reprogramado para '+(typeof fmtDate==='function'?fmtDate(status.newDate):status.newDate);
+        actions=`<button class="btn" onclick="ruahSetEssayStatus('${date}','reactivate')"><i data-lucide="rotate-ccw" class="icon"></i> Cancelar reprogramación</button>`;
+      }else if(status.status==='rescheduledTo'){
+        state='Reprogramado desde '+(typeof fmtDate==='function'?fmtDate(status.originalDate):status.originalDate);
+      }else if(has){
+        state='Con registros';
+        actions=`<button class="btn" disabled><i data-lucide="lock" class="icon"></i> Registro iniciado</button>`;
+      }else if(wd===3){
+        actions=`<button class="btn danger" onclick="ruahSetEssayStatus('${date}','suspend')"><i data-lucide="ban" class="icon"></i> Suspender ensayo</button><button class="btn" onclick="ruahOpenReschedule('${date}')"><i data-lucide="calendar-clock" class="icon"></i> Reprogramar</button>`;
+      }
+      essayBlock=`<div class="card" style="margin-top:12px"><h3><i data-lucide="music" class="icon"></i> Gestión del ensayo</h3><p><b>Estado:</b> ${esc(state)}</p><div class="toolbar" style="margin-top:10px">${actions}</div></div>`;
+    }
+    const activityHtml=activities.length?activities.map(a=>`<div class="card" style="margin:10px 0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b><i data-lucide="calendar-check-2" class="icon"></i> ${esc(a.name)}</b><div class="ruah-muted">${esc(a.type||'Actividad')} · ${esc(a.time||'Sin hora')} · ${days[a.day]||''}</div></div><button class="btn" onclick="closeModal();openActivityModal('${a.id}')"><i data-lucide="pencil" class="icon"></i> Editar actividad</button></div></div>`).join(''):'<div class="empty">No hay actividades programadas para este día.</div>';
+    const attendanceHtml=attendance.length?attendance.map(x=>{const m=db.musicians.find(z=>z.id===x.musicianId);return `<div class="item" style="padding:7px 0"><b>${esc(m?m.first+' '+m.last:'Músico eliminado')}</b> · ${statusBadge(x)} · ${esc(x.arrival||'Sin hora')}</div>`}).join(''):'<div class="empty">No hay asistencias registradas ese día.</div>';
+    modal(`<div class="modalhead"><h2><i data-lucide="calendar-days" class="icon"></i> ${esc(d.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</h2><button class="close" onclick="closeModal()">×</button></div><div class="card" style="margin-top:10px"><h3>Actividades de este día</h3>${activityHtml}${essayBlock}</div><div style="margin-top:12px"><h3>Asistencias registradas</h3>${attendanceHtml}</div><div class="toolbar" style="margin-top:14px"><button class="btn primary" onclick="closeModal();openActivityModal()"><i data-lucide="plus" class="icon"></i> Crear actividad</button></div>`);
+    if(window.lucide)lucide.createIcons();
+  };
+
+  window.renderCalendar=function(){
+    const host=document.getElementById('ruahCalendar');if(!host)return;
+    const now=new Date();
+    const base=new Date(now.getFullYear(),now.getMonth()+(window.calOffset||0),1);
+    const y=base.getFullYear(),mo=base.getMonth();
+    const title=document.getElementById('ruahCalTitle');if(title)title.textContent=base.toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+    const first=(new Date(y,mo,1).getDay()+6)%7, daysIn=new Date(y,mo+1,0).getDate();
+    let html='<div class="ruah-calendar">';
+    ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);
+    for(let i=0;i<42;i++){
+      const n=i-first+1,valid=n>=1&&n<=daysIn;
+      const cell=new Date(y,mo,n),num=cell.getDate(),iso=localISO(cell),wd=cell.getDay();
+      const ev=(db.activities||[]).filter(a=>activityMatchesDate(a,iso));
+      const st=(db.essayStatus&&db.essayStatus[iso])||{};
+      let essayTag='';
+      if(essay&&wd===3&&!essay.date){
+        if(st.status==='suspended')essayTag='<span class="ruah-event essay-suspended"><i data-lucide="ban" class="icon"></i> Ensayo · Suspendido</span>';
+        else if(st.status==='rescheduled')essayTag='<span class="ruah-event essay-moved"><i data-lucide="calendar-clock" class="icon"></i> Ensayo · Reprogramado</span>';
+        else if((db.attendance||[]).some(x=>x.date===iso&&x.activityId===essay.id))essayTag='<span class="ruah-event essay-done"><i data-lucide="check-circle-2" class="icon"></i> Ensayo · Registrado</span>';
+        else essayTag='<span class="ruah-event essay-pending"><i data-lucide="clock-3" class="icon"></i> Ensayo · Pendiente</span>';
+      }
+      if(st.status==='rescheduledTo')essayTag='<span class="ruah-event essay-moved"><i data-lucide="calendar-clock" class="icon"></i> Ensayo reprogramado aquí</span>';
+      html+=`<div class="ruah-day ${valid?'':'muted'}"><button type="button" class="ruah-cal-day-btn" ${valid?`onclick="ruahShowCalendarDay('${iso}')"`:''}><b>${num}</b>${ev.slice(0,3).map(a=>`<span class="ruah-event">${esc(a.name)}${a.time?' · '+esc(a.time):''}</span>`).join('')}${essayTag}</button></div>`;
+    }
+    html+='</div><div class="ruah-calendar-note"><i data-lucide="mouse-pointer-click" class="icon"></i> Haz clic en cualquier día para ver, editar actividades o gestionar el ensayo.</div>';
+    host.innerHTML=html;
+    const old=host.parentElement.querySelector('.ruah-essay-control');if(old)old.remove();
+    if(typeof essayStatsV2==='function'){
+      const st=essayStatsV2();
+      const dates=st.total?wedDates(st.start,today()).slice().reverse().slice(0,12):[];
+      const rows=dates.map(date=>{const info=(db.essayStatus&&db.essayStatus[date])||{};let state='',action='';if(info.status==='suspended'){state='<span class="badge absent">Suspendido</span>'}else if(info.status==='rescheduled'){state=`<span class="badge late">Reprogramado para ${fmtDate(info.newDate)}</span>`}else if((db.attendance||[]).some(x=>x.date===date&&x.activityId===(essayActivity()?.id))){state='<span class="badge present">Realizado</span>'}else{state='<span class="badge late">Pendiente</span>'}action=`<button class="btn" onclick="ruahShowCalendarDay('${date}')"><i data-lucide="settings-2" class="icon"></i> Gestionar</button>`;return `<div class="ruah-essay-row"><div><b>${fmtDate(date)}</b><small>Miércoles · Ensayo</small></div><div>${state}</div><div>${action}</div></div>`}).join('');
+      host.insertAdjacentHTML('beforebegin',`<div class="ruah-essay-control"><div class="ruah-cal-summary"><div class="ruah-cal-kpi"><small>Miércoles evaluados</small><b>${st.total}</b></div><div class="ruah-cal-kpi"><small>Ensayos realizados</small><b>${st.done}</b></div><div class="ruah-cal-kpi"><small>Ensayos suspendidos</small><b>${st.suspended}</b></div><div class="ruah-cal-kpi"><small>Reprogramados</small><b>${st.rescheduled}</b></div><div class="ruah-cal-kpi"><small>Sin registro</small><b>${st.unregistered}</b></div></div><div class="ruah-calendar-note"><i data-lucide="info" class="icon"></i> Un miércoles sin registro queda pendiente. Solo tú decides si se suspende o se reprograma.</div><div class="card"><h3><i data-lucide="music-2" class="icon"></i> Control de ensayos</h3>${rows||'<div class="empty">Todavía no hay miércoles desde el primer dato registrado.</div>'}</div></div>`);
+    }
+    if(window.lucide)lucide.createIcons();
+  };
+
+  // Mantener el desplazamiento del calendario en una variable accesible y local.
+  window.ruahCalShift=function(n){window.calOffset=(window.calOffset||0)+n;renderCalendar()};
+
+  // Actividades: el selector de día es la fuente de verdad para recurrencia.
+  // Al editar/crear, se muestra explícitamente la recurrencia y la fecha de la actividad.
+  const oldOpenActivityModal=window.openActivityModal;
+  window.openActivityModal=function(id){
+    const a=getActivity(id)||{name:'',day:3,time:'08:00',type:'Actividad personalizada',custom:true};
+    const dateToday=typeof today==='function'?today():localISO(new Date());
+    modal(`<div class="modalhead"><h2>${id?'Editar':'Crear'} actividad</h2><button class="close" onclick="closeModal()">×</button></div><div class="formgrid">
+      <div class="field"><label>Nombre *</label><input id="xn" value="${esc(a.name)}"></div>
+      <div class="field"><label>Tipo</label><input id="xt" value="${esc(a.type||'')}" placeholder="Ej. Ensayo, Devocional, Culto"></div>
+      <div class="field"><label>¿Qué día se realiza?</label><select id="xd">${days.map((d,i)=>`<option value="${i}" ${Number(a.day)===i?'selected':''}>Todos los ${d.toLowerCase()}</option>`).join('')}</select><small class="ruah-muted">La actividad se colocará automáticamente en el calendario según este día.</small></div>
+      <div class="field"><label>Hora límite de llegada</label><input type="time" id="xh" value="${a.time||'08:00'}"></div>
+      <div class="field"><label>Fecha de referencia</label><input type="date" id="xdate" value="${a.date||dateToday}"><small class="ruah-muted">Esta fecha sirve para consultar/editar el día exacto. La recurrencia sigue el día seleccionado.</small></div>
+      <div class="full"><button class="btn primary" onclick="saveActivity('${id||''}')"><i data-lucide="save" class="icon"></i> Guardar</button> <button class="btn" onclick="closeModal()">Cancelar</button></div></div>`);
+    if(window.lucide)lucide.createIcons();
+  };
+  window.saveActivity=function(id){
+    const name=document.getElementById('xn')?.value.trim(),day=Number(document.getElementById('xd')?.value),time=document.getElementById('xh')?.value,type=document.getElementById('xt')?.value.trim()||'Personalizada',date=document.getElementById('xdate')?.value||'';
+    if(!name)return alert('Escribe un nombre.');
+    const isEssay=type.toLowerCase()==='ensayo'||name.toLowerCase().includes('ensayo');
+    const data={name,day,time,type};
+    // Ensayos son recurrentes los miércoles; no se fija una fecha única.
+    if(isEssay)data.day=3;
+    // Las actividades normales pueden tener una fecha de referencia, pero el calendario usa el día seleccionado para la recurrencia.
+    data.date=isEssay?'':date;
+    if(id){const a=getActivity(id);if(!a)return alert('No se encontró la actividad.');Object.assign(a,data)}else db.activities.push({id:uid('a'),...data,custom:true});
+    closeModal();save();if(typeof renderActivities==='function')renderActivities();if(typeof renderCalendar==='function')renderCalendar();
+  };
+
+  // Quitar posibles reglas que estiren los botones en móvil.
+  const st=document.createElement('style');st.textContent=`
+    .ruah-cal-day-btn{width:100%;height:100%;min-height:86px;display:block;text-align:left;background:transparent;border:0;border-radius:9px;padding:7px;cursor:pointer;color:inherit;overflow:hidden}
+    .ruah-cal-day-btn:hover{background:#f5f8ff}
+    .ruah-cal-day-btn:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+    .ruah-day{padding:0!important;overflow:hidden}
+    .ruah-event .icon{width:11px;height:11px}
+    @media(max-width:600px){.ruah-cal-day-btn{min-height:68px;padding:5px}.ruah-day{min-height:68px}.ruah-cal-day-btn .ruah-event{max-width:100%}}
+  `;document.head.appendChild(st);
+  setTimeout(()=>{if(typeof renderCalendar==='function')renderCalendar()},30);
+})();
+</script>
