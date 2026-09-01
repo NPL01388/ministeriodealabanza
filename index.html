@@ -1450,42 +1450,76 @@ function periodPerformance(mId,year,month){
   const attendanceOk=present+justifiedLate+justifiedAbsent;
   const ownOk=own.filter(x=>x.done).length, delegatedOk=delegatedIn.filter(x=>x.done).length;
   const total=attendance.length+own.length+delegatedIn.length;
-  const compliance=attendanceOk+ownOk+delegatedOk;
+  const compliance=total?Math.round((attendanceOk+ownOk+delegatedOk)/total*100):null;
   const basePoints=present*10+justifiedLate*7+justifiedAbsent*9-late*4-absent*10;
   const arrival=attendance.reduce((sum,x)=>sum+arrivalPoints(x),0);
   const resp=own.reduce((sum,x)=>sum+(x.done?12:-8),0)+delegatedOut.length*-2+delegatedIn.reduce((sum,x)=>sum+(x.done?6:-4),0);
-  return {grade:total?Math.round(compliance/total*100):null,points:basePoints+arrival+resp,total};
+  const points=Math.round((basePoints+arrival+resp)*100)/100;
+
+  /* El porcentaje del ranking ahora considera también el puntaje real.
+     Para que puntos y cumplimiento sean comparables, calculamos el máximo
+     razonablemente alcanzable con los mismos registros del período. */
+  const maxAttendance=attendance.length*15; // 10 por asistencia + hasta 5 por llegada
+  const maxOwn=own.length*12;
+  const maxDelegatedIn=delegatedIn.length*6;
+  const maxDelegatedOut=delegatedOut.length*0; // la delegación original solo penaliza
+  const maxPoints=maxAttendance+maxOwn+maxDelegatedIn+maxDelegatedOut;
+  const pointGrade=maxPoints>0?Math.max(0,Math.min(100,Math.round((points/maxPoints)*10000)/100)):null;
+  /* 60% cumplimiento + 40% puntos. Así una buena asistencia no oculta
+     una caída fuerte en puntualidad, responsabilidades o penalizaciones. */
+  const grade=(compliance!==null&&pointGrade!==null)?Math.round((compliance*.6+pointGrade*.4)*100)/100:(compliance!==null?compliance:pointGrade);
+  return {grade,compliance,pointGrade,points,maxPoints,total};
 }
 function rankingTrend(mId){
-  /* Tendencia tipo bolsa: compara el % de cumplimiento actual
-     contra el período anterior y calcula variación relativa real. */
+  /* Tendencia tipo bolsa: compara la CALIFICACIÓN DEL RANKING, que ahora
+     combina 60% cumplimiento + 40% puntaje normalizado. Busca el período
+     anterior con datos reales para evitar el antiguo "Sin comparación" cuando
+     existe información histórica. */
   const activeYear=Number(db.activeYear)||new Date().getFullYear();
-  const now=new Date();
-  let curYear=activeYear, curMonth=(activeYear===now.getFullYear()?now.getMonth()+1:0);
   const months=new Set();
   (db.attendance||[]).forEach(x=>{if(x.musicianId===mId&&String(x.date||'').startsWith(String(activeYear)+'-'))months.add(String(x.date).slice(0,7))});
   (db.responsibilities||[]).forEach(x=>{if(x.musicianId===mId&&String(x.date||'').startsWith(String(activeYear)+'-'))months.add(String(x.date).slice(0,7))});
-  const sorted=[...months].sort().reverse();
-  if(!curMonth || !periodPerformance(mId,curYear,curMonth).total){
-    if(sorted.length){const [yy,mm]=sorted[0].split('-').map(Number);curYear=yy;curMonth=mm;}
-    else return {type:'flat',delta:null,relative:null,current:null,previous:null,label:'Sin datos'};
+  const sorted=[...months].sort();
+  if(!sorted.length)return {type:'flat',delta:null,relative:null,current:null,previous:null,label:'Primera medición'};
+
+  const now=new Date();
+  let currentKey=sorted[sorted.length-1];
+  if(activeYear===now.getFullYear()){
+    const thisKey=String(activeYear)+'-'+String(now.getMonth()+1).padStart(2,'0');
+    if(sorted.includes(thisKey))currentKey=thisKey;
   }
-  const cur=periodPerformance(mId,curYear,curMonth);
-  let d=new Date(curYear,curMonth-2,1);
-  let prevYear=d.getFullYear(),prevMonth=d.getMonth()+1;
-  let prev=periodPerformance(mId,prevYear,prevMonth);
-  if(!prev.total && sorted.length>1){
-    const [py,pm]=sorted[1].split('-').map(Number);
-    prevYear=py;prevMonth=pm;prev=periodPerformance(mId,prevYear,prevMonth);
+  const [cy,cm]=currentKey.split('-').map(Number);
+  const cur=periodPerformance(mId,cy,cm);
+  if(cur.grade===null)return {type:'flat',delta:null,relative:null,current:null,previous:null,label:'Primera medición'};
+
+  let previous=null,previousKey=null;
+  const idx=sorted.indexOf(currentKey);
+  if(idx>0){
+    previousKey=sorted[idx-1];
+    const [py,pm]=previousKey.split('-').map(Number);
+    previous=periodPerformance(mId,py,pm);
   }
-  if(!cur.total || prev.grade===null || prev.grade===undefined) return {type:'flat',delta:null,relative:null,current:cur.grade,previous:prev.grade,label:'Sin comparación'};
-  const delta=cur.grade-prev.grade;
-  const relative=prev.grade===0?(cur.grade===0?0:null):(delta/prev.grade)*100;
-  return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:prev.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(curMonth).padStart(2,'0')}/${curYear}`};
+  /* Si no hay mes anterior dentro del año, intenta el mismo mes del año
+     anterior, usando los datos que ya existen en la aplicación. */
+  if(!previous || previous.grade===null){
+    const prevYear=cy-1;
+    const key=String(prevYear)+'-'+String(cm).padStart(2,'0');
+    const hasData=(db.attendance||[]).some(x=>x.musicianId===mId&&String(x.date||'').startsWith(key))||
+                  (db.responsibilities||[]).some(x=>x.musicianId===mId&&String(x.date||'').startsWith(key));
+    if(hasData){previousKey=key;previous=periodPerformance(mId,prevYear,cm);}
+  }
+
+  if(!previous || previous.grade===null){
+    return {type:'flat',delta:null,relative:null,current:cur.grade,previous:null,label:'Primera medición',period:`${String(cm).padStart(2,'0')}/${cy}`,currentPoints:cur.points,currentPointGrade:cur.pointGrade};
+  }
+  const delta=Math.round((cur.grade-previous.grade)*100)/100;
+  const relative=previous.grade===0?(cur.grade===0?0:100):(delta/previous.grade)*100;
+  return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:previous.grade,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(cm).padStart(2,'0')}/${cy}`,previousPeriod:previousKey,currentPoints:cur.points,previousPoints:previous.points,currentPointGrade:cur.pointGrade,previousPointGrade:previous.pointGrade};
 }
+
 function trendHtml(t){
   if(t.relative===null || t.relative===undefined){
-    return `<span class="trend-box trend-flat">— <small>${t.label||'sin comparación'}</small></span>`;
+    return `<span class="trend-box trend-flat">— <small>${t.label||'primera medición'}</small></span>`;
   }
   const n=Math.abs(t.relative).toFixed(1);
   if(t.type==='up')return `<span class="trend-box trend-up">▲ +${n}% <small>Subió</small></span>`;
@@ -1589,7 +1623,7 @@ window.openRankingDetail=function(id,position,order='points'){
     const box=document.querySelector('#modalBox');if(!box)return;
     const t=rankingTrend(id),p=performance(id);
     const anchor=box.querySelector('.ranking-detail-impact');
-    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación muestra el cambio porcentual real del cumplimiento frente al período anterior: (actual − anterior) ÷ anterior × 100. Es independiente de los puntos del ranking. ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
+    const html=`<div class="ranking-detail-impact"><h4>📈 Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><small style="color:var(--muted)">La variación compara la calificación total del ranking frente al período anterior. La calificación combina 60% de cumplimiento de actividades y 40% del puntaje obtenido (incluyendo llegadas, tardanzas, responsabilidades y delegaciones). ${t.previous!==null&&t.previous!==undefined?'Mes anterior: '+t.previous+'%.':''}</small></div>`;
     if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else box.insertAdjacentHTML('beforeend',html);
     if(window.lucide)lucide.createIcons();
   },50);
@@ -1752,6 +1786,73 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
   const oldShowPage=window.showPage;
   window.showPage=function(id){oldShowPage(id);if(id==='anos')renderYearManager()};
   setTimeout(()=>{installYearUI();renderYearManager();},50);
+})();
+</script>
+<style id="ruah-upgrade-css">
+.ruah-upgrade-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}.ruah-upgrade-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.ruah-upgrade-card h3{margin:0 0 8px}.ruah-kpi{font-size:25px;font-weight:900}.ruah-muted{color:var(--muted);font-size:12px}.ruah-alert{display:flex;gap:10px;align-items:flex-start;padding:10px;border-bottom:1px solid var(--line)}.ruah-alert:last-child{border-bottom:0}.ruah-alert-icon{font-size:20px;line-height:1}.ruah-recognition{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.ruah-recognition:last-child{border-bottom:0}.ruah-trend-up{color:var(--ok);font-weight:900}.ruah-trend-down{color:var(--bad);font-weight:900}.ruah-mini-progress{height:7px;background:#edf0f5;border-radius:99px;overflow:hidden;margin-top:7px}.ruah-mini-progress>span{display:block;height:100%;background:var(--primary);border-radius:99px}.ruah-calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.ruah-cal-head{font-size:11px;font-weight:800;text-align:center;color:var(--muted);padding:5px}.ruah-day{min-height:86px;border:1px solid var(--line);border-radius:10px;padding:7px;background:#fff}.ruah-day.muted{opacity:.45}.ruah-day b{font-size:12px}.ruah-event{display:block;margin-top:5px;padding:4px 5px;border-radius:6px;background:#eef4ff;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ruah-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ruah-setting{border:1px solid var(--line);border-radius:12px;padding:12px}.ruah-setting label{display:flex;justify-content:space-between;gap:10px;align-items:center}.ruah-setting input{width:90px}.ruah-table-note{font-size:12px;color:var(--muted);margin-top:8px}@media(max-width:900px){.ruah-upgrade-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ruah-settings{grid-template-columns:1fr}}@media(max-width:560px){.ruah-upgrade-grid{grid-template-columns:1fr}.ruah-calendar{gap:3px}.ruah-day{min-height:68px;padding:5px}.ruah-event{font-size:9px}.ruah-settings{grid-template-columns:1fr}}
+</style>
+
+<script id="ruah-platform-upgrade">
+(function(){
+  function activeYearNum(){return Number(db.activeYear)||new Date().getFullYear()}
+  function monthKey(){const n=new Date();return String(activeYearNum())+'-'+String(n.getMonth()+1).padStart(2,'0')}
+  function pct(n){return Number.isFinite(n)?n.toFixed(1)+'%':'—'}
+  function musicianName(id){const m=db.musicians.find(x=>x.id===id);return m?m.first+' '+m.last:'—'}
+  function periodKeyList(){const set=new Set();(db.attendance||[]).forEach(x=>x.date&&set.add(x.date.slice(0,7)));(db.responsibilities||[]).forEach(x=>x.date&&set.add(x.date.slice(0,7)));return [...set].filter(k=>k.startsWith(String(activeYearNum())+'-')).sort()}
+  function dashboardStats(){
+    const y=activeYearNum(), pre=(db.attendance||[]).filter(x=>String(x.date||'').startsWith(String(y)+'-'));
+    const resp=(db.responsibilities||[]).filter(x=>String(x.date||'').startsWith(String(y)+'-'));
+    const all=db.musicians.map(m=>({m,p:performance(m.id),t:rankingTrend(m.id)}));
+    const avg=all.length?all.reduce((a,x)=>a+x.p.grade,0)/all.length:0;
+    const points=all.reduce((a,x)=>a+x.p.points,0);
+    const pending=resp.filter(x=>!x.done&&!x.delegatedTo).length;
+    const delegated=resp.filter(x=>x.delegatedTo&&!x.delegatedFrom).length;
+    return {y,pre,resp,all,avg,points,pending,delegated}
+  }
+  function renderUpgradeDashboard(){
+    const d=dashboardStats(), host=document.getElementById('ruahUpgradeDashboard');if(!host)return;
+    const ranked=[...d.all].sort((a,b)=>b.p.grade-a.p.grade||b.p.points-a.p.points), best=ranked[0], growth=[...d.all].filter(x=>x.t.relative!==null).sort((a,b)=>b.t.relative-a.t.relative)[0], worst=[...d.all].filter(x=>x.t.relative!==null).sort((a,b)=>a.t.relative-b.t.relative)[0];
+    const alerts=[];
+    d.all.forEach(x=>{if(x.p.late>=3)alerts.push({i:'⏰',t:`${musicianName(x.m.id)} tiene ${x.p.late} tardanzas sin justificar.`});if(x.p.grade<60&&x.p.total)alerts.push({i:'⚠️',t:`${musicianName(x.m.id)} está en ${x.p.grade}% y requiere atención.`})});
+    d.resp.filter(x=>!x.done&&!x.delegatedTo).slice(0,5).forEach(x=>alerts.push({i:'📋',t:`Responsabilidad pendiente: ${x.title} · ${musicianName(x.musicianId)}.`}));
+    d.resp.filter(x=>x.delegatedTo&&!x.delegatedFrom).slice(0,4).forEach(x=>alerts.push({i:'🔄',t:`${musicianName(x.musicianId)} delegó “${x.title}” a ${musicianName(x.delegatedTo)}.`}));
+    const recs=[
+      ['🏆','Líder actual',best?musicianName(best.m.id):'—',best?`${best.p.grade}% · ${formatArrivalScore(best.p.points)} pts`:'' ],
+      ['📈','Mayor crecimiento',growth?musicianName(growth.m.id):'—',growth?`+${Math.abs(growth.t.relative).toFixed(1)}%`:'' ],
+      ['⏰','Mejor puntualidad',ranked.length?[...ranked].sort((a,b)=>{const aa=a.p.attendance.length?a.p.attendance.filter(x=>x.arrival).length? a.p.arrival/a.p.attendance.filter(x=>x.arrival).length:0:0;const bb=b.p.attendance.length?b.p.arrival/b.p.attendance.filter(x=>x.arrival).length:0;return bb-aa})[0]?musicianName([...ranked].sort((a,b)=>b.p.arrival-a.p.arrival)[0].m.id):'—':'',ranked.length?`${formatArrivalScore(ranked[0].p.arrival)} pts de llegada`:'' ],
+      ['📉','Mayor caída',worst?musicianName(worst.m.id):'—',worst?`-${Math.abs(worst.t.relative).toFixed(1)}%`:'' ]
+    ];
+    host.innerHTML=`<div class="ruah-upgrade-grid">
+      <div class="ruah-upgrade-card"><h3>📊 Ministerio · ${d.y}</h3><div class="ruah-kpi">${pct(d.avg)}</div><div class="ruah-muted">Promedio de calificación</div><div class="ruah-mini-progress"><span style="width:${Math.max(0,Math.min(100,d.avg))}%"></span></div></div>
+      <div class="ruah-upgrade-card"><h3>🏆 Mejor posición</h3><div class="ruah-kpi">${best?esc(musicianName(best.m.id)):'—'}</div><div class="ruah-muted">${best?best.p.grade+'% · '+formatArrivalScore(best.p.points)+' puntos':'Sin datos'}</div></div>
+      <div class="ruah-upgrade-card"><h3>📋 Pendientes</h3><div class="ruah-kpi">${d.pending}</div><div class="ruah-muted">Responsabilidades sin completar</div><div class="ruah-muted">${d.delegated} delegación(es) registrada(s)</div></div>
+      <div class="ruah-upgrade-card"><h3>👥 Registros del año</h3><div class="ruah-kpi">${d.pre.length+d.resp.length}</div><div class="ruah-muted">Asistencias + responsabilidades</div></div>
+    </div>
+    <div class="ruah-upgrade-grid">
+      <div class="ruah-upgrade-card"><h3>🚨 Atención</h3>${alerts.length?alerts.slice(0,8).map(a=>`<div class="ruah-alert"><span class="ruah-alert-icon">${a.i}</span><span>${esc(a.t)}</span></div>`).join(''):'<div class="ruah-muted">No hay alertas importantes.</div>'}</div>
+      <div class="ruah-upgrade-card"><h3>🏅 Reconocimientos</h3>${recs.map(r=>`<div class="ruah-recognition"><span>${r[0]} <b>${esc(r[1])}</b><br><small>${esc(r[2])}</small></span><b>${esc(r[3])}</b></div>`).join('')}</div>
+      <div class="ruah-upgrade-card"><h3>📈 Evolución</h3>${d.all.slice(0,8).map(x=>{const t=x.t;return `<div class="ruah-recognition"><span>${esc(musicianName(x.m.id))}</span><span class="${t.type==='up'?'ruah-trend-up':t.type==='down'?'ruah-trend-down':''}">${t.relative==null?'Primera medición':(t.type==='up'?'▲ +':'▼ -')+Math.abs(t.relative).toFixed(1)+'%'}</span></div>`}).join('')}</div>
+      <div class="ruah-upgrade-card"><h3>📌 Resumen</h3><div class="ruah-muted">Puntos acumulados del ministerio</div><div class="ruah-kpi">${formatArrivalScore(d.points)}</div><div class="ruah-muted">Las calificaciones combinan cumplimiento y puntos según las reglas actuales.</div></div>
+    </div>`;
+    if(window.lucide)lucide.createIcons();
+  }
+  function installDashboard(){const dash=document.getElementById('dashboard');if(!dash||document.getElementById('ruahUpgradeDashboard'))return;const el=document.createElement('div');el.id='ruahUpgradeDashboard';dash.appendChild(el)}
+  const oldRD=window.renderDashboard;window.renderDashboard=function(){oldRD();installDashboard();renderUpgradeDashboard()};
+
+  function installPages(){
+    const nav=document.querySelector('.nav'),main=document.querySelector('main.content');if(!nav||!main)return;
+    if(!nav.querySelector('[data-page="calendario"]')){const b=document.createElement('button');b.dataset.page='calendario';b.innerHTML='<i data-lucide="calendar" class="icon"></i> Calendario';nav.insertBefore(b,nav.querySelector('[data-page="cumpleanos"]')||null)}
+    if(!nav.querySelector('[data-page="configranking"]')){const b=document.createElement('button');b.dataset.page='configranking';b.innerHTML='<i data-lucide="settings-2" class="icon"></i> Configuración';nav.appendChild(b)}
+    if(!document.getElementById('calendario')){const s=document.createElement('section');s.id='calendario';s.className='page';s.innerHTML='<div class="pagehead"><div><h2>Calendario del ministerio</h2><span>Vista mensual de las actividades programadas.</span></div><div class="toolbar"><button class="btn" onclick="ruahCalShift(-1)">‹</button><b id="ruahCalTitle"></b><button class="btn" onclick="ruahCalShift(1)">›</button></div></div><div class="card"><div id="ruahCalendar"></div></div>';main.appendChild(s)}
+    if(!document.getElementById('configranking')){const s=document.createElement('section');s.id='configranking';s.className='page';s.innerHTML='<div class="pagehead"><div><h2>Configuración del ranking</h2><span>Consulta las reglas activas sin modificar el funcionamiento actual.</span></div></div><div class="card" id="ruahRankingConfig"></div>';main.appendChild(s)}
+    if(window.lucide)lucide.createIcons();
+  }
+  let calOffset=0;window.ruahCalShift=function(n){calOffset+=n;renderCalendar()};
+  function renderCalendar(){const host=document.getElementById('ruahCalendar');if(!host)return;const now=new Date();const d=new Date(now.getFullYear(),now.getMonth()+calOffset,1),y=d.getFullYear(),mo=d.getMonth();document.getElementById('ruahCalTitle').textContent=d.toLocaleDateString('es-CO',{month:'long',year:'numeric'});const first=(new Date(y,mo,1).getDay()+6)%7,daysIn=new Date(y,mo+1,0).getDate(),prevDays=new Date(y,mo,0).getDate();let html='<div class="ruah-calendar">';['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(x=>html+=`<div class="ruah-cal-head">${x}</div>`);for(let i=0;i<42;i++){const n=i-first+1,valid=n>=1&&n<=daysIn,num=valid?n:(n<1?prevDays+n:n-daysIn),date=valid?new Date(y,mo,n):new Date(y,mo,n);const wd=(date.getDay()+6)%7;const ev=db.activities.filter(a=>a.day===wd);html+=`<div class="ruah-day ${valid?'':'muted'}"><b>${num}</b>${ev.slice(0,4).map(a=>`<span class="ruah-event">${esc(a.name)} · ${esc(a.time||'')}</span>`).join('')}</div>`}html+='</div>';host.innerHTML=html}
+  function renderConfig(){const h=document.getElementById('ruahRankingConfig');if(!h)return;h.innerHTML=`<div class="ruah-settings"><div class="ruah-setting"><label><b>Componente de cumplimiento</b><span>60%</span></label><p class="ruah-table-note">Asistencias, tardanzas, inasistencias y responsabilidades.</p></div><div class="ruah-setting"><label><b>Componente de puntos</b><span>40%</span></label><p class="ruah-table-note">Puntos por asistencia, llegada, responsabilidades y delegaciones.</p></div><div class="ruah-setting"><label><b>Delegar responsabilidad</b><span>-2 pts</span></label><p class="ruah-table-note">La responsabilidad original queda cerrada y la evaluación pasa al músico delegado.</p></div><div class="ruah-setting"><label><b>Recibir y cumplir delegación</b><span>+6 pts</span></label><p class="ruah-table-note">Si el delegado no cumple, recibe la penalización correspondiente.</p></div></div><div class="ruah-setting" style="margin-top:12px"><b>📈 Tendencia</b><p class="ruah-table-note">La subida o bajada compara la calificación del ranking con el período anterior disponible, utilizando los datos históricos existentes. Si no existe una medición previa, se muestra “Primera medición”.</p></div>`}
+  const oldShow=window.showPage;window.showPage=function(id){oldShow(id);if(id==='calendario')renderCalendar();if(id==='configranking')renderConfig()};
+  installPages();setTimeout(()=>{installDashboard();renderUpgradeDashboard();renderCalendar();renderConfig()},80);
+  const observer=new MutationObserver(()=>{installDashboard();});observer.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
