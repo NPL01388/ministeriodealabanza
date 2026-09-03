@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Igleico Hechos del Espíritu Santo — Ministerio Alabanza Ruah</title>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root{--bg:#f4f6fb;--card:#fff;--text:#172033;--muted:#6b7280;--primary:#285bb5;--primary2:#3d73c7;--line:#e5e7eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--shadow:0 10px 30px #1b173008}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
@@ -249,6 +250,9 @@ img,svg,video,canvas{max-width:100%;height:auto}
   font-size:12px;line-height:1.45
 }
 </style>
+<style>
+.ruah-profile-photo-zoom{cursor:zoom-in;transition:transform .18s ease}.ruah-photo-viewer{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px}.ruah-photo-viewer img{max-width:92vw;max-height:92vh;width:auto;height:auto;object-fit:contain;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.45);cursor:zoom-out}.ruah-photo-close{position:absolute;top:18px;right:18px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:28px;cursor:pointer}.ruah-photo-close:hover{background:rgba(255,255,255,.24)}
+</style>
 </head>
 <body>
 <div class="app">
@@ -356,6 +360,7 @@ Ej.: 30 min antes = <span class="positive">+2.50</span> · 3 min antes = <span c
   <div class="grid2">
     <div class="card"><h3>Exportar información</h3><p>Descarga un archivo Excel con músicos, asistencias, actividades, responsabilidades y horarios especiales.</p><button class="btn primary" onclick="exportExcel()"><i data-lucide="download" class="icon"></i> Descargar Excel</button></div>
     <div class="card"><h3>Transferir datos entre dispositivos</h3><p>Para pasar tus datos del celular al computador o de un dispositivo a otro, usa el respaldo de datos. Es el método más seguro porque no depende de Internet ni de una librería externa.</p><div class="toolbar"><button class="btn primary" onclick="exportExcel()"><i data-lucide="file-spreadsheet" class="icon"></i> Descargar Excel con datos</button><button class="btn ok" onclick="downloadDataBackup()"><i data-lucide="database" class="icon"></i> Descargar respaldo de datos</button><button class="btn" onclick="document.getElementById('importDataFile').click()"><i data-lucide="upload" class="icon"></i> Cargar datos</button></div><input id="importDataFile" type="file" accept=".json,.xlsx,.xls,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onchange="importDataFile(event)"><small style="display:block;margin-top:8px;color:var(--muted)"><b>Recomendado para transferir:</b> descarga el respaldo de datos (.json). Ese archivo contiene la base completa y puede cargarse en otro celular o computador sin depender de Internet. El Excel queda disponible para consulta y transferencia cuando el navegador pueda generar XLSX.</small></div>
+    <div class="card"><h3><i data-lucide="presentation" class="icon"></i> Informe anual</h3><p>Genera automáticamente una presentación PowerPoint del año seleccionado, usando los datos registrados hasta el momento. No necesitas esperar a diciembre.</p><div class="toolbar"><button class="btn primary" onclick="generateAnnualPPT()"><i data-lucide="presentation" class="icon"></i> Generar PowerPoint del año</button></div><small style="display:block;margin-top:8px;color:var(--muted)">El informe conserva el año seleccionado (por ejemplo, 2026) y toma asistencia, puntualidad, responsabilidades, puntos, calificación y evolución disponibles en la aplicación.</small></div>
   </div>
 </section>
 </main></div></div>
@@ -488,6 +493,28 @@ function renderAttendance(){
 }
 if(window.lucide)lucide.createIcons();
 function renderActivities(){document.getElementById('activityTable').innerHTML=db.activities.map(a=>`<tr><td><b>${esc(a.name)}</b></td><td>${days[a.day]}</td><td>${a.time}</td><td>${esc(a.type||'Personalizada')}</td><td><button class="btn" onclick="openActivityModal('${a.id}')">Editar</button> ${a.custom?`<button class="btn danger" onclick="deleteActivity('${a.id}')">Eliminar</button>`:''}</td></tr>`).join('')}
+function openTrendExplanation(mId){
+  const m=db.musicians.find(x=>x.id===mId), t=rankingTrend(mId);
+  if(!m||!t.currentPerf||!t.previousPerf){
+    modal(`<div class="modalhead"><h2>Evolución de la calificación</h2><button class="close" onclick="closeModal()">×</button></div><div class="empty"><i data-lucide="info" class="icon"></i> Aún no hay un período anterior con datos suficientes para explicar la subida o bajada.</div>`);if(window.lucide)lucide.createIcons();return;
+  }
+  const cur=t.currentPerf, prev=t.previousPerf;
+  const delta=(a,b)=>Math.round((a-b)*100)/100;
+  const rows=[
+    ['check-circle-2','Cumplimiento',prev.compliance,cur.compliance,'%','peso 60%'],
+    ['star','Rendimiento por puntos',prev.pointGrade,cur.pointGrade,'%','peso 40%'],
+    ['calendar-check-2','Puntos por actividades/asistencia',prev.basePoints,cur.basePoints,' pts',''],
+    ['clock-3','Puntualidad',prev.arrival,cur.arrival,' pts','puntos por hora de llegada'],
+    ['clipboard-check','Responsabilidades',prev.responsibilityPoints,cur.responsibilityPoints,' pts','incluye delegaciones'],
+    ['calculator','Puntos totales',prev.points,cur.points,' pts','']
+  ];
+  const rowHtml=rows.map(r=>{const d=delta(r[3],r[2]);const cls=d>0?'ranking-detail-good':d<0?'ranking-detail-bad':'ranking-detail-neutral';return `<div class="ranking-detail-row"><div><b><i data-lucide="${r[0]}" class="icon"></i> ${r[1]}</b><small>${r[2].toFixed(2)}${r[4]} → ${r[3].toFixed(2)}${r[4]} ${r[5]?'· '+r[5]:''}</small></div><span class="${cls}">${d>0?'+':''}${d.toFixed(2)}${r[4]}</span></div>`}).join('');
+  const countsText=`Asistencias puntuales: ${prev.present} → ${cur.present}<br>Tardanzas: ${prev.late} → ${cur.late}<br>Inasistencias: ${prev.absent} → ${cur.absent}<br>Responsabilidades cumplidas: ${prev.ownOk} → ${cur.ownOk}`;
+  const direction=t.delta>0?'subió':t.delta<0?'bajó':'se mantuvo';
+  modal(`<div class="modalhead"><h2><i data-lucide="trending-up" class="icon"></i> ¿Por qué ${direction}?</h2><button class="close" onclick="closeModal()">×</button></div><p><b>${esc(m.first+' '+m.last)}</b> · ${t.previousPeriod||'período anterior'} → ${t.period||'período actual'}</p><div class="ranking-detail-impact"><div class="ranking-detail-row"><div><b>Calificación</b><small>${prev.grade.toFixed(2)}% → ${cur.grade.toFixed(2)}%</small></div><span class="${t.delta>0?'ranking-detail-good':t.delta<0?'ranking-detail-bad':'ranking-detail-neutral'}">${t.delta>0?'+':''}${t.delta.toFixed(2)} pp</span></div><div class="ranking-detail-list">${rowHtml}</div><div class="ranking-detail-row"><div><b><i data-lucide="activity" class="icon"></i> Cambios observables</b><small>${countsText}</small></div></div></div><p class="ruah-table-note"><b>Cómo leerlo:</b> los valores positivos beneficiaron la calificación; los negativos la perjudicaron. La evolución se calcula comparando los períodos con datos históricos disponibles y usa tanto cumplimiento como puntos.</p>`);
+  if(window.lucide)lucide.createIcons();
+}
+
 function renderResponsibilities(){
  const mid=document.getElementById('respMusician').value,st=document.getElementById('respStatus').value;
  let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
@@ -1273,6 +1300,28 @@ function performance(mId){
   const points=basePoints+arrival+responsibilityPoints;
   return {attendance,responsibilities,delegatedIn,present,justifiedLate,justifiedAbsent,late,absent,attendanceOk,responsibilitiesOk:ownOk,total,basePoints,arrival,responsibilityPoints,points,grade:total?Math.round(compliance/total*100):0,delegatedInDone:delegatedOk,delegatedInCount:delegatedIn.length};
 }
+function openTrendExplanation(mId){
+  const m=db.musicians.find(x=>x.id===mId), t=rankingTrend(mId);
+  if(!m||!t.currentPerf||!t.previousPerf){
+    modal(`<div class="modalhead"><h2>Evolución de la calificación</h2><button class="close" onclick="closeModal()">×</button></div><div class="empty"><i data-lucide="info" class="icon"></i> Aún no hay un período anterior con datos suficientes para explicar la subida o bajada.</div>`);if(window.lucide)lucide.createIcons();return;
+  }
+  const cur=t.currentPerf, prev=t.previousPerf;
+  const delta=(a,b)=>Math.round((a-b)*100)/100;
+  const rows=[
+    ['check-circle-2','Cumplimiento',prev.compliance,cur.compliance,'%','peso 60%'],
+    ['star','Rendimiento por puntos',prev.pointGrade,cur.pointGrade,'%','peso 40%'],
+    ['calendar-check-2','Puntos por actividades/asistencia',prev.basePoints,cur.basePoints,' pts',''],
+    ['clock-3','Puntualidad',prev.arrival,cur.arrival,' pts','puntos por hora de llegada'],
+    ['clipboard-check','Responsabilidades',prev.responsibilityPoints,cur.responsibilityPoints,' pts','incluye delegaciones'],
+    ['calculator','Puntos totales',prev.points,cur.points,' pts','']
+  ];
+  const rowHtml=rows.map(r=>{const d=delta(r[3],r[2]);const cls=d>0?'ranking-detail-good':d<0?'ranking-detail-bad':'ranking-detail-neutral';return `<div class="ranking-detail-row"><div><b><i data-lucide="${r[0]}" class="icon"></i> ${r[1]}</b><small>${r[2].toFixed(2)}${r[4]} → ${r[3].toFixed(2)}${r[4]} ${r[5]?'· '+r[5]:''}</small></div><span class="${cls}">${d>0?'+':''}${d.toFixed(2)}${r[4]}</span></div>`}).join('');
+  const countsText=`Asistencias puntuales: ${prev.present} → ${cur.present}<br>Tardanzas: ${prev.late} → ${cur.late}<br>Inasistencias: ${prev.absent} → ${cur.absent}<br>Responsabilidades cumplidas: ${prev.ownOk} → ${cur.ownOk}`;
+  const direction=t.delta>0?'subió':t.delta<0?'bajó':'se mantuvo';
+  modal(`<div class="modalhead"><h2><i data-lucide="trending-up" class="icon"></i> ¿Por qué ${direction}?</h2><button class="close" onclick="closeModal()">×</button></div><p><b>${esc(m.first+' '+m.last)}</b> · ${t.previousPeriod||'período anterior'} → ${t.period||'período actual'}</p><div class="ranking-detail-impact"><div class="ranking-detail-row"><div><b>Calificación</b><small>${prev.grade.toFixed(2)}% → ${cur.grade.toFixed(2)}%</small></div><span class="${t.delta>0?'ranking-detail-good':t.delta<0?'ranking-detail-bad':'ranking-detail-neutral'}">${t.delta>0?'+':''}${t.delta.toFixed(2)} pp</span></div><div class="ranking-detail-list">${rowHtml}</div><div class="ranking-detail-row"><div><b><i data-lucide="activity" class="icon"></i> Cambios observables</b><small>${countsText}</small></div></div></div><p class="ruah-table-note"><b>Cómo leerlo:</b> los valores positivos beneficiaron la calificación; los negativos la perjudicaron. La evolución se calcula comparando los períodos con datos históricos disponibles y usa tanto cumplimiento como puntos.</p>`);
+  if(window.lucide)lucide.createIcons();
+}
+
 function renderResponsibilities(){
   const mid=document.getElementById('respMusician')?.value||'',st=document.getElementById('respStatus')?.value||'';
   let arr=db.responsibilities.filter(r=>(!mid||r.musicianId===mid)&&(!st||(st==='done'?r.done:!r.done)));
@@ -1556,14 +1605,36 @@ function rankingTrend(mId){
   return {type:delta>0?'up':delta<0?'down':'flat',delta,relative,current:cur.grade,previous:previous.grade,currentPerf:cur,previousPerf:previous,label:delta>0?'Subió':delta<0?'Bajó':'Sin cambio',period:`${String(cm).padStart(2,'0')}/${cy}`,previousPeriod:previousKey,currentPoints:cur.points,previousPoints:previous.points,currentPointGrade:cur.pointGrade,previousPointGrade:previous.pointGrade};
 }
 
-function trendHtml(t){
+function trendHtml(t,mId){
   if(t.relative===null || t.relative===undefined){
-    return `<span class="trend-box trend-flat"><i data-lucide="minus" class="icon"></i> <small>${t.label||'primera medición'}</small></span>`;
+    return `<span class="trend-box trend-flat" ${mId?`role="button" tabindex="0" onclick="openTrendExplanation('${mId}')" title="Ver qué afectó la calificación"`:''}><i data-lucide="minus" class="icon"></i> <small>${t.label||'primera medición'}</small></span>`;
   }
   const n=Math.abs(t.relative).toFixed(1);
-  if(t.type==='up')return `<span class="trend-box trend-up"><i data-lucide="trending-up" class="icon"></i> +${n}% <small>Subió</small></span>`;
-  if(t.type==='down')return `<span class="trend-box trend-down"><i data-lucide="trending-down" class="icon"></i> -${n}% <small>Bajó</small></span>`;
-  return '<span class="trend-box trend-flat"><i data-lucide="minus" class="icon"></i> 0.0% <small>Sin cambio</small></span>';
+  if(t.type==='up')return `<span class="trend-box trend-up" role="button" tabindex="0" onclick="openTrendExplanation('${mId||''}')" title="Ver qué benefició la calificación"><i data-lucide="trending-up" class="icon"></i> +${n}% <small>Subió</small></span>`;
+  if(t.type==='down')return `<span class="trend-box trend-down" role="button" tabindex="0" onclick="openTrendExplanation('${mId||''}')" title="Ver qué afectó la calificación"><i data-lucide="trending-down" class="icon"></i> -${n}% <small>Bajó</small></span>`;
+  return `<span class="trend-box trend-flat" role="button" tabindex="0" onclick="openTrendExplanation('${mId||''}')" title="Ver detalle de la evolución"><i data-lucide="minus" class="icon"></i> 0.0% <small>Sin cambio</small></span>`;
+}
+
+function openTrendExplanation(mId){
+  const m=db.musicians.find(x=>x.id===mId), t=rankingTrend(mId);
+  if(!m||!t.currentPerf||!t.previousPerf){
+    modal(`<div class="modalhead"><h2>Evolución de la calificación</h2><button class="close" onclick="closeModal()">×</button></div><div class="empty"><i data-lucide="info" class="icon"></i> Aún no hay un período anterior con datos suficientes para explicar la subida o bajada.</div>`);if(window.lucide)lucide.createIcons();return;
+  }
+  const cur=t.currentPerf, prev=t.previousPerf;
+  const delta=(a,b)=>Math.round((a-b)*100)/100;
+  const rows=[
+    ['check-circle-2','Cumplimiento',prev.compliance,cur.compliance,'%','peso 60%'],
+    ['star','Rendimiento por puntos',prev.pointGrade,cur.pointGrade,'%','peso 40%'],
+    ['calendar-check-2','Puntos por actividades/asistencia',prev.basePoints,cur.basePoints,' pts',''],
+    ['clock-3','Puntualidad',prev.arrival,cur.arrival,' pts','puntos por hora de llegada'],
+    ['clipboard-check','Responsabilidades',prev.responsibilityPoints,cur.responsibilityPoints,' pts','incluye delegaciones'],
+    ['calculator','Puntos totales',prev.points,cur.points,' pts','']
+  ];
+  const rowHtml=rows.map(r=>{const d=delta(r[3],r[2]);const cls=d>0?'ranking-detail-good':d<0?'ranking-detail-bad':'ranking-detail-neutral';return `<div class="ranking-detail-row"><div><b><i data-lucide="${r[0]}" class="icon"></i> ${r[1]}</b><small>${r[2].toFixed(2)}${r[4]} → ${r[3].toFixed(2)}${r[4]} ${r[5]?'· '+r[5]:''}</small></div><span class="${cls}">${d>0?'+':''}${d.toFixed(2)}${r[4]}</span></div>`}).join('');
+  const countsText=`Asistencias puntuales: ${prev.present} → ${cur.present}<br>Tardanzas: ${prev.late} → ${cur.late}<br>Inasistencias: ${prev.absent} → ${cur.absent}<br>Responsabilidades cumplidas: ${prev.ownOk} → ${cur.ownOk}`;
+  const direction=t.delta>0?'subió':t.delta<0?'bajó':'se mantuvo';
+  modal(`<div class="modalhead"><h2><i data-lucide="trending-up" class="icon"></i> ¿Por qué ${direction}?</h2><button class="close" onclick="closeModal()">×</button></div><p><b>${esc(m.first+' '+m.last)}</b> · ${t.previousPeriod||'período anterior'} → ${t.period||'período actual'}</p><div class="ranking-detail-impact"><div class="ranking-detail-row"><div><b>Calificación</b><small>${prev.grade.toFixed(2)}% → ${cur.grade.toFixed(2)}%</small></div><span class="${t.delta>0?'ranking-detail-good':t.delta<0?'ranking-detail-bad':'ranking-detail-neutral'}">${t.delta>0?'+':''}${t.delta.toFixed(2)} pp</span></div><div class="ranking-detail-list">${rowHtml}</div><div class="ranking-detail-row"><div><b><i data-lucide="activity" class="icon"></i> Cambios observables</b><small>${countsText}</small></div></div></div><p class="ruah-table-note"><b>Cómo leerlo:</b> los valores positivos beneficiaron la calificación; los negativos la perjudicaron. La evolución se calcula comparando los períodos con datos históricos disponibles y usa tanto cumplimiento como puntos.</p>`);
+  if(window.lucide)lucide.createIcons();
 }
 
 function renderResponsibilities(){
@@ -1648,7 +1719,7 @@ function renderRanking(){
     <td><b class="${llegadaClass}">${p.arrival>0?'+':''}${formatArrivalScore(p.arrival)} pts</b><br><small>puntaje por hora</small></td>
     <td>${p.responsibilitiesOk}/${p.responsibilities.length} propias<br><small>${delIn} delegada(s) recibida(s) · ${delDone} cumplida(s)</small></td>
     <td><b class="${p.points>=0?'':'dangertext'}">${p.points>0?'+':''}${formatArrivalScore(p.points)}</b><br><small>Base ${p.basePoints} · Llegada ${formatArrivalScore(p.arrival)} · Resp. ${formatArrivalScore(p.responsibilityPoints)}</small></td>
-    <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span><br>${trendHtml(t)}</td>
+    <td><span class="badge ${g>=70?'present':g>=40?'late':'absent'}">${g}%</span><br>${trendHtml(t,m.id)}</td>
     <td><button class="btn" onclick="openRankingDetail('${m.id}',${i+1},'${order}')"><i data-lucide="eye" class="icon"></i> Ver detalle</button></td></tr>`;
   }).join(''):'<tr><td colspan="8" class="empty">Aún no hay músicos para calificar.</td></tr>';
   if(window.lucide)lucide.createIcons();
@@ -1678,7 +1749,7 @@ window.openRankingDetail=function(id,position,order='points'){
     }
     const impactHtml=impactRows.length?`<div class="ranking-detail-list">${impactRows.join('')}</div>`:'<div class="empty">Aún no existe un período anterior con datos suficientes para explicar la variación.</div>';
     const trendReason=cur&&prevPerf ? (cur.grade>prevPerf.grade ? 'La calificación subió porque el resultado combinado de cumplimiento y puntos fue mejor que en el período anterior.' : cur.grade<prevPerf.grade ? 'La calificación bajó porque el resultado combinado de cumplimiento y puntos fue menor que en el período anterior.' : 'La calificación se mantuvo porque el resultado combinado prácticamente no cambió.') : 'Cuando exista un período anterior con datos, aquí se mostrará qué componente produjo la subida o la bajada.';
-    const html=`<div class="ranking-detail-impact"><h4><i data-lucide="trending-up" class="icon"></i> Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t)}</p><p style="margin:8px 0"><b>¿Qué produjo el cambio?</b> ${trendReason}</p>${impactHtml}<small style="color:var(--muted)">La calificación combina 60% de cumplimiento de actividades y 40% del rendimiento por puntos. La comparación utiliza el período anterior disponible con datos.</small></div>`;
+    const html=`<div class="ranking-detail-impact"><h4><i data-lucide="trending-up" class="icon"></i> Tendencia del ranking</h4><p style="margin:5px 0">Calificación actual: <b>${p.grade}%</b> · ${trendHtml(t,id)}</p><p style="margin:8px 0"><b>¿Qué produjo el cambio?</b> ${trendReason}</p>${impactHtml}<small style="color:var(--muted)">La calificación combina 60% de cumplimiento de actividades y 40% del rendimiento por puntos. La comparación utiliza el período anterior disponible con datos.</small></div>`;
     if(anchor)anchor.insertAdjacentHTML('beforebegin',html);else box.insertAdjacentHTML('beforeend',html);
     if(window.lucide)lucide.createIcons();
   },50);
@@ -2173,6 +2244,72 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
   setTimeout(()=>{renderDiscipline();if(window.lucide)lucide.createIcons()},120);
 })();
 </script>
+<script>
+(function(){
+  function openRuahPhoto(src,alt){
+    if(!src)return;
+    const old=document.querySelector('.ruah-photo-viewer'); if(old)old.remove();
+    const v=document.createElement('div');v.className='ruah-photo-viewer';v.innerHTML='<button type="button" class="ruah-photo-close" aria-label="Cerrar">×</button><img src="'+String(src).replace(/"/g,'&quot;')+'" alt="'+String(alt||'Foto del músico').replace(/"/g,'&quot;')+'">';
+    document.body.appendChild(v);
+    const close=()=>v.remove();v.addEventListener('click',e=>{if(e.target===v||e.target.classList.contains('ruah-photo-close'))close()});
+    document.addEventListener('keydown',function esc(e){if(e.key==='Escape'){close();document.removeEventListener('keydown',esc)}});
+  }
+  document.addEventListener('click',function(e){
+    const img=e.target.closest('img'); if(!img)return;
+    const modal=img.closest('.modal,.modal-content,[role="dialog"]');
+    if(!modal)return;
+    const src=img.currentSrc||img.src;
+    if(!src||src.startsWith('data:image')===false && src.startsWith('http')===false)return;
+    const alt=img.alt||'Foto del músico';
+    // Only profile-sized photos inside the musician profile, not unrelated icons/logos.
+    const w=img.naturalWidth||img.width||0,h=img.naturalHeight||img.height||0;
+    if(img.closest('#profileModal') || img.classList.contains('profile-photo') || img.classList.contains('musician-photo') || (w>=120&&h>=120)){
+      e.preventDefault();openRuahPhoto(src,alt);
+    }
+  });
+})();
+</script>
+<script id="annual-ppt-report">
+/* Informe anual PowerPoint: usa los datos existentes y el año activo. */
+window.generateAnnualPPT=function(){
+  if(typeof PptxGenJS==='undefined')return alert('No se pudo cargar el generador de PowerPoint. Conéctate a Internet y vuelve a intentarlo.');
+  const year=window.ruahYear?.activeYear?window.ruahYear.activeYear():Number(db.activeYear)||new Date().getFullYear();
+  const p=new PptxGenJS();
+  p.layout='LAYOUT_WIDE'; p.author='Igleico Ruah'; p.subject=`Informe anual ${year}`; p.title=`Informe anual ${year}`; p.company='Igleico Ruah';
+  p.lang='es-CO';
+  const W=13.333,H=7.5;
+  const navy='0D2A49', muted='64748B', line='D9E2EC', white='FFFFFF', green='16803C', red='B42318', blue='1D4ED8';
+  const fmtPct=v=>Number.isFinite(v)?`${Number(v).toFixed(1)}%`:'0.0%';
+  const fullName=m=>`${m.first||''} ${m.last||''}`.trim()||'Músico';
+  const inY=x=>String(x?.date||'').startsWith(String(year)+'-');
+  const att=(db.attendance||[]).filter(inY), resp=(db.responsibilities||[]).filter(inY);
+  const musicians=(db.musicians||[]).filter(m=>m.active!==false);
+  const pctAvg=musicians.length?musicians.reduce((s,m)=>s+Number(performance(m.id)?.grade||0),0)/musicians.length:0;
+  const totalPoints=musicians.reduce((s,m)=>s+Number(performance(m.id)?.points||0),0);
+  const punctual=att.filter(x=>x.status==='present').length;
+  const late=att.filter(x=>x.status==='late').length;
+  const absent=att.filter(x=>x.status==='absent').length;
+  const doneResp=resp.filter(x=>x.done).length;
+  const essayAct=typeof essayActivity==='function'?essayActivity():null;
+  const susp=Object.entries(db.essayStatus||{}).filter(([d,v])=>String(d).startsWith(String(year)+'-')&&(v==='suspended'||v?.status==='suspended')).length;
+  const resch=Object.entries(db.essayStatus||{}).filter(([d,v])=>String(d).startsWith(String(year)+'-')&&(v==='rescheduled'||v?.status==='rescheduled')).length;
+  const safeAddText=(slide,text,x,y,w,h,opts={})=>slide.addText(String(text??''),{x,y,w,h,fontFace:'Aptos',margin:0.05,breakLine:false,...opts});
+  const header=(slide,title,sub)=>{slide.background={color:'F8FAFC'};safeAddText(slide,title,.55,.35,12.2,.42,{fontSize:24,bold:true,color:navy});if(sub)safeAddText(slide,sub,.55,.82,12.1,.28,{fontSize:10,color:muted});slide.addShape(p.ShapeType.line,{x:.55,y:1.18,w:12.2,h:0,line:{color:line,width:1}});safeAddText(slide,`Informe ${year}`,.55,7.08,4,.18,{fontSize:8,color:muted});};
+  const addStat=(slide,label,value,x,y,w)=>{slide.addShape(p.ShapeType.roundRect,{x,y,w,h:1.0,rectRadius:.08,fill:{color:white},line:{color:line,width:1}});safeAddText(slide,label,x+.12,y+.16,w-.24,.2,{fontSize:9,color:muted,bold:true});safeAddText(slide,value,x+.12,y+.43,w-.24,.35,{fontSize:20,color:navy,bold:true});};
+
+  let slide=p.addSlide(); slide.background={color:navy}; safeAddText(slide,`INFORME ANUAL ${year}`,0.75,2.0,11.8,.6,{fontSize:30,bold:true,color:white,align:'center'});safeAddText(slide,getBranding()?.churchName||'Igleico Hechos del Espíritu Santo',1.2,2.85,10.9,.4,{fontSize:17,color:white,align:'center'});safeAddText(slide,getBranding()?.ministryName||'Ministerio Alabanza Ruah',1.2,3.35,10.9,.4,{fontSize:20,bold:true,color:white,align:'center'});safeAddText(slide,`Datos registrados hasta ${fmtDate(today())}`,1.2,4.1,10.9,.3,{fontSize:11,color:'D9E2EC',align:'center'});
+
+  slide=p.addSlide();header(slide,'Resumen del ministerio',`Estado acumulado del año ${year}`);addStat(slide,'Músicos activos',musicians.length,.55,1.5,2.35);addStat(slide,'Asistencias',att.length,3.1,1.5,2.35);addStat(slide,'Promedio calificación',fmtPct(pctAvg),5.65,1.5,2.35);addStat(slide,'Puntos acumulados',totalPoints.toFixed(0),8.2,1.5,2.35);addStat(slide,'Ensayos suspendidos',susp,10.75,1.5,2.0);addStat(slide,'Ensayos reprogramados',resch,.55,2.75,2.35);addStat(slide,'Puntuales',punctual,3.1,2.75,2.35);addStat(slide,'Tardanzas',late,5.65,2.75,2.35);addStat(slide,'Inasistencias',absent,8.2,2.75,2.35);addStat(slide,'Responsabilidades cumplidas',doneResp,10.75,2.75,2.0);safeAddText(slide,'Este resumen se genera con los datos existentes; no reinicia ni reemplaza el historial.',.7,4.25,11.8,.5,{fontSize:13,color:muted,align:'center'});
+
+  const ranking=musicians.map(m=>{const q=performance(m.id)||{};return {m,q}}).sort((a,b)=>Number(b.q.grade||0)-Number(a.q.grade||0));
+  slide=p.addSlide();header(slide,'Ranking anual',`Calificación calculada con los registros del ${year}`);const rows=[[{text:'Puesto',options:{bold:true,color:white}},{text:'Músico',options:{bold:true,color:white}},{text:'Calificación',options:{bold:true,color:white}},{text:'Puntos',options:{bold:true,color:white}},{text:'Asistencia',options:{bold:true,color:white}}]];ranking.forEach((r,i)=>{const c=counts(r.m.id),q=r.q;rows.push([String(i+1),fullName(r.m),fmtPct(q.grade),String(Math.round(q.points||0)),`${c.present+c.late+c.justifiedLate+c.justifiedAbsent}/${c.present+c.late+c.justifiedLate+c.justifiedAbsent+c.absent}`]);});slide.addTable(rows,{x:.6,y:1.45,w:12.1,h:5.2,border:{type:'solid',color:line,width:1},fill:white,color:'334155',fontFace:'Aptos',fontSize:11,margin:.06,rowH:.38,autoFit:false,firstRow:{fill:{color:navy},color:white,bold:true}});
+
+  ranking.forEach((r,idx)=>{const m=r.m,q=r.q,c=counts(m.id),ar=att.filter(x=>x.musicianId===m.id),rr=resp.filter(x=>x.musicianId===m.id),pun=ar.filter(x=>x.status==='present').length,lt=ar.filter(x=>x.status==='late').length,ab=ar.filter(x=>x.status==='absent').length,ok=rr.filter(x=>x.done).length;let trend='Primera medición',trendSign='',trendColor=muted;try{const t=rankingTrend(m.id);if(t&&t.current!=null&&t.previous!=null){const d=Number(t.current)-Number(t.previous);trend=`${d>=0?'↑':'↓'} ${Math.abs(d).toFixed(1)} pp`;trendColor=d>=0?green:red;}}catch(e){} slide=p.addSlide();header(slide,fullName(m),`Perfil anual · Puesto #${idx+1}`);if(m.photo){try{slide.addImage({data:m.photo,x:.65,y:1.45,w:2.25,h:2.25});}catch(e){}}
+    addStat(slide,'Calificación',fmtPct(q.grade),3.15,1.45,2.15);addStat(slide,'Puntos',Math.round(q.points||0),5.5,1.45,2.15);addStat(slide,'Asistencias',pun,7.85,1.45,2.15);addStat(slide,'Responsabilidades',`${ok}/${rr.length}`,10.2,1.45,2.45);safeAddText(slide,'Evolución',3.2,2.85,1.3,.25,{fontSize:10,color:muted,bold:true});safeAddText(slide,trend,4.25,2.78,2.0,.4,{fontSize:17,bold:true,color:trendColor});safeAddText(slide,'Indicadores del año',.7,4.0,3,.3,{fontSize:15,bold:true,color:navy});safeAddText(slide,`Puntualidad: ${pun}\nTardanzas: ${lt}\nInasistencias: ${ab}\nResponsabilidades cumplidas: ${ok}\nResponsabilidades no cumplidas: ${Math.max(0,rr.length-ok)}\nPuntos obtenidos: ${Math.round(q.points||0)}`,.75,4.45,5.4,1.8,{fontSize:12,color:'334155',breakLine:true});let reason='';try{const tr=trendReason(m.id);reason=typeof tr==='string'?tr:'Consulta la evolución del ranking para ver el detalle.';}catch(e){reason='Consulta la evolución del ranking para ver el detalle.'}safeAddText(slide,'¿Qué debe mejorar o qué lo benefició?',6.5,4.0,5.7,.3,{fontSize:15,bold:true,color:navy});safeAddText(slide,reason,6.55,4.45,5.7,1.75,{fontSize:11,color:'334155',breakLine:true});});
+  const file=`Informe_Ruah_${year}_${today()}.pptx`;p.writeFile({fileName:file}).catch(e=>alert('No se pudo generar el PowerPoint. '+(e?.message||e)));
+};
+</script>
+
 </body>
 </html>
 <script id="ruah-calendar-final-fix">
@@ -2292,5 +2429,81 @@ setTimeout(()=>{if(typeof renderAll==='function')renderAll();if(typeof renderRan
     @media(max-width:600px){.ruah-cal-day-btn{min-height:68px;padding:5px}.ruah-day{min-height:68px}.ruah-cal-day-btn .ruah-event{max-width:100%}}
   `;document.head.appendChild(st);
   setTimeout(()=>{if(typeof renderCalendar==='function')renderCalendar()},30);
+})();
+</script>
+
+<style id="ruah-musician-links-style">
+  .ruah-musician-link{
+    color:inherit;
+    text-decoration:underline;
+    text-decoration-style:dotted;
+    text-underline-offset:3px;
+    cursor:pointer;
+    font-weight:inherit;
+    transition:opacity .15s ease, text-decoration-color .15s ease;
+  }
+  .ruah-musician-link:hover{opacity:.78;text-decoration-style:solid}
+  .ruah-musician-link:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:3px}
+</style>
+<script>
+(function(){
+  function escReg(v){return v.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')}
+  function makeMusicianNamesClickable(){
+    if(!window.db || !Array.isArray(db.musicians) || !db.musicians.length)return;
+    const names=db.musicians.map(m=>({id:m.id,name:`${m.first||''} ${m.last||''}`.trim()})).filter(x=>x.name.length>=2);
+    if(!names.length)return;
+    names.sort((a,b)=>b.name.length-a.name.length);
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    let node;
+    while(node=walker.nextNode()){
+      const parent=node.parentElement;
+      if(!parent)continue;
+      if(parent.closest('.ruah-musician-link,.modal,script,style,textarea,input,select,option,[contenteditable="true"]'))continue;
+      if(!node.nodeValue.trim())continue;
+      if(names.some(x=>node.nodeValue.includes(x.name)))nodes.push(node);
+    }
+    nodes.forEach(textNode=>{
+      let text=textNode.nodeValue, frag=document.createDocumentFragment(), pos=0, found=false;
+      const re=new RegExp(names.map(x=>escReg(x.name)).join('|'),'g');
+      let m;
+      while((m=re.exec(text))){
+        const hit=names.find(x=>x.name===m[0]);
+        if(!hit)continue;
+        found=true;
+        if(m.index>pos)frag.appendChild(document.createTextNode(text.slice(pos,m.index)));
+        const a=document.createElement('span');
+        a.className='ruah-musician-link';
+        a.dataset.musicianId=hit.id;
+        a.title='Ver perfil de '+hit.name;
+        a.setAttribute('role','link');
+        a.tabIndex=0;
+        a.textContent=m[0];
+        frag.appendChild(a);
+        pos=m.index+m[0].length;
+      }
+      if(found){
+        if(pos<text.length)frag.appendChild(document.createTextNode(text.slice(pos)));
+        textNode.parentNode.replaceChild(frag,textNode);
+      }
+    });
+  }
+  document.addEventListener('click',function(e){
+    const el=e.target.closest?.('.ruah-musician-link');
+    if(!el)return;
+    e.preventDefault();e.stopPropagation();
+    if(typeof window.openProfile==='function')window.openProfile(el.dataset.musicianId);
+  });
+  document.addEventListener('keydown',function(e){
+    if((e.key==='Enter'||e.key===' ') && e.target.classList?.contains('ruah-musician-link')){
+      e.preventDefault();
+      if(typeof window.openProfile==='function')window.openProfile(e.target.dataset.musicianId);
+    }
+  });
+  let scheduled=false;
+  const schedule=()=>{if(scheduled)return;scheduled=true;setTimeout(()=>{scheduled=false;makeMusicianNamesClickable()},40)};
+  const observer=new MutationObserver(schedule);
+  observer.observe(document.body,{childList:true,subtree:true});
+  setTimeout(makeMusicianNamesClickable,120);
 })();
 </script>
